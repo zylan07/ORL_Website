@@ -1,0 +1,794 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ORL design system colors */
+  --color-deep-ocean-navy: var(--deep-ocean-navy);
+  --color-midnight-blue: var(--midnight-blue);
+  --color-marine-teal: var(--marine-teal);
+  --color-lagoon-blue: var(--lagoon-blue);
+  --color-aqua-cyan: var(--aqua-cyan);
+  --color-seafoam-green: var(--seafoam-green);
+  --color-ocean-emerald: var(--ocean-emerald);
+  --color-pearl-white: var(--pearl-white);
+  --color-slate-grey: var(--slate-grey);
+  --color-sand-beige: var(--sand-beige);
+  --color-coral-accent: var(--coral-accent);
+  --color-soft-gold: var(--soft-gold);
+  --color-light-cyan: var(--light-cyan);
+  --color-surface: var(--surface);
+  --color-card-hover: var(--card-hover);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #f8fafc; /* Pearl White (Base background) */
+  --surface: #ffffff; /* Pure White surfaces */
+  --card: #ffffff; /* Pure White card background */
+  --card-hover: #e0f7fa; /* Light Cyan card hover background */
+
+  --text-primary: #0f172a; /* Deep Slate primary text */
+  --text-secondary: #334155; /* Slate grey secondary text */
+  --text-muted: #64748b; /* Light Slate grey muted text */
+  --border: #e2e8f0; /* Soft border */
+  --input: #e2e8f0;
+  --ring: #0284c7; /* Ocean Blue ring */
+
+  /* Accent Colors */
+  --accent: #0284c7; /* Ocean Blue accent */
+  --accent-foreground: #ffffff;
+  --accent-secondary: #0d9488; /* Marine Teal accent */
+  --soft-gold: #d97706; /* Soft gold/amber in light mode for readability */
+
+  /* Theme Mappings for Tailwind Compatibility */
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: #0a192f; /* Sticky navbar remains deep premium navy in both modes for a high-end feel */
+  --primary-foreground: #f8fafc;
+  --secondary: #f5f5f4; /* Soft Sand */
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: var(--text-muted);
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+
+  /* Original variables kept for compatibility */
+  --deep-ocean-navy: #040c1a;
+  --midnight-blue: #0a192f;
+  --marine-teal: #0d9488;
+  --lagoon-blue: #0284c7;
+  --aqua-cyan: #06b6d4;
+  --seafoam-green: #14b8a6;
+  --ocean-emerald: #059669;
+  --pearl-white: #f8fafc;
+  --slate-grey: #64748b;
+  --sand-beige: #f5f5f4;
+  --coral-accent: #f43f5e;
+  --light-cyan: #e0f7fa;
+}
+
+.dark {
+  --background: #020712; /* Deep Ocean Navy background */
+  --surface: #060d1e; /* Midnight Blue surface background */
+  --card: #060d1e; /* Midnight Blue card background */
+  --card-hover: #0a1e3f; /* Lighter Midnight Blue on hover */
+
+  --text-primary: #f8fafc; /* Pearl White primary text */
+  --text-secondary: #94a3b8; /* Slate grey secondary text */
+  --text-muted: #64748b; /* Darker Slate grey muted text */
+  --border: rgba(255, 255, 255, 0.08); /* Dark mode soft border */
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #22d3ee; /* Aqua Cyan ring */
+
+  /* Accent Colors */
+  --accent: #22d3ee; /* Aqua Cyan accent */
+  --accent-foreground: #020712;
+  --accent-secondary: #14b8a6; /* Marine Teal accent */
+  --soft-gold: #fbbf24; /* Soft gold accent */
+
+  /* Theme Mappings for Tailwind Compatibility */
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: #020712; /* Header becomes matching Deep Ocean Navy in dark mode */
+  --primary-foreground: #f8fafc;
+  --secondary: #0a192f; /* Midnight Blue secondary */
+  --secondary-foreground: #f8fafc;
+  --muted: #0b132b;
+  --muted-foreground: var(--text-muted);
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+
+  /* Original variables kept for compatibility */
+  --deep-ocean-navy: #020712;
+  --midnight-blue: #060d1e;
+  --marine-teal: #14b8a6;
+  --lagoon-blue: #38bdf8;
+  --aqua-cyan: #22d3ee;
+  --seafoam-green: #2dd4bf;
+  --ocean-emerald: #34d399;
+  --pearl-white: #f8fafc;
+  --slate-grey: #94a3b8;
+  --sand-beige: #1c1917;
+  --coral-accent: #fb7185;
+  --light-cyan: #083344;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* ==========================================================================
+   OCEAN THEME & VISUAL EXPERIENCE ENHANCEMENTS
+   ========================================================================== */
+
+/* Premium Ocean Glassmorphism */
+.ocean-glass {
+  background: rgba(240, 249, 255, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px 0 rgba(15, 23, 42, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  transition:
+    background-color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.dark .ocean-glass {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Light Caustics / Sunlight Filtering */
+@keyframes caustic-drift {
+  0% {
+    background-position:
+      0% 50%,
+      0% 50%;
+  }
+  50% {
+    background-position:
+      100% 50%,
+      50% 100%;
+  }
+  100% {
+    background-position:
+      0% 50%,
+      0% 50%;
+  }
+}
+
+.light-caustics {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(
+      ellipse at 15% 0%,
+      rgba(56, 189, 248, 0.22) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at 85% 0%,
+      rgba(20, 184, 166, 0.18) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0) 15%,
+      rgba(56, 189, 248, 0.08) 35%,
+      rgba(20, 184, 166, 0.09) 45%,
+      rgba(56, 189, 248, 0.08) 55%,
+      rgba(255, 255, 255, 0) 75%
+    );
+  background-size: 200% 200%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: caustic-drift 18s ease-in-out infinite;
+  z-index: 1;
+}
+
+.dark .light-caustics {
+  background-image:
+    radial-gradient(
+      ellipse at 15% 0%,
+      rgba(56, 189, 248, 0.2) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at 85% 0%,
+      rgba(14, 165, 233, 0.16) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0) 15%,
+      rgba(56, 189, 248, 0.07) 35%,
+      rgba(20, 184, 166, 0.08) 45%,
+      rgba(14, 165, 233, 0.07) 55%,
+      rgba(255, 255, 255, 0) 75%
+    );
+}
+
+/* Ocean Horizon Waves */
+@keyframes horizon-wave-anim {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-6px) scaleY(1.03);
+  }
+}
+
+.horizon-wave-1 {
+  animation: horizon-wave-anim 14s ease-in-out infinite;
+}
+
+.horizon-wave-2 {
+  animation: horizon-wave-anim 10s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+.horizon-wave-3 {
+  animation: horizon-wave-anim 18s ease-in-out infinite;
+  animation-delay: -6s;
+}
+
+/* Data Breathing Pulse */
+@keyframes data-pulse-anim {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px -2px rgba(14, 165, 233, 0.05);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 10px 25px -4px rgba(14, 165, 233, 0.15);
+  }
+}
+
+.data-pulse {
+  animation: data-pulse-anim 6s ease-in-out infinite;
+}
+
+/* Holographic Hover Effects */
+.holographic-card {
+  position: relative;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+  overflow: hidden;
+}
+
+.holographic-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(14, 165, 233, 0.08),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.holographic-card:hover::before {
+  transform: translateX(100%);
+}
+
+.holographic-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 24px rgba(14, 165, 233, 0.1),
+    0 0 15px rgba(20, 184, 166, 0.05);
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+/* Ocean Current Header Line & Shimmer */
+@keyframes current-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.nav-current-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(14, 165, 233, 0.4),
+    rgba(20, 184, 166, 0.8),
+    rgba(99, 102, 241, 0.4),
+    rgba(14, 165, 233, 0.4)
+  );
+  background-size: 300% 100%;
+  animation: current-shimmer 12s linear infinite;
+  z-index: 50;
+}
+
+/* Underwater ROV Float Animation */
+@keyframes rov-float-path {
+  0% {
+    transform: translate(-120px, 60px) rotate(3deg);
+  }
+  25% {
+    transform: translate(25vw, 20px) rotate(-2deg);
+  }
+  50% {
+    transform: translate(55vw, 80px) rotate(4deg);
+  }
+  75% {
+    transform: translate(80vw, 30px) rotate(-3deg);
+  }
+  100% {
+    transform: translate(105vw, 70px) rotate(2deg);
+  }
+}
+
+.rov-animate {
+  animation: rov-float-path 40s linear infinite;
+}
+
+/* Reduced Motion Fallback */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+
+  .light-caustics,
+  .holographic-card::before,
+  .rov-animate {
+    animation: none !important;
+    display: none !important;
+  }
+
+  .horizon-wave-1,
+  .horizon-wave-2,
+  .horizon-wave-3,
+  .data-pulse,
+  .holographic-card {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .holographic-card:hover {
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border-color: var(--color-border) !important;
+  }
+
+  .nav-current-line {
+    animation: none !important;
+    background: var(--color-primary) !important;
+    opacity: 0.5;
+  }
+}
+
+/* ==========================================================================
+   GLOBAL TABLE STANDARDIZATION SYSTEM
+   ========================================================================== */
+
+/* 1. Rounded Responsive Scroll Container */
+.orl-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.035);
+  scrollbar-width: thin;
+}
+
+/* 2. Standardized Table element */
+.orl-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.75rem; /* text-xs */
+  line-height: 1.25rem;
+}
+
+/* 3. Sticky Table Header Cell (Deep Navy / Marine Teal) */
+.orl-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #0a192f !important; /* Deep Navy Header background */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; /* font-mono */
+  font-size: 0.625rem; /* text-[10px] */
+  font-weight: 700; /* font-bold */
+  text-transform: uppercase;
+  letter-spacing: 0.05em; /* tracking-wider */
+  color: #f8fafc !important; /* Pearl White text */
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  white-space: nowrap;
+}
+
+.dark .orl-table th {
+  background-color: #020712 !important; /* Dark mode deep navy background */
+  color: #f8fafc !important;
+}
+
+/* 4. Table Body Row Alternating Colors (3-color hierarchy) */
+.orl-table tbody tr {
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.orl-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Table Redesign: Page-specific HSL color families with repeating opacities (25%, 40%, 55%, 70%, 85%) */
+
+/* --- 1. Publications (Blue/Indigo Family) --- */
+/* Light Mode */
+.page-publications .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(210, 80%, 45%, 0.25) !important; }
+.page-publications .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(210, 80%, 45%, 0.40) !important; }
+.page-publications .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(210, 80%, 45%, 0.55) !important; }
+.page-publications .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(210, 80%, 45%, 0.70) !important; }
+.page-publications .orl-table tbody tr:nth-child(5n)   { background-color: hsla(210, 80%, 45%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-publications .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(210, 90%, 30%, 0.25) !important; }
+.dark .page-publications .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(210, 90%, 30%, 0.40) !important; }
+.dark .page-publications .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(210, 90%, 30%, 0.55) !important; }
+.dark .page-publications .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(210, 90%, 30%, 0.70) !important; }
+.dark .page-publications .orl-table tbody tr:nth-child(5n)   { background-color: hsla(210, 90%, 30%, 0.85) !important; }
+
+/* --- 2. Research (Teal/Emerald Family) --- */
+/* Light Mode */
+.page-research .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(165, 80%, 38%, 0.25) !important; }
+.page-research .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(165, 80%, 38%, 0.40) !important; }
+.page-research .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(165, 80%, 38%, 0.55) !important; }
+.page-research .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(165, 80%, 38%, 0.70) !important; }
+.page-research .orl-table tbody tr:nth-child(5n)   { background-color: hsla(165, 80%, 38%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-research .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(165, 90%, 25%, 0.25) !important; }
+.dark .page-research .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(165, 90%, 25%, 0.40) !important; }
+.dark .page-research .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(165, 90%, 25%, 0.55) !important; }
+.dark .page-research .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(165, 90%, 25%, 0.70) !important; }
+.dark .page-research .orl-table tbody tr:nth-child(5n)   { background-color: hsla(165, 90%, 25%, 0.85) !important; }
+
+/* --- 3. Academic Activities (Violet/Purple Family) --- */
+/* Light Mode */
+.page-academic-activities .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(265, 75%, 45%, 0.25) !important; }
+.page-academic-activities .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(265, 75%, 45%, 0.40) !important; }
+.page-academic-activities .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(265, 75%, 45%, 0.55) !important; }
+.page-academic-activities .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(265, 75%, 45%, 0.70) !important; }
+.page-academic-activities .orl-table tbody tr:nth-child(5n)   { background-color: hsla(265, 75%, 45%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(265, 80%, 28%, 0.25) !important; }
+.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(265, 80%, 28%, 0.40) !important; }
+.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(265, 80%, 28%, 0.55) !important; }
+.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(265, 80%, 28%, 0.70) !important; }
+.dark .page-academic-activities .orl-table tbody tr:nth-child(5n)   { background-color: hsla(265, 80%, 28%, 0.85) !important; }
+
+/* --- 4. Technical Training (Cyan/Lagoon Blue Family) --- */
+/* Light Mode */
+.page-technical-training .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(190, 85%, 40%, 0.25) !important; }
+.page-technical-training .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(190, 85%, 40%, 0.40) !important; }
+.page-technical-training .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(190, 85%, 40%, 0.55) !important; }
+.page-technical-training .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(190, 85%, 40%, 0.70) !important; }
+.page-technical-training .orl-table tbody tr:nth-child(5n)   { background-color: hsla(190, 85%, 40%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-technical-training .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(190, 90%, 25%, 0.25) !important; }
+.dark .page-technical-training .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(190, 90%, 25%, 0.40) !important; }
+.dark .page-technical-training .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(190, 90%, 25%, 0.55) !important; }
+.dark .page-technical-training .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(190, 90%, 25%, 0.70) !important; }
+.dark .page-technical-training .orl-table tbody tr:nth-child(5n)   { background-color: hsla(190, 90%, 25%, 0.85) !important; }
+
+/* --- 5. People (Slate/Navy Family) --- */
+/* Light Mode */
+.page-people .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(215, 50%, 45%, 0.25) !important; }
+.page-people .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(215, 50%, 45%, 0.40) !important; }
+.page-people .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(215, 50%, 45%, 0.55) !important; }
+.page-people .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(215, 50%, 45%, 0.70) !important; }
+.page-people .orl-table tbody tr:nth-child(5n)   { background-color: hsla(215, 50%, 45%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-people .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(215, 60%, 25%, 0.25) !important; }
+.dark .page-people .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(215, 60%, 25%, 0.40) !important; }
+.dark .page-people .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(215, 60%, 25%, 0.55) !important; }
+.dark .page-people .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(215, 60%, 25%, 0.70) !important; }
+.dark .page-people .orl-table tbody tr:nth-child(5n)   { background-color: hsla(215, 60%, 25%, 0.85) !important; }
+
+/* --- 6. Awards (Gold/Amber Family) --- */
+/* Light Mode */
+.page-awards .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(38, 85%, 40%, 0.25) !important; }
+.page-awards .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(38, 85%, 40%, 0.40) !important; }
+.page-awards .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(38, 85%, 40%, 0.55) !important; }
+.page-awards .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(38, 85%, 40%, 0.70) !important; }
+.page-awards .orl-table tbody tr:nth-child(5n)   { background-color: hsla(38, 85%, 40%, 0.85) !important; }
+/* Dark Mode */
+.dark .page-awards .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(38, 90%, 25%, 0.25) !important; }
+.dark .page-awards .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(38, 90%, 25%, 0.40) !important; }
+.dark .page-awards .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(38, 90%, 25%, 0.55) !important; }
+.dark .page-awards .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(38, 90%, 25%, 0.70) !important; }
+.dark .page-awards .orl-table tbody tr:nth-child(5n)   { background-color: hsla(38, 90%, 25%, 0.85) !important; }
+
+/* --- 7. Generic Fallback (Sky Blue / Slate Family) --- */
+/* Light Mode */
+.orl-table tbody tr:nth-child(5n+1) { background-color: hsla(200, 75%, 48%, 0.25) !important; }
+.orl-table tbody tr:nth-child(5n+2) { background-color: hsla(200, 75%, 48%, 0.40) !important; }
+.orl-table tbody tr:nth-child(5n+3) { background-color: hsla(200, 75%, 48%, 0.55) !important; }
+.orl-table tbody tr:nth-child(5n+4) { background-color: hsla(200, 75%, 48%, 0.70) !important; }
+.orl-table tbody tr:nth-child(5n)   { background-color: hsla(200, 75%, 48%, 0.85) !important; }
+/* Dark Mode */
+.dark .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(200, 80%, 30%, 0.25) !important; }
+.dark .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(200, 80%, 30%, 0.40) !important; }
+.dark .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(200, 80%, 30%, 0.55) !important; }
+.dark .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(200, 80%, 30%, 0.70) !important; }
+.dark .orl-table tbody tr:nth-child(5n)   { background-color: hsla(200, 80%, 30%, 0.85) !important; }
+
+/* --- 8. Text Color Overrides for 55%+ Opacity Rows (3rd, 4th, and 5th rows) --- */
+.orl-table tbody tr:nth-child(5n+3),
+.orl-table tbody tr:nth-child(5n+4),
+.orl-table tbody tr:nth-child(5n) {
+  color: #ffffff !important;
+}
+.orl-table tbody tr:nth-child(5n+3) td,
+.orl-table tbody tr:nth-child(5n+4) td,
+.orl-table tbody tr:nth-child(5n) td {
+  color: #ffffff !important;
+}
+.orl-table tbody tr:nth-child(5n+3) a,
+.orl-table tbody tr:nth-child(5n+4) a,
+.orl-table tbody tr:nth-child(5n) a {
+  color: #e0f2fe !important; /* clear light sky blue link for high contrast */
+  text-decoration: underline;
+}
+.orl-table tbody tr:nth-child(5n+3) a:hover,
+.orl-table tbody tr:nth-child(5n+4) a:hover,
+.orl-table tbody tr:nth-child(5n) a:hover {
+  color: #ffffff !important;
+}
+.orl-table tbody tr:nth-child(5n+3) .text-muted-foreground,
+.orl-table tbody tr:nth-child(5n+4) .text-muted-foreground,
+.orl-table tbody tr:nth-child(5n) .text-muted-foreground,
+.orl-table tbody tr:nth-child(5n+3) .text-text-muted,
+.orl-table tbody tr:nth-child(5n+4) .text-text-muted,
+.orl-table tbody tr:nth-child(5n) .text-text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.orl-table tbody tr:nth-child(5n+3) .text-text-secondary,
+.orl-table tbody tr:nth-child(5n+4) .text-text-secondary,
+.orl-table tbody tr:nth-child(5n) .text-text-secondary {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Row Hover Highlight (Marine Teal Highlight) */
+.orl-table tbody tr:hover {
+  background-color: rgba(13, 148, 136, 0.08) !important;
+}
+.dark .orl-table tbody tr:hover {
+  background-color: rgba(20, 184, 166, 0.12) !important;
+}
+
+/* 5. Table Data Cell */
+.orl-table td {
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.orl-table td strong,
+.orl-table td .orl-table-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   GLOBAL CARD STANDARDIZATION SYSTEM
+   ========================================================================== */
+
+.orl-standard-card {
+  min-height: 160px; /* Uniform minimum height */
+  padding: 1.25rem; /* p-5 - Uniform Padding */
+  border-radius: var(--radius-xl); /* Rounded-2xl */
+  border: 1px solid var(--color-border); /* Uniform border treatment */
+  background-color: var(--card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Card Hover effect */
+.orl-standard-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: rgba(20, 184, 166, 0.35); /* teal accent tint */
+}
+
+.dark .orl-standard-card:hover {
+  border-color: rgba(34, 211, 238, 0.45); /* cyan accent tint */
+}
+
+/* Card Icon standard container */
+.orl-card-icon {
+  height: 2.25rem; /* 36px */
+  width: 2.25rem; /* 36px - Uniform icon size */
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(20, 184, 166, 0.1);
+  color: var(--accent-secondary);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.orl-standard-card:hover .orl-card-icon {
+  background-color: var(--accent-secondary);
+  color: var(--pearl-white);
+}
+
+.dark .orl-card-icon {
+  background-color: rgba(34, 211, 238, 0.1);
+  color: var(--accent);
+}
+
+.dark .orl-standard-card:hover .orl-card-icon {
+  background-color: var(--accent);
+  color: #020712;
+}
+
+/* Card Badge positioning */
+.orl-card-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.625rem; /* text-[10px] */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 9999px; /* rounded-full */
+}
+
+/* Card typography & spacing */
+.orl-card-title {
+  font-size: 0.6875rem; /* text-[11px] */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.375rem; /* Uniform title spacing */
+}
+
+.orl-card-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.orl-card-desc {
+  font-size: 0.6875rem; /* text-[11px] */
+  color: var(--text-secondary);
+  line-height: 1.25;
+  margin-top: 0.25rem; /* Uniform description spacing */
+}
+
+/* Awards Section Academic Year Text Contrast Styling */
+.award-academic-year {
+  color: #1e3a8a !important; /* Deep Blue in light mode for strong contrast on gold rows */
+}
+.dark .award-academic-year {
+  color: #7dd3fc !important; /* Light Sky Blue in dark mode for contrast against dark gold rows */
+}
+/* For high-opacity rows (55%+ opacity: 3rd, 4th, and 5th rows), override to white */
+.orl-table tbody tr:nth-child(5n+3) .award-academic-year,
+.orl-table tbody tr:nth-child(5n+4) .award-academic-year,
+.orl-table tbody tr:nth-child(5n) .award-academic-year {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
