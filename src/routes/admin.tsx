@@ -2317,196 +2317,13 @@ function Admin() {
               </p>
             </div>
 
-            {/* Faculty Banners Showcase Editor with Live Mockup */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Faculty Showcase Banners</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "award-banner", isNew: true, data: { url: "", duration: 5, order: 1, recipient: "", title: "", organization: "", date: "", category: "faculty" } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Faculty Banner
-                </button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {(carouselConfig["award"] || []).filter(img => (img.category || "faculty") === "faculty").map((img) => {
-                  const parts = (img.caption || "").split("\n");
-                  const recipient = parts[0] || "—";
-                  const title = parts[1] || "";
-                  const organization = parts[2] || "";
-                  const date = parts[3] || "";
-                  const originalIdx = (carouselConfig["award"] || []).findIndex(item => item.id === img.id);
-
-                  return (
-                    <div key={img.id} className="p-4 rounded-xl border border-border bg-background flex flex-col justify-between gap-4 font-sans text-xs">
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">
-                          Live Showcase Card Mockup (faculty)
-                        </span>
-                        
-                        <div className="border border-border bg-card p-4 rounded-xl flex items-center gap-4 shadow-sm relative overflow-hidden group">
-                          <div className="h-16 w-16 bg-muted rounded overflow-hidden shrink-0 border">
-                            {img.url ? (
-                              <img src={resolveAssetUrl(img.url)} className="h-full w-full object-cover" alt="Live award banner preview" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-4xs text-text-muted bg-secondary">No Image</div>
-                            )}
-                          </div>
-                          <div className="space-y-0.5 text-xs min-w-0 flex-1">
-                            <span className="text-4xs text-amber-500 font-bold uppercase tracking-wider block">Award Showcase</span>
-                            <h4 className="font-bold text-foreground truncate">{recipient}</h4>
-                            <p className="text-text-secondary truncate font-medium">{title}</p>
-                            <p className="text-4xs text-text-muted truncate">{organization} | {date}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center border-t border-border/40 pt-3 mt-1.5">
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleMoveAwardCarouselItem(img.id, "up", "faculty")}
-                            className="p-1 rounded bg-secondary/60 border border-border/50 text-foreground"
-                          >
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleMoveAwardCarouselItem(img.id, "down", "faculty")}
-                            className="p-1 rounded bg-secondary/60 border border-border/50 text-foreground"
-                          >
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => setEditingItem({ key: "award-banner", isNew: false, index: originalIdx, data: { ...img, recipient, title, organization, date } })}
-                            className="p-1.5 rounded border border-border hover:bg-secondary text-teal-500"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm("Remove this showcase banner?")) {
-                                const list = (carouselConfig["award"] || []).filter(item => item.id !== img.id);
-                                const updated = { ...carouselConfig, award: list.map((item, index) => ({ ...item, order: index + 1 })) };
-                                setCarouselConfigState(updated);
-                                saveCarouselConfig(updated);
-                                toast.success("Banner deleted.");
-                              }
-                            }}
-                            className="p-1.5 rounded border border-border hover:bg-destructive hover:text-white text-text-muted"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Student Banners Showcase Editor with Live Mockup */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Student Showcase Banners</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "award-banner", isNew: true, data: { url: "", duration: 5, order: 1, recipient: "", title: "", organization: "", date: "", category: "student" } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Student Banner
-                </button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {(carouselConfig["award"] || []).filter(img => img.category === "student").map((img) => {
-                  const parts = (img.caption || "").split("\n");
-                  const recipient = parts[0] || "—";
-                  const title = parts[1] || "";
-                  const organization = parts[2] || "";
-                  const date = parts[3] || "";
-                  const originalIdx = (carouselConfig["award"] || []).findIndex(item => item.id === img.id);
-
-                  return (
-                    <div key={img.id} className="p-4 rounded-xl border border-border bg-background flex flex-col justify-between gap-4 font-sans text-xs">
-                      <div className="space-y-3">
-                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">
-                          Live Showcase Card Mockup (student)
-                        </span>
-                        
-                        <div className="border border-border bg-card p-4 rounded-xl flex items-center gap-4 shadow-sm relative overflow-hidden group">
-                          <div className="h-16 w-16 bg-muted rounded overflow-hidden shrink-0 border">
-                            {img.url ? (
-                              <img src={resolveAssetUrl(img.url)} className="h-full w-full object-cover" alt="Live award banner preview" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-4xs text-text-muted bg-secondary">No Image</div>
-                            )}
-                          </div>
-                          <div className="space-y-0.5 text-xs min-w-0 flex-1">
-                            <span className="text-4xs text-amber-500 font-bold uppercase tracking-wider block">Award Showcase</span>
-                            <h4 className="font-bold text-foreground truncate">{recipient}</h4>
-                            <p className="text-text-secondary truncate font-medium">{title}</p>
-                            <p className="text-4xs text-text-muted truncate">{organization} | {date}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center border-t border-border/40 pt-3 mt-1.5">
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleMoveAwardCarouselItem(img.id, "up", "student")}
-                            className="p-1 rounded bg-secondary/60 border border-border/50 text-foreground"
-                          >
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleMoveAwardCarouselItem(img.id, "down", "student")}
-                            className="p-1 rounded bg-secondary/60 border border-border/50 text-foreground"
-                          >
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => setEditingItem({ key: "award-banner", isNew: false, index: originalIdx, data: { ...img, recipient, title, organization, date } })}
-                            className="p-1.5 rounded border border-border hover:bg-secondary text-teal-500"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm("Remove this showcase banner?")) {
-                                const list = (carouselConfig["award"] || []).filter(item => item.id !== img.id);
-                                const updated = { ...carouselConfig, award: list.map((item, index) => ({ ...item, order: index + 1 })) };
-                                setCarouselConfigState(updated);
-                                saveCarouselConfig(updated);
-                                toast.success("Banner deleted.");
-                              }
-                            }}
-                            className="p-1.5 rounded border border-border hover:bg-destructive hover:text-white text-text-muted"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* General Awards Table List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">Honors & Recognition Register</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "award", title: "", organization: "", date: "", summary: "", recipient: "", attachments: [] } })}
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "award", title: "", organization: "", date: "", summary: "", recipient: "", attachments: [], showInGallery: false, showcaseImage: "", showcaseCategory: "faculty", showcasePriority: 1 } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add Award
@@ -2521,6 +2338,9 @@ function Admin() {
                       <th className="px-4 py-2">Awarding Body</th>
                       <th className="px-4 py-2 font-mono">Date</th>
                       <th className="px-4 py-2">Recipient</th>
+                      <th className="px-4 py-2">Gallery Showcase?</th>
+                      <th className="px-4 py-2">Showcase Category</th>
+                      <th className="px-4 py-2 font-mono">Priority</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -2531,6 +2351,9 @@ function Admin() {
                         <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
                         <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
                         <td className="px-4 py-3 font-semibold text-text-secondary">{item.recipient || "—"}</td>
+                        <td className="px-4 py-3">{item.showInGallery ? "Yes ✅" : "No ❌"}</td>
+                        <td className="px-4 py-3 capitalize">{item.showcaseCategory || "—"}</td>
+                        <td className="px-4 py-3 font-mono">{item.showcasePriority ?? "—"}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -2557,14 +2380,12 @@ function Admin() {
                   </tbody>
                 </table>
               </div>
-            </div>
-
-          </div>
+            </div>          </div>
         )}
 
         {/* ==================== TECHNICAL TRAINING MANAGER ==================== */}
         {activeTab === "training" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Technical Training Manager</h1>
               <p className="text-xs text-text-secondary mt-1">
@@ -2572,41 +2393,35 @@ function Admin() {
               </p>
             </div>
 
+            {/* 1. Host Institution Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Programme Catalog</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Host Institution Engagement</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itec", title: "", organization: "", duration: "", mode: "Contact", code: "", date: "", summary: "", attachments: [] } })}
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "host", title: "", organization: "", date: "", duration: "", role: "Visiting Faculty", attachments: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Training Course
+                  <Plus className="h-3.5 w-3.5" /> Add Host Engagement
                 </button>
               </div>
-
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-xs text-left">
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
-                      <th className="px-4 py-2">Programme Title / Code</th>
-                      <th className="px-4 py-2">Host / Coordinator</th>
-                      <th className="px-4 py-2">Duration & Mode</th>
-                      <th className="px-4 py-2">Course Type</th>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Host Institution</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2">Role</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => ["host", "itec", "itp", "pdp", "coord", "pg"].includes(r.type)).map((item, idx) => (
+                    {repoRecords.filter(r => r.type === "host").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3">
-                          <span className="font-bold block leading-snug">{item.title}</span>
-                          {item.code && <span className="text-4xs font-mono text-teal-500 block mt-0.5">Code: {item.code}</span>}
-                        </td>
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
                         <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
-                        <td className="px-4 py-3 text-text-muted">
-                          {item.duration}
-                          <span className="block text-4xs text-text-muted font-mono mt-0.5">{item.mode}</span>
-                        </td>
-                        <td className="px-4 py-3 text-teal-500 font-bold font-mono text-5xs uppercase">{item.type}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.role || "Visiting Faculty"}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -2617,9 +2432,9 @@ function Admin() {
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm("Remove this training record?")) {
+                                if (confirm("Remove this host engagement?")) {
                                   deleteRecord(item.id);
-                                  toast.success("Training record removed.");
+                                  toast.success("Host engagement removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -2630,6 +2445,327 @@ function Admin() {
                         </td>
                       </tr>
                     ))}
+                    {repoRecords.filter(r => r.type === "host").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 2. ITEC Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">ITEC Programmes</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itec", title: "", place: "", date: "", duration: "", code: "", summary: "", attachments: [], images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add ITEC Programme
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Country / Venue</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2">Participants</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "itec").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-text-secondary font-mono">{item.code || "—"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this ITEC programme?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("ITEC programme removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "itec").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 3. ITP Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">ITP Programmes</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itp", title: "", place: "", date: "", duration: "", summary: "", attachments: [], images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add ITP Programme
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Country / Venue</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "itp").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this ITP programme?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("ITP programme removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "itp").length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 4. PDP as Coordinator Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">PDP as Coordinator</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "coord", title: "", organization: "NITTTR Chennai", duration: "", role: "Coordinator", date: "", attachments: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add PDP Coordinator Listing
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Organizing Institution</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2">Role</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "coord").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.role || "Coordinator"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this PDP Coordinator listing?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("PDP Coordinator listing removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "coord").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 5. PDP as Resource Person Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">PDP as Resource Person</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "pdp", title: "", organization: "", subtitle: "", duration: "", role: "Resource Person", mode: "Contact", date: "", attachments: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add PDP Resource Listing
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Organizing Institution</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2">Topic & Mode</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "pdp").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-text-secondary">
+                          <span className="font-semibold block leading-snug">{item.subtitle}</span>
+                          <span className="block text-4xs font-mono text-text-muted mt-0.5">{item.mode || "Contact"}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this PDP Resource listing?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("PDP Resource listing removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "pdp").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 6. PG Courses Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">PG Courses</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "pg", title: "", code: "", organization: "M.Tech VLSI & Embedded Systems", duration: "Semester I", mode: "", date: "", attachments: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add PG Course
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Subject Name & Code</th>
+                      <th className="px-4 py-2">Department / Programme</th>
+                      <th className="px-4 py-2">Semester Term</th>
+                      <th className="px-4 py-2">No. of Students</th>
+                      <th className="px-4 py-2 font-mono">Academic Year</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "pg").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">
+                          <span className="font-bold block leading-snug">{item.title}</span>
+                          {item.code && <span className="text-4xs font-mono text-teal-500 block mt-0.5">Code: {item.code}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.duration}</td>
+                        <td className="px-4 py-3 text-text-secondary font-mono">{item.mode || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this PG course?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("PG course removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "pg").length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -2640,7 +2776,7 @@ function Admin() {
 
         {/* ==================== ACADEMIC ACTIVITIES ==================== */}
         {activeTab === "activities" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Academic Activities Manager</h1>
               <p className="text-xs text-text-secondary mt-1">
@@ -2648,38 +2784,35 @@ function Admin() {
               </p>
             </div>
 
+            {/* 1. Doctoral Committee Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Academic Registries</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Doctoral Committee (DC)</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "dc", title: "", organization: "", date: "", duration: "", mode: "", place: "", subtitle: "", summary: "", attachments: [] } })}
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "dc", title: "", subtitle: "", organization: "", date: "", summary: "", attachments: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Activity
+                  <Plus className="h-3.5 w-3.5" /> Add DC Member Listing
                 </button>
               </div>
-
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-xs text-left">
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
-                      <th className="px-4 py-2">Activity Details</th>
-                      <th className="px-4 py-2">Organization / University</th>
-                      <th className="px-4 py-2 font-mono">Date</th>
-                      <th className="px-4 py-2">Type</th>
+                      <th className="px-4 py-2">Research Scholar</th>
+                      <th className="px-4 py-2">Research Guide</th>
+                      <th className="px-4 py-2">Affiliated University / Institution</th>
+                      <th className="px-4 py-2 font-mono">Date / Year</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => ["dc", "talk", "workshop", "bos"].includes(r.type)).map((item, idx) => (
+                    {repoRecords.filter(r => r.type === "dc").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3">
-                          <span className="font-bold block leading-snug">{item.title}</span>
-                          {item.subtitle && <span className="text-4xs text-text-muted block mt-0.5">{item.subtitle}</span>}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
-                        <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
-                        <td className="px-4 py-3 text-teal-500 font-bold font-mono text-5xs uppercase">{item.type}</td>
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -2690,9 +2823,9 @@ function Admin() {
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm("Remove this academic activity?")) {
+                                if (confirm("Remove this DC member listing?")) {
                                   deleteRecord(item.id);
-                                  toast.success("Activity removed successfully.");
+                                  toast.success("DC member listing removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -2703,6 +2836,200 @@ function Admin() {
                         </td>
                       </tr>
                     ))}
+                    {repoRecords.filter(r => r.type === "dc").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 2. Invited Talks Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Invited Talks</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "talk", title: "", recipient: "", subtitle: "", organization: "", place: "", date: "", summary: "", attachments: [], images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Invited Talk
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Talk Title</th>
+                      <th className="px-4 py-2">Speaker</th>
+                      <th className="px-4 py-2">Host Institution / Venue</th>
+                      <th className="px-4 py-2 font-mono">Date</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "talk").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.recipient || item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization} {item.place && `, ${item.place}`}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this invited talk?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("Invited talk removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "talk").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 3. Workshops Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Workshops</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "workshop", title: "", organization: "", duration: "", code: "", date: "", summary: "", attachments: [], images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Workshop
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Workshop Title</th>
+                      <th className="px-4 py-2">Host / Organizing Body</th>
+                      <th className="px-4 py-2 font-mono">Date</th>
+                      <th className="px-4 py-2">Duration & Participants</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "workshop").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
+                        <td className="px-4 py-3 text-text-muted">
+                          {item.duration}
+                          {item.code && <span className="block text-4xs font-mono text-teal-500 mt-0.5">Participants: {item.code}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this workshop?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("Workshop removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "workshop").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 4. Board of Studies Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Board of Studies (BoS)</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "bos", title: "", organization: "", subtitle: "", date: "", summary: "", attachments: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add BoS Membership
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Role & Academic Body</th>
+                      <th className="px-4 py-2">University / Institution</th>
+                      <th className="px-4 py-2">Department / Panel</th>
+                      <th className="px-4 py-2 font-mono">Date / Tenure</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "bos").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this Board of Studies membership?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("Board of Studies membership removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "bos").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -3988,6 +4315,55 @@ function Admin() {
                           onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, attachments: val } })}
                           category="awards"
                         />
+
+                        <div className="border border-border/60 p-4 rounded-lg bg-secondary/10 space-y-4">
+                          <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">Homepage Showcase Carousel Settings</span>
+                          
+                          <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={!!editingItem.data.showInGallery}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, showInGallery: e.target.checked } })}
+                              className="rounded border-border bg-background focus:ring-teal-500 text-teal-500"
+                            />
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Show in Homepage Showcase Gallery</span>
+                          </label>
+
+                          {editingItem.data.showInGallery && (
+                            <div className="space-y-4 pt-2 border-t border-border/40">
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="block space-y-1">
+                                  <span className="text-[10px] font-bold text-text-muted uppercase">Showcase Category</span>
+                                  <select
+                                    value={editingItem.data.showcaseCategory || "faculty"}
+                                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, showcaseCategory: e.target.value } })}
+                                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                                  >
+                                    <option value="faculty">Faculty Award</option>
+                                    <option value="student">Student Award</option>
+                                  </select>
+                                </label>
+                                <label className="block space-y-1">
+                                  <span className="text-[10px] font-bold text-text-muted uppercase">Showcase Priority (Order)</span>
+                                  <input
+                                    type="number"
+                                    value={editingItem.data.showcasePriority || 1}
+                                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, showcasePriority: Number(e.target.value) } })}
+                                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                                  />
+                                </label>
+                              </div>
+                              
+                              <AssetUploadInput
+                                label="Showcase Photograph"
+                                value={editingItem.data.showcaseImage || ""}
+                                type="image"
+                                onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, showcaseImage: val } })}
+                                category="awards"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
 

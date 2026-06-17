@@ -1,1 +1,0 @@
-import{j as o}from"./index-B4Xv7tpD.js";const e=()=>o.jsx("div",{className:"mx-auto max-w-3xl px-6 py-16 text-center",children:o.jsx("h1",{className:"text-2xl font-semibold",children:"Could not load record"})});export{e as errorComponent};

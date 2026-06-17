@@ -766,9 +766,13 @@ function GalleryPage() {
         {!hasMatches && (
           <div className="text-center py-16 rounded-xl border border-dashed border-border/80 bg-card max-w-xl mx-auto space-y-4 shadow-sm select-none font-sans">
             <Camera className="h-8 w-8 text-text-muted mx-auto animate-pulse" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">No Archive Matches</h3>
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+              {GALLERY_RECORDS.length === 0 ? "No records available." : "No Archive Matches"}
+            </h3>
             <p className="text-xs text-text-secondary max-w-sm mx-auto leading-relaxed">
-              No photo records or internship cards matched your current search filters. Please adjust your text query or dropdown selections.
+              {GALLERY_RECORDS.length === 0
+                ? "No records available in the gallery archive."
+                : "No photo records or internship cards matched your current search filters. Please adjust your text query or dropdown selections."}
             </p>
           </div>
         )}

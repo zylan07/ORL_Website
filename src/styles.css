@@ -521,150 +521,35 @@
 .orl-table tbody tr:last-child {
   border-bottom: none;
 }
-
-/* Table Redesign: Page-specific HSL color families with repeating opacities (25%, 40%, 55%, 70%, 85%) */
-
-/* --- 1. Publications (Blue/Indigo Family) --- */
-/* Light Mode */
-.page-publications .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(210, 80%, 45%, 0.25) !important; }
-.page-publications .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(210, 80%, 45%, 0.40) !important; }
-.page-publications .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(210, 80%, 45%, 0.55) !important; }
-.page-publications .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(210, 80%, 45%, 0.70) !important; }
-.page-publications .orl-table tbody tr:nth-child(5n)   { background-color: hsla(210, 80%, 45%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-publications .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(210, 90%, 30%, 0.25) !important; }
-.dark .page-publications .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(210, 90%, 30%, 0.40) !important; }
-.dark .page-publications .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(210, 90%, 30%, 0.55) !important; }
-.dark .page-publications .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(210, 90%, 30%, 0.70) !important; }
-.dark .page-publications .orl-table tbody tr:nth-child(5n)   { background-color: hsla(210, 90%, 30%, 0.85) !important; }
-
-/* --- 2. Research (Teal/Emerald Family) --- */
-/* Light Mode */
-.page-research .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(165, 80%, 38%, 0.25) !important; }
-.page-research .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(165, 80%, 38%, 0.40) !important; }
-.page-research .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(165, 80%, 38%, 0.55) !important; }
-.page-research .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(165, 80%, 38%, 0.70) !important; }
-.page-research .orl-table tbody tr:nth-child(5n)   { background-color: hsla(165, 80%, 38%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-research .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(165, 90%, 25%, 0.25) !important; }
-.dark .page-research .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(165, 90%, 25%, 0.40) !important; }
-.dark .page-research .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(165, 90%, 25%, 0.55) !important; }
-.dark .page-research .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(165, 90%, 25%, 0.70) !important; }
-.dark .page-research .orl-table tbody tr:nth-child(5n)   { background-color: hsla(165, 90%, 25%, 0.85) !important; }
-
-/* --- 3. Academic Activities (Violet/Purple Family) --- */
-/* Light Mode */
-.page-academic-activities .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(265, 75%, 45%, 0.25) !important; }
-.page-academic-activities .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(265, 75%, 45%, 0.40) !important; }
-.page-academic-activities .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(265, 75%, 45%, 0.55) !important; }
-.page-academic-activities .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(265, 75%, 45%, 0.70) !important; }
-.page-academic-activities .orl-table tbody tr:nth-child(5n)   { background-color: hsla(265, 75%, 45%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(265, 80%, 28%, 0.25) !important; }
-.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(265, 80%, 28%, 0.40) !important; }
-.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(265, 80%, 28%, 0.55) !important; }
-.dark .page-academic-activities .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(265, 80%, 28%, 0.70) !important; }
-.dark .page-academic-activities .orl-table tbody tr:nth-child(5n)   { background-color: hsla(265, 80%, 28%, 0.85) !important; }
-
-/* --- 4. Technical Training (Cyan/Lagoon Blue Family) --- */
-/* Light Mode */
-.page-technical-training .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(190, 85%, 40%, 0.25) !important; }
-.page-technical-training .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(190, 85%, 40%, 0.40) !important; }
-.page-technical-training .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(190, 85%, 40%, 0.55) !important; }
-.page-technical-training .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(190, 85%, 40%, 0.70) !important; }
-.page-technical-training .orl-table tbody tr:nth-child(5n)   { background-color: hsla(190, 85%, 40%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-technical-training .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(190, 90%, 25%, 0.25) !important; }
-.dark .page-technical-training .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(190, 90%, 25%, 0.40) !important; }
-.dark .page-technical-training .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(190, 90%, 25%, 0.55) !important; }
-.dark .page-technical-training .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(190, 90%, 25%, 0.70) !important; }
-.dark .page-technical-training .orl-table tbody tr:nth-child(5n)   { background-color: hsla(190, 90%, 25%, 0.85) !important; }
-
-/* --- 5. People (Slate/Navy Family) --- */
-/* Light Mode */
-.page-people .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(215, 50%, 45%, 0.25) !important; }
-.page-people .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(215, 50%, 45%, 0.40) !important; }
-.page-people .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(215, 50%, 45%, 0.55) !important; }
-.page-people .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(215, 50%, 45%, 0.70) !important; }
-.page-people .orl-table tbody tr:nth-child(5n)   { background-color: hsla(215, 50%, 45%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-people .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(215, 60%, 25%, 0.25) !important; }
-.dark .page-people .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(215, 60%, 25%, 0.40) !important; }
-.dark .page-people .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(215, 60%, 25%, 0.55) !important; }
-.dark .page-people .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(215, 60%, 25%, 0.70) !important; }
-.dark .page-people .orl-table tbody tr:nth-child(5n)   { background-color: hsla(215, 60%, 25%, 0.85) !important; }
-
-/* --- 6. Awards (Gold/Amber Family) --- */
-/* Light Mode */
-.page-awards .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(38, 85%, 40%, 0.25) !important; }
-.page-awards .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(38, 85%, 40%, 0.40) !important; }
-.page-awards .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(38, 85%, 40%, 0.55) !important; }
-.page-awards .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(38, 85%, 40%, 0.70) !important; }
-.page-awards .orl-table tbody tr:nth-child(5n)   { background-color: hsla(38, 85%, 40%, 0.85) !important; }
-/* Dark Mode */
-.dark .page-awards .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(38, 90%, 25%, 0.25) !important; }
-.dark .page-awards .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(38, 90%, 25%, 0.40) !important; }
-.dark .page-awards .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(38, 90%, 25%, 0.55) !important; }
-.dark .page-awards .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(38, 90%, 25%, 0.70) !important; }
-.dark .page-awards .orl-table tbody tr:nth-child(5n)   { background-color: hsla(38, 90%, 25%, 0.85) !important; }
-
-/* --- 7. Generic Fallback (Sky Blue / Slate Family) --- */
-/* Light Mode */
-.orl-table tbody tr:nth-child(5n+1) { background-color: hsla(200, 75%, 48%, 0.25) !important; }
-.orl-table tbody tr:nth-child(5n+2) { background-color: hsla(200, 75%, 48%, 0.40) !important; }
-.orl-table tbody tr:nth-child(5n+3) { background-color: hsla(200, 75%, 48%, 0.55) !important; }
-.orl-table tbody tr:nth-child(5n+4) { background-color: hsla(200, 75%, 48%, 0.70) !important; }
-.orl-table tbody tr:nth-child(5n)   { background-color: hsla(200, 75%, 48%, 0.85) !important; }
-/* Dark Mode */
-.dark .orl-table tbody tr:nth-child(5n+1) { background-color: hsla(200, 80%, 30%, 0.25) !important; }
-.dark .orl-table tbody tr:nth-child(5n+2) { background-color: hsla(200, 80%, 30%, 0.40) !important; }
-.dark .orl-table tbody tr:nth-child(5n+3) { background-color: hsla(200, 80%, 30%, 0.55) !important; }
-.dark .orl-table tbody tr:nth-child(5n+4) { background-color: hsla(200, 80%, 30%, 0.70) !important; }
-.dark .orl-table tbody tr:nth-child(5n)   { background-color: hsla(200, 80%, 30%, 0.85) !important; }
-
-/* --- 8. Text Color Overrides for 55%+ Opacity Rows (3rd, 4th, and 5th rows) --- */
-.orl-table tbody tr:nth-child(5n+3),
-.orl-table tbody tr:nth-child(5n+4),
-.orl-table tbody tr:nth-child(5n) {
-  color: #ffffff !important;
+/* --- Standardized University Table Style --- */
+/* Light Mode Row Alternating Colors */
+.orl-table tbody tr:nth-child(odd) {
+  background-color: #ffffff !important;
+  color: inherit !important;
 }
-.orl-table tbody tr:nth-child(5n+3) td,
-.orl-table tbody tr:nth-child(5n+4) td,
-.orl-table tbody tr:nth-child(5n) td {
-  color: #ffffff !important;
-}
-.orl-table tbody tr:nth-child(5n+3) a,
-.orl-table tbody tr:nth-child(5n+4) a,
-.orl-table tbody tr:nth-child(5n) a {
-  color: #e0f2fe !important; /* clear light sky blue link for high contrast */
-  text-decoration: underline;
-}
-.orl-table tbody tr:nth-child(5n+3) a:hover,
-.orl-table tbody tr:nth-child(5n+4) a:hover,
-.orl-table tbody tr:nth-child(5n) a:hover {
-  color: #ffffff !important;
-}
-.orl-table tbody tr:nth-child(5n+3) .text-muted-foreground,
-.orl-table tbody tr:nth-child(5n+4) .text-muted-foreground,
-.orl-table tbody tr:nth-child(5n) .text-muted-foreground,
-.orl-table tbody tr:nth-child(5n+3) .text-text-muted,
-.orl-table tbody tr:nth-child(5n+4) .text-text-muted,
-.orl-table tbody tr:nth-child(5n) .text-text-muted {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-.orl-table tbody tr:nth-child(5n+3) .text-text-secondary,
-.orl-table tbody tr:nth-child(5n+4) .text-text-secondary,
-.orl-table tbody tr:nth-child(5n) .text-text-secondary {
-  color: rgba(255, 255, 255, 0.85) !important;
+.orl-table tbody tr:nth-child(even) {
+  background-color: #f5f8fc !important;
+  color: inherit !important;
 }
 
-/* Row Hover Highlight (Marine Teal Highlight) */
+/* Dark Mode Row Alternating Colors */
+.dark .orl-table tbody tr:nth-child(odd) {
+  background-color: #060d1e !important;
+  color: inherit !important;
+}
+.dark .orl-table tbody tr:nth-child(even) {
+  background-color: #0b132b !important;
+  color: inherit !important;
+}
+
+/* Row Hover Highlight */
 .orl-table tbody tr:hover {
-  background-color: rgba(13, 148, 136, 0.08) !important;
+  background-color: #e6f0fa !important;
 }
 .dark .orl-table tbody tr:hover {
-  background-color: rgba(20, 184, 166, 0.12) !important;
+  background-color: #0e2a5c !important;
 }
+
 
 /* 5. Table Data Cell */
 .orl-table td {

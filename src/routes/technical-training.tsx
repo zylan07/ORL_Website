@@ -16,6 +16,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
+import { parseDateSafe } from "@/lib/utils";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
 
@@ -216,8 +217,8 @@ function TechnicalTrainingPage() {
       });
     }
     return sortDesc
-      ? [...result].sort((a, b) => b.date.localeCompare(a.date))
-      : [...result].sort((a, b) => a.date.localeCompare(b.date));
+      ? [...result].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime())
+      : [...result].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
   }, [rawTraining, q, sortDesc]);
 
   // Derived counts for filtered items

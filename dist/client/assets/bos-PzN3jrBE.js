@@ -1,1 +1,0 @@
-import{j as o}from"./index-B4Xv7tpD.js";import{R as t}from"./record-list-BJGgBTvb.js";import"./search-SRcC6kyc.js";import"./arrow-up-down-CUcGacpd.js";import"./external-link-BZDHQXDB.js";import"./paperclip-DY_x8l-J.js";const n=()=>o.jsx(t,{type:"bos"});export{n as component};

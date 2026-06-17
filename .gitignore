@@ -1,0 +1,53 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.nitro/
+
+# Cache directories
+.tanstack/
+.turbo/
+.cache/
+
+# Local Environment Variables (secrets)
+.env
+.env.local
+.env.*
+*.local
+
+# Keep template env file
+!.env.example
+
+# System/IDE Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary / Lock files
+~$*.xlsx
+~$*.xls
+~$*.docx
+~$*.doc
+*.tmp
+*.bak
+
+# Legacy Content Preparation, Archives, & Scratch Files
+Datas/
+scratch/
+archive/
+backups/
+ORL_Project_Archive/

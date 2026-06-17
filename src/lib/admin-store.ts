@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { supabase } from "./supabase";
 
 // ----------------- GENERIC ENTITY INTERFACE -----------------
 export interface GenericEntity {
@@ -120,6 +121,20 @@ function saveStoredData<T>(key: string, data: T[]): void {
   if (!isBrowser) return;
   try {
     localStorage.setItem(`uwarl-db-${key}`, JSON.stringify(data));
+    cleanupOrphanAssets();
+    
+    if (supabase) {
+      (async () => {
+        try {
+          const { error } = await supabase
+            .from("datasets")
+            .upsert({ dataset_key: key, data }, { onConflict: "dataset_key" });
+          if (error) throw error;
+        } catch (err: any) {
+          console.warn(`Background dataset save to Supabase failed for ${key}. running in offline fallback.`, err.message || err);
+        }
+      })();
+    }
   } catch (e) {
     console.error(`Error saving ${key} to localStorage:`, e);
   }
@@ -556,7 +571,21 @@ function notifyStoreChange(key: string) {
   storeListeners.get(key)?.forEach((cb) => cb());
 }
 
-// ----------------- STATE GETTERS & SETTERS (PUBLIC API) -----------------
+export function notifyAllStoreListeners() {
+  storeListeners.forEach((listeners) => {
+    listeners.forEach((cb) => cb());
+  });
+}
+
+export function updateSettingsCache(settings: SiteSettings) {
+  settingsCache = settings;
+  notifyStoreChange("settings");
+}
+
+export function updateDatasetCache(key: string, data: any[]) {
+  datasetCaches.set(key, data);
+  notifyStoreChange(key);
+}
 
 export function getDatasetRecords(key: string, seed: any[]): GenericEntity[] {
   return getStoredData(key, seed);
@@ -592,6 +621,20 @@ export function saveSettings(settings: SiteSettings): void {
   try {
     localStorage.setItem("uwarl-db-settings", JSON.stringify(settings));
     notifyStoreChange("settings");
+    cleanupOrphanAssets();
+
+    if (supabase) {
+      (async () => {
+        try {
+          const { error } = await supabase
+            .from("site_settings")
+            .upsert({ key: "site_settings", value: settings }, { onConflict: "key" });
+          if (error) throw error;
+        } catch (err: any) {
+          console.warn("Background site settings save to Supabase failed. running in offline fallback.", err.message || err);
+        }
+      })();
+    }
   } catch (e) {
     console.error("Error saving site settings:", e);
   }
@@ -681,12 +724,12 @@ const INITIAL_HOME_QUICK_ACCESS: GenericEntity[] = ([
   { label: "Academic Activities", to: "/academic-activities", icon: "GraduationCap", description: "Supervision registries and workshops", color: "violet", displayOrder: 4 },
   { label: "Awards & Recognition", to: "/awards", icon: "Award", description: "National and institutional recognitions", color: "amber", displayOrder: 5 },
   { label: "People", to: "/people", icon: "Users", description: "Faculty, scholars, staff, and alumni", color: "indigo", displayOrder: 6 },
-  { label: "Gallery", to: "/gallery", icon: "Camera", description: "Photo archives of underwater trials", color: "cyan", displayOrder: 7 },
-  { label: "Collaborations", to: "/collaborations-consultancy", icon: "Globe", description: "Joint MoUs and consultancy programs", color: "emerald", displayOrder: 8 }
-] as any[]).map((item, idx) => ({ id: `qa-${idx}`, title: item.label, ...item }));
+    { label: "Gallery", to: "/gallery", icon: "Camera", description: "Photo archives of underwater trials", color: "cyan", displayOrder: 7 },
+    { label: "Collaborations", to: "/collaborations-consultancy", icon: "Globe", description: "Joint MoUs and consultancy programs", color: "emerald", displayOrder: 8 }
+  ] as any[]).map((item, idx) => ({ id: `qa-${idx}`, title: item.label, ...item }));
 
 // ----------------- GLOBAL BACKUP & RESTORE SYSTEMS -----------------
-import { getAssets, saveAssets } from "./storage-service";
+import { resolveAssetUrl, registerAsset, getAssets, saveAssets, type UploadedAsset, type Attachment, cleanupOrphanAssets } from "@/lib/storage-service";
 
 export function exportSiteBackup(): string {
   const backup = {
@@ -770,6 +813,7 @@ export function importSiteBackup(jsonString: string): void {
     
     notifyStoreChange("settings");
     notifyStoreChange("repo-records");
+    cleanupOrphanAssets();
   } catch (e) {
     console.error("Error restoring backup:", e);
     throw e;

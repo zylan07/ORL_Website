@@ -151,28 +151,24 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
   const [page, setPage] = useState(1);
   const [activeIdx, setActiveIdx] = useState(0);
 
-  // Compute items for the dual showcase gallery from carousel images
+  // Compute items for the dual showcase gallery from awards records directly
   const showcaseGalleryData = useMemo(() => {
     if (type !== "award") return { faculty: [], student: [] };
 
-    const mapped = images.map((img) => {
-      const parts = (img.caption || "").split("\n");
-      const recipient = parts[0] || "—";
-      const title = parts[1] || "";
-      const organization = parts[2] || "";
-      const date = parts[3] || "";
-      const category =
-        img.category || (img.order % 2 === 0 ? "student" : "faculty");
+    const awards = records.filter(
+      (r) => r.type === "award" && r.showInGallery === true
+    );
 
+    const mapped = awards.map((r) => {
       return {
-        id: img.id,
-        image: resolveAssetUrl(img.url),
-        recipient,
-        title,
-        organization,
-        date,
-        category,
-        priority: img.order,
+        id: r.id,
+        image: resolveAssetUrl(r.showcaseImage || ""),
+        recipient: r.recipient || "—",
+        title: r.title,
+        organization: r.organization || "",
+        date: r.date || "",
+        category: r.showcaseCategory || "faculty",
+        priority: r.showcasePriority || 0,
       };
     });
 
@@ -181,7 +177,7 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
     const student = sorted.filter((item) => item.category === "student");
 
     return { faculty, student };
-  }, [images, type]);
+  }, [records, type]);
 
   // Auto-rotating Carousel logic with configurable per-image duration
   useEffect(() => {
@@ -201,6 +197,14 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
     }
     return sortDesc ? list : [...list].reverse();
   }, [type, subtype, deferredQ, sortDesc]);
+
+  const sectionRecords = useMemo(() => {
+    let list = records.filter((r) => r.type === type);
+    if (subtype) {
+      list = list.filter((r) => r.subtype === subtype);
+    }
+    return list;
+  }, [records, type, subtype]);
 
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -784,9 +788,9 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
               <tr>
                 <td
                   colSpan={tableHeaders.length}
-                  className="px-4 py-10 text-center text-sm text-text-muted"
+                  className="px-4 py-10 text-center text-sm text-text-muted font-sans"
                 >
-                  No records match your search filter.
+                  {sectionRecords.length === 0 ? "No records available." : "No records match your search filter."}
                 </td>
               </tr>
             )}

@@ -25,6 +25,9 @@ export interface ProjectRecord {
   thumbnail?: string;
   scholar?: string;
   researchArea?: string;
+  purpose?: string;
+  keywords?: string;
+  location?: string;
 }
 
 export const PROJECTS_DATABASE: ProjectRecord[] = [
@@ -34,7 +37,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "external",
     title: "Automated Identification and Characterization of Underwater Images in Deep Ocean",
     fundingAgency: "Ministry of Earth Sciences (MoES/PAMC/DOM)",
-    amount: "Rs. 48.16 Lakhs",
+    amount: "₹ 48.16 Lakhs",
     status: "Ongoing",
     duration: "2023-2026",
     pi: "Dr. K. Muthumeenakshi",
@@ -49,7 +52,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "external",
     title: "Off-shore Excavation of Heritage rich submerged sites of Poompuhar and Mahabalipuram using Machine Learning",
     fundingAgency: "Department of Science and Technology (DST-SSTP)",
-    amount: "Rs. 50.00 Lakhs",
+    amount: "₹ 50.00 Lakhs",
     status: "Completed",
     duration: "2018-2021",
     pi: "Dr. S. Sakthivel Murugan",
@@ -65,7 +68,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "external",
     title: "Implementation of Magnetic Induction based Underground Sensor Network for Smart Irrigation",
     fundingAgency: "Tamil Nadu State Council for Science & Technology (TNSCST)",
-    amount: "Rs. 8.7 Lakhs",
+    amount: "₹ 8.70 Lakhs",
     status: "Completed",
     duration: "2017-2020",
     pi: "Dr. S. Sakthivel Murugan",
@@ -81,7 +84,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "external",
     title: "Design & Hardware Implementation of Adaptive Algorithm for Wind Driven Ambient Noise in Shallow Water",
     fundingAgency: "National Institute of Ocean Technology (NIOT)",
-    amount: "Rs. 20.64 Lakhs",
+    amount: "₹ 20.64 Lakhs",
     status: "Completed",
     duration: "2010-2013",
     pi: "Dr. S. Radha",
@@ -91,14 +94,14 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     thumbnail: PLACEHOLDER_IMAGES.project,
     images: [PLACEHOLDER_IMAGES.project]
   },
-
+  
   // INTERNAL FUNDED PROJECTS
   {
     id: "int-1",
     type: "internal",
     title: "Design and Development of Indigenous Research based Inspection Class Remotely Operated Vehicle (ROV)",
     fundingAgency: "SSNCE Internal Funding",
-    amount: "Rs. 9.5 Lakhs",
+    amount: "₹ 9.50 Lakhs",
     status: "Completed",
     duration: "2018-2020",
     pi: "Dr. S. Sakthivel Murugan",
@@ -119,7 +122,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "internal",
     title: "Establishment of Underwater Acoustic Test Tank",
     fundingAgency: "SSNCE Internal Funding",
-    amount: "Rs. 6.0 Lakhs",
+    amount: "₹ 6.00 Lakhs",
     status: "Completed",
     duration: "Sanctioned Year: 2019",
     description: "The underwater acoustic research lab was established with an essential equipments in the field of underwater acoustic signal processing. The main objective of the project is to establish the Underwater test tank with dimensions of 5m length, 4 m diameter and 2.5 m depth (5x4x2.5) with total water capacity of 52000 litres approximately to test those equipments. This will help in undergoing various researches on coherence analysis study, ambient noise characteristics, animal bioacoustics, absorption and scattering loss pattern modeling and analysis, testing of underwater systems such as Remotely Operated Vehicle (ROV), Ambient noise measurement system, Buried Object Detection (BOD) etc.",
@@ -132,7 +135,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "internal",
     title: "Enhancement of Underwater Acoustic Research Lab",
     fundingAgency: "SSNCE Internal Funding",
-    amount: "Rs. 3.4 Lakhs",
+    amount: "₹ 3.40 Lakhs",
     status: "Completed",
     publicationCount: 0,
   },
@@ -141,7 +144,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "internal",
     title: "Data Collection for Characterisation of Underwater Ambient Noise at Bay of Bengal",
     fundingAgency: "SSNCE Internal Funding",
-    amount: "Rs. 2.85 Lakhs",
+    amount: "₹ 2.85 Lakhs",
     status: "Completed",
     publicationCount: 0,
   },
@@ -150,7 +153,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "internal",
     title: "Development of Underwater Acoustic Research Lab",
     fundingAgency: "SSNCE Internal Funding",
-    amount: "Rs. 7.0 Lakhs",
+    amount: "₹ 7.00 Lakhs",
     status: "Completed",
     publicationCount: 0,
   },
@@ -161,7 +164,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Enhancement and Restoration of blurred underwater images.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.28 Lakhs",
+    amount: "₹ 0.28 Lakhs",
     role: "Project Supervisor",
     duration: "2023-2025",
     status: "Completed"
@@ -171,7 +174,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Hybrid underwater energy harvesting system using ocean water and solar cell.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2023-2025",
     status: "Completed"
@@ -181,7 +184,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Amphibious waterbody and beach cleaning BOT.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.28 Lakhs",
+    amount: "₹ 0.28 Lakhs",
     role: "Project Supervisor",
     duration: "2023-2025",
     status: "Completed"
@@ -191,7 +194,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Passive acoustic detector for monitoring of underwater mammals.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.30 Lakhs",
+    amount: "₹ 0.30 Lakhs",
     role: "Project Supervisor",
     duration: "2022-2024",
     status: "Completed"
@@ -201,7 +204,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Arming and automation of remotely operable vehicles (RoV).",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.29 Lakhs",
+    amount: "₹ 0.29 Lakhs",
     role: "Project Supervisor",
     duration: "2022-2024",
     status: "Completed"
@@ -211,7 +214,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Development of autonomous navigation suite for an underwater vehicle (UWV).",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.30 Lakhs",
+    amount: "₹ 0.30 Lakhs",
     role: "Project Supervisor",
     duration: "2022-2023",
     status: "Completed"
@@ -221,7 +224,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Experimental study of permanent magnet linear generator for underwater wave motion.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2020",
     status: "Completed"
@@ -231,7 +234,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Design and testing of metamaterial enhanced magnetic induction based underground communication.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.24 Lakhs",
+    amount: "₹ 0.24 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2020",
     status: "Completed"
@@ -241,7 +244,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Enhancement of Underwater Images Using Image Restoration Techniques",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2019",
     status: "Completed"
@@ -251,7 +254,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Prototype Development of energy harvesting system using acoustic signals from Aircraft engines.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2019",
     status: "Completed"
@@ -261,7 +264,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Design and development of a Chassis for a remotely operated vehicle.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2019",
     status: "Completed"
@@ -271,7 +274,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Thrust control for an inspection class mini-ROV.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2020",
     status: "Completed"
@@ -281,7 +284,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Prototype of position tracking in a remotely operated vehicle using sensors.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2019",
     status: "Completed"
@@ -291,7 +294,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Geo acoustic inversion study to classify the sediments and determine the sediment depth.",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2018-2019",
     status: "Completed"
@@ -301,7 +304,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Prototype Implementation of IoT in underwater using Lifi Technology",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2017-2019",
     status: "Completed"
@@ -311,7 +314,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Designing the stack arrangement of galvanic cell for energy harvesting in underwater",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.20 Lakhs",
+    amount: "₹ 0.20 Lakhs",
     role: "Project Supervisor",
     duration: "2017-2018",
     status: "Completed"
@@ -321,7 +324,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Development of Smart electricity energy management system for smart campus using IoT",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.22 Lakhs",
+    amount: "₹ 0.22 Lakhs",
     role: "Project Supervisor",
     duration: "2017-2018",
     status: "Completed"
@@ -331,7 +334,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Prototype development of energy harvesting system using sea water activated battery for underwater applications",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2017-2019",
     status: "Completed"
@@ -341,7 +344,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Design and development of Insulation tester",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.18 Lakhs",
+    amount: "₹ 0.18 Lakhs",
     role: "Project Supervisor",
     duration: "2016-2017",
     status: "Completed"
@@ -351,7 +354,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Development of an energy harvesting microbial fuel cell system using marine sediment for underwater applications",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.30 Lakhs",
+    amount: "₹ 0.30 Lakhs",
     role: "Project Supervisor",
     duration: "2014-2015",
     status: "Completed"
@@ -361,7 +364,7 @@ export const PROJECTS_DATABASE: ProjectRecord[] = [
     type: "student",
     title: "Development of wind speed frequency distribution algorithm and its implementation with DSP based hardware for real time graphical representation",
     fundingAgency: "SSNCE",
-    amount: "Rs. 0.25 Lakhs",
+    amount: "₹ 0.25 Lakhs",
     role: "Project Supervisor",
     duration: "2014-2015",
     status: "Completed"

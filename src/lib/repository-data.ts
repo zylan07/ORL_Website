@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from "react";
+import { parseDateSafe } from "./utils";
+import { supabase } from "./supabase";
 import {
   getRecords,
   saveRecords,
@@ -115,8 +117,13 @@ export const TYPE_META: Record<RecordType, PageMeta> = {
 let recordsCache: RepoRecord[] = getRecords();
 const recordsListeners = new Set<() => void>();
 
-function triggerRecordsUpdate() {
+export function triggerRecordsUpdate() {
   recordsCache = getRecords();
+  for (const cb of recordsListeners) cb();
+}
+
+export function updateRecordsCache(records: RepoRecord[]) {
+  recordsCache = records;
   for (const cb of recordsListeners) cb();
 }
 
@@ -170,6 +177,20 @@ export function deleteRecord(id: string) {
   const updated = current.filter((r) => r.id !== id);
   saveRecords(updated);
   triggerRecordsUpdate();
+
+  if (supabase) {
+    (async () => {
+      try {
+        const { error } = await supabase
+          .from("records")
+          .delete()
+          .eq("record_key", id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.warn(`Background record deletion in Supabase failed for ${id}. running in offline fallback.`, err.message || err);
+      }
+    })();
+  }
 }
 
 export function addAttachment(recordId: string, att: Omit<Attachment, "id">) {
@@ -344,7 +365,7 @@ function recordHaystack(r: RepoRecord): string {
 export function searchRecords(type: RecordType, query: string): RepoRecord[] {
   const list = recordsCache.filter((r) => r.type === type);
   const q = query.trim();
-  if (!q) return [...list].sort((a, b) => b.date.localeCompare(a.date));
+  if (!q) return [...list].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime());
   const terms = q.split(/\s+/).map(parseTerm);
   return list
     .filter((r) => {
@@ -354,7 +375,7 @@ export function searchRecords(type: RecordType, query: string): RepoRecord[] {
         return hay.includes(t.value);
       });
     })
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime());
 }
 
 export function recordCounts() {

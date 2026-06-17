@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { StickySectionNav } from "@/components/sticky-section-nav";
+import { parseDateSafe } from "@/lib/utils";
 
 const publicationsSearchSchema = z.object({
   tab: z.enum(["journals", "conferences", "books"]).optional(),
@@ -203,8 +204,8 @@ function PublicationsPage() {
       });
     }
     return sortDesc
-      ? [...result].sort((a, b) => b.date.localeCompare(a.date))
-      : [...result].sort((a, b) => a.date.localeCompare(b.date));
+      ? [...result].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime())
+      : [...result].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
   }, [rawPublications, q, sortDesc]);
 
   // Derived counts for filtered items

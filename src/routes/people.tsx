@@ -757,27 +757,27 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
                 {item.orcid && (
                   <div>
                     <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold font-mono">ORCID</span>
-                    <a href={`https://orcid.org/${item.orcid}`} target="_blank" rel="noreferrer" className="font-mono text-cyan-500 hover:underline">{item.orcid}</a>
+                    <a href={`https://orcid.org/${item.orcid}`} target="_blank" rel="noopener noreferrer" className="font-mono text-cyan-500 hover:underline">{item.orcid}</a>
                   </div>
                 )}
                 {item.googleScholar && (
                   <div>
                     <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Google Scholar</span>
-                    <a href={item.googleScholar} target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline break-all">Scholar Profile &rarr;</a>
+                    <a href={item.googleScholar} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline break-all">Scholar Profile &rarr;</a>
                   </div>
                 )}
                 {item.cvId && (
                   <div>
                     <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">
-                      {item.topic ? "Internship Certificate" : "Curriculum Vitae"}
+                      {(item.role === "intern" || item.topic) ? "Internship Certificate" : "Curriculum Vitae"}
                     </span>
                     <a
                       href={resolveAssetUrl(item.cvId)}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="text-cyan-500 hover:underline font-bold"
                     >
-                      {item.topic ? "Download Certificate PDF" : "Download CV PDF"} &rarr;
+                      {(item.role === "intern" || item.topic) ? "Download Internship Certificate" : "Download CV PDF"} &rarr;
                     </a>
                   </div>
                 )}
@@ -1316,7 +1316,9 @@ function PeoplePage() {
               </div>
             ))}
             {filteredFaculty.length === 0 && (
-              <div className="col-span-2 text-center text-text-muted text-xs py-6">No faculty members found.</div>
+              <div className="col-span-2 text-center text-text-muted text-xs py-6">
+                {TEAM_MEMBERS.length === 0 ? "No records available." : "No faculty members found."}
+              </div>
             )}
           </div>
         </section>
@@ -1381,7 +1383,9 @@ function PeoplePage() {
               </div>
             ))}
             {filteredScholars.length === 0 && (
-              <div className="col-span-4 text-center text-text-muted text-xs py-6">No scholars found.</div>
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                {RESEARCH_SCHOLARS.length === 0 ? "No records available." : "No scholars found."}
+              </div>
             )}
           </div>
         </section>
@@ -1531,7 +1535,7 @@ function PeoplePage() {
                 {filteredUgAlumni.length === 0 && (
                   <tr>
                     <td colSpan={3} className="p-8 text-center text-text-muted">
-                      No UG project students match the search text.
+                      {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match the search text."}
                     </td>
                   </tr>
                 )}
@@ -1589,7 +1593,7 @@ function PeoplePage() {
                 {filteredPgAlumni.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-text-muted">
-                      No PG project students match the search text.
+                      {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match the search text."}
                     </td>
                   </tr>
                 )}
@@ -1675,7 +1679,7 @@ function PeoplePage() {
                 {processedInternships.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-text-muted">
-                      No internship records found matching the active search.
+                      {INTERNSHIPS.length === 0 ? "No records available." : "No internship records found matching the active search."}
                     </td>
                   </tr>
                 )}
@@ -1736,7 +1740,7 @@ function PeoplePage() {
             ))}
             {filteredDiscussions.length === 0 && (
               <div className="text-center text-text-muted text-xs py-8">
-                No technical discussions found.
+                {TECHNICAL_DISCUSSIONS.length === 0 ? "No records available." : "No technical discussions found."}
               </div>
             )}
           </div>

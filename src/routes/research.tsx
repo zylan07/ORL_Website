@@ -691,12 +691,17 @@ function ResearchPage() {
   const filteredProjects = useMemo(() => {
     return PROJECTS_DATABASE.filter((p) => {
       // search
-      const q = String(projectSearch ?? "").toLowerCase();
+      const q = String(projectSearch ?? "").toLowerCase().trim();
+      const matchField = (val: any) => String(val ?? "").toLowerCase().includes(q);
       const matchesSearch =
-        String(p.title ?? "").toLowerCase().includes(q) ||
-        String(p.scholar ?? "").toLowerCase().includes(q) ||
-        String(p.researchArea ?? "").toLowerCase().includes(q) ||
-        String(p.fundingAgency ?? "").toLowerCase().includes(q);
+        matchField(p.title) ||
+        matchField(p.scholar) ||
+        matchField(p.researchArea) ||
+        matchField(p.fundingAgency) ||
+        matchField(p.description) ||
+        matchField(p.purpose) ||
+        matchField(p.keywords) ||
+        matchField(p.location);
 
       // agency
       let matchesAgency = true;
@@ -910,7 +915,9 @@ function ResearchPage() {
                     </div>
                   ))}
                   {filteredProjects.filter(p => p.type === "external").length === 0 && (
-                    <div className="col-span-2 text-center text-text-muted text-xs py-6">No external projects match the active filters.</div>
+                    <div className="col-span-2 text-center text-text-muted text-xs py-6">
+                      {PROJECTS_DATABASE.filter(p => p.type === "external").length === 0 ? "No records available." : "No external projects match the active filters."}
+                    </div>
                   )}
                 </div>
               )}
@@ -961,7 +968,9 @@ function ResearchPage() {
                     </div>
                   ))}
                   {filteredProjects.filter(p => p.type === "internal").length === 0 && (
-                    <div className="col-span-2 text-center text-text-muted text-xs py-6">No internal projects match the active filters.</div>
+                    <div className="col-span-2 text-center text-text-muted text-xs py-6">
+                      {PROJECTS_DATABASE.filter(p => p.type === "internal").length === 0 ? "No records available." : "No internal projects match the active filters."}
+                    </div>
                   )}
                 </div>
               )}
@@ -1081,7 +1090,7 @@ function ResearchPage() {
                         {processedStudentProjects.length === 0 && (
                           <tr>
                             <td colSpan={6} className="p-8 text-center text-text-muted">
-                              No student projects match your search query.
+                              {PROJECTS_DATABASE.filter(p => p.type === "student").length === 0 ? "No records available." : "No student projects match your search query."}
                             </td>
                           </tr>
                         )}
@@ -1161,7 +1170,9 @@ function ResearchPage() {
                       </div>
                     ))}
                     {filteredProjects.filter(p => p.type === "phd").length === 0 && (
-                      <div className="text-center text-text-muted text-xs py-4">No scholars match the active filters.</div>
+                      <div className="text-center text-text-muted text-xs py-4">
+                        {PROJECTS_DATABASE.filter(p => p.type === "phd").length === 0 ? "No records available." : "No scholars match the active filters."}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1288,7 +1299,7 @@ function ResearchPage() {
             })}
             {filteredEquipment.length === 0 && (
               <div className="col-span-3 text-center text-text-muted text-xs py-8">
-                No instrumentation systems found in this division matching your search.
+                {EQUIPMENT_DATABASE.filter(eq => eq.category === activeCategory).length === 0 ? "No records available." : "No instrumentation systems found in this division matching your search."}
               </div>
             )}
           </div>
@@ -1394,7 +1405,7 @@ function ResearchPage() {
             ))}
             {groupedActivities.sortedYears.length === 0 && (
               <div className="text-center text-text-muted text-xs py-8">
-                No oceanographic campaigns or surveys found matching your query.
+                {FIELD_ACTIVITIES_DATABASE.length === 0 ? "No records available." : "No oceanographic campaigns or surveys found matching your query."}
               </div>
             )}
           </div>

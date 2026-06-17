@@ -375,45 +375,49 @@ function CollaborationsPage() {
           </div>
 
           {/* Centered Vertical Timeline */}
-          <div className="flex flex-col items-center gap-6 max-w-xl mx-auto py-4">
-            {mouRecords.map((mou, index) => {
-              const year = mou.date ? (mou.date.match(/\b\d{4}\b/)?.[0] || mou.date) : "N/A";
-              return (
-                <div key={mou.id} className="w-full flex flex-col items-center">
-                  {index > 0 && (
-                    <div className="flex flex-col items-center my-2 select-none">
-                      <div className="w-0.5 h-8 bg-emerald-500/30" />
+          {mouRecords.length === 0 ? (
+            <div className="text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
+          ) : (
+            <div className="flex flex-col items-center gap-6 max-w-xl mx-auto py-4">
+              {mouRecords.map((mou, index) => {
+                const year = mou.date ? (mou.date.match(/\b\d{4}\b/)?.[0] || mou.date) : "N/A";
+                return (
+                  <div key={mou.id} className="w-full flex flex-col items-center">
+                    {index > 0 && (
+                      <div className="flex flex-col items-center my-2 select-none">
+                        <div className="w-0.5 h-8 bg-emerald-500/30" />
+                        <span className="text-emerald-500 font-bold text-xs">↓</span>
+                        <div className="w-0.5 h-8 bg-emerald-500/30" />
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center gap-2 select-none">
+                      <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/25 ring-4 ring-emerald-500/5">
+                        {year}
+                      </span>
                       <span className="text-emerald-500 font-bold text-xs">↓</span>
-                      <div className="w-0.5 h-8 bg-emerald-500/30" />
                     </div>
-                  )}
-                  <div className="flex flex-col items-center gap-2 select-none">
-                    <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/25 ring-4 ring-emerald-500/5">
-                      {year}
-                    </span>
-                    <span className="text-emerald-500 font-bold text-xs">↓</span>
+                    <div
+                      onClick={() => openDetail(mou, "emerald")}
+                      className="w-full rounded-xl border border-border bg-card p-5 hover:border-emerald-500/35 hover:shadow-xs hover:bg-emerald-500/5 transition duration-300 cursor-pointer text-center group select-none relative"
+                    >
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-5xs font-mono font-bold text-emerald-500 bg-background px-2 border border-emerald-500/20 rounded">
+                        Active Accord
+                      </span>
+                      <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
+                        {mou.organization}
+                      </h4>
+                      <p className="text-[10px] text-text-secondary mt-1.5 max-w-md mx-auto leading-relaxed">
+                        Scope: {mou.researchFocus}
+                      </p>
+                      <span className="inline-block mt-3 text-5xs font-bold uppercase tracking-wider text-emerald-500 hover:underline">
+                        View Scope & Notes
+                      </span>
+                    </div>
                   </div>
-                  <div
-                    onClick={() => openDetail(mou, "emerald")}
-                    className="w-full rounded-xl border border-border bg-card p-5 hover:border-emerald-500/35 hover:shadow-xs hover:bg-emerald-500/5 transition duration-300 cursor-pointer text-center group select-none relative"
-                  >
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-5xs font-mono font-bold text-emerald-500 bg-background px-2 border border-emerald-500/20 rounded">
-                      Active Accord
-                    </span>
-                    <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                      {mou.organization}
-                    </h4>
-                    <p className="text-[10px] text-text-secondary mt-1.5 max-w-md mx-auto leading-relaxed">
-                      Scope: {mou.researchFocus}
-                    </p>
-                    <span className="inline-block mt-3 text-5xs font-bold uppercase tracking-wider text-emerald-500 hover:underline">
-                      View Scope & Notes
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* 4. Technical Support Services (Teal Theme) */}
@@ -484,8 +488,8 @@ function CollaborationsPage() {
               </div>
             ))}
             {filteredInstitutions.length === 0 && (
-              <div className="col-span-full text-center text-text-muted text-xs py-6">
-                No partner institutions match the active search.
+              <div className="col-span-full text-center text-text-muted text-xs py-6 font-sans">
+                {consultancyInstitutions.length === 0 ? "No records available." : "No partner institutions match the active search."}
               </div>
             )}
           </div>
@@ -539,6 +543,9 @@ function CollaborationsPage() {
                 </div>
               </div>
             ))}
+            {consultancyActivities.length === 0 && (
+              <div className="text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
+            )}
           </div>
         </section>
 
