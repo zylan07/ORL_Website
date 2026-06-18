@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useDatasetRecords, DATA_SEEDS } from "@/lib/admin-store";
+import { useDatasetRecords, DATA_SEEDS, useSiteSettings } from "@/lib/admin-store";
 import { StickySectionNav } from "@/components/sticky-section-nav";
+import { PageHero } from "@/components/page-hero";
 import { z } from "zod";
 import { resolveAssetUrl } from "@/lib/storage-service";
 import {

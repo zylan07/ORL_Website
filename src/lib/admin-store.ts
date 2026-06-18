@@ -76,6 +76,26 @@ export interface SiteSettings {
   latitude?: string;
   longitude?: string;
   address?: string;
+
+  // Dynamic Page Heroes configurations
+  researchHero?: PageHeroConfig;
+  publicationsHero?: PageHeroConfig;
+  trainingHero?: PageHeroConfig;
+  academicHero?: PageHeroConfig;
+  peopleHero?: PageHeroConfig;
+  galleryHero?: PageHeroConfig;
+  awardsHero?: PageHeroConfig;
+  collaborationsHero?: PageHeroConfig;
+}
+
+export interface PageHeroConfig {
+  title: string;
+  subtitle: string;
+  description: string;
+  mediaType: "image" | "video" | "none";
+  mediaUrl: string;
+  mediaPosition: "background" | "left" | "right";
+  overlayOpacity?: number; // 0 to 100
 }
 
 // Checking browser context
@@ -631,7 +651,81 @@ const DEFAULT_SETTINGS: SiteSettings = {
   googleMapsUrl: "https://maps.google.com/?q=NITTTR+Chennai",
   latitude: "12.9784",
   longitude: "80.2472",
-  address: "Department of ECE, NITTTR Chennai, Taramani, Chennai, Tamil Nadu - 600113"
+  address: "Department of ECE, NITTTR Chennai, Taramani, Chennai, Tamil Nadu - 600113",
+
+  // Default page heroes configuration
+  researchHero: {
+    title: "Research & Facilities",
+    subtitle: "Ocean Engineering & Applied Acoustics",
+    description: "Explore authentic research projects, advanced oceanographic testing facilities, subsea robotic platforms, and coastal deployments mapping the depths of shallow water basins.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  publicationsHero: {
+    title: "Publications",
+    subtitle: "Disseminating Scientific Insights & Research Breakthroughs",
+    description: "Explore the peer-reviewed research outputs, IEEE conference papers, book chapters, and engineering reference volumes authored by ORL faculty and researchers.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  trainingHero: {
+    title: "Technical Training & Courses",
+    subtitle: "Capacity building, professional training programmes, and international technical delegations",
+    description: "ITEC international sessions, professional development programs, and post-graduate engineering courses taught and coordinated by the laboratory faculty.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  academicHero: {
+    title: "Academic Activities",
+    subtitle: "Workshops, Seminars, & Technical Events",
+    description: "Explore doctoral research supervision, academic committee memberships, invited presentations, keynotes, workshops, and educational governance roles managed by ORL members.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  peopleHero: {
+    title: "People",
+    subtitle: "ORL Research Personnel",
+    description: "Meet the faculty, research scholars, project engineers, and student cohorts driving underwater acoustic telemetry, subsea vehicle designs, and optical communication trials.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  galleryHero: {
+    title: "Photo Gallery",
+    subtitle: "Professional media archive of subsea deployments, trials, and research",
+    description: "A visual record of our research journey, laboratory workspace, field testing, and milestone achievements.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  awardsHero: {
+    title: "Awards & Recognition",
+    subtitle: "Celebrating Scientific & Academic Excellence",
+    description: "A legacy of research breakthroughs, keynotes, best presentation honors, and national recognitions.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
+  collaborationsHero: {
+    title: "Collaborations & Consultancy",
+    subtitle: "Bridging Academia, Industry, and Marine Field Operations",
+    description: "MoUs, industry projects, consultancy initiatives, and technical committees where ORL faculty actively participate.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  }
 };
 
 // ----------------- REACT STATE MANAGERS & TRIGGER HOOKS -----------------
