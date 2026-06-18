@@ -118,20 +118,21 @@ export function StickySectionNav({
 
   useEffect(() => {
     if (!activeId || !navRef.current) return;
-    const container = navRef.current.querySelector(".overflow-x-auto");
-    const activeButton = navRef.current.querySelector(`[data-nav-id="${activeId}"]`);
+    const container = navRef.current.querySelector(".overflow-x-auto") as HTMLDivElement | null;
+    const activeButton = navRef.current.querySelector(`[data-nav-id="${activeId}"]`) as HTMLButtonElement | null;
     if (container && activeButton) {
-      const containerRect = container.getBoundingClientRect();
-      const buttonRect = activeButton.getBoundingClientRect();
+      const containerWidth = container.offsetWidth;
+      const buttonLeft = activeButton.offsetLeft;
+      const buttonWidth = activeButton.offsetWidth;
+      const scrollLeft = container.scrollLeft;
 
-      const isLeftOutOfView = buttonRect.left < containerRect.left;
-      const isRightOutOfView = buttonRect.right > containerRect.right;
+      const isLeftOutOfView = buttonLeft < scrollLeft;
+      const isRightOutOfView = (buttonLeft + buttonWidth) > (scrollLeft + containerWidth);
 
       if (isLeftOutOfView || isRightOutOfView) {
-        activeButton.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "nearest",
+        container.scrollTo({
+          left: buttonLeft - (containerWidth / 2) + (buttonWidth / 2),
+          behavior: "smooth"
         });
       }
     }
@@ -142,7 +143,7 @@ export function StickySectionNav({
       ref={navRef}
       className="sticky top-[56px] z-30 w-full border-b border-border bg-background/85 backdrop-blur-md px-6 py-3 shadow-sm transition-all duration-300"
     >
-      <div className="mx-auto max-w-6xl flex items-center justify-start lg:justify-center gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2">
+      <div className="mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 w-full">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id;
