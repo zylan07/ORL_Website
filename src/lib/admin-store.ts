@@ -434,7 +434,8 @@ const INITIAL_GALLERY: GenericEntity[] = [
     tags: ["Acoustics", "Signal Validation"],
     documents: [],
     featured: true,
-    displayOrder: 1
+    displayOrder: 1,
+    sectionId: "imported-gallery"
   },
   {
     id: "gal-2",
@@ -447,7 +448,8 @@ const INITIAL_GALLERY: GenericEntity[] = [
     tags: ["ROV", "Trials"],
     documents: [],
     featured: true,
-    displayOrder: 2
+    displayOrder: 2,
+    sectionId: "imported-gallery"
   },
   {
     id: "gal-3",
@@ -460,7 +462,8 @@ const INITIAL_GALLERY: GenericEntity[] = [
     tags: ["Basin", "Test Tank"],
     documents: [],
     featured: true,
-    displayOrder: 3
+    displayOrder: 3,
+    sectionId: "imported-gallery"
   },
   {
     id: "gal-4",
@@ -473,7 +476,8 @@ const INITIAL_GALLERY: GenericEntity[] = [
     tags: ["ITEC", "Seminar"],
     documents: [],
     featured: true,
-    displayOrder: 4
+    displayOrder: 4,
+    sectionId: "imported-gallery"
   }
 ];
 
@@ -491,7 +495,8 @@ const INITIAL_GALLERY_ALL = [
     tags: ["AUV Navigation", "Trilateration"],
     documents: [],
     featured: false,
-    displayOrder: 5
+    displayOrder: 5,
+    sectionId: "imported-gallery"
   },
   {
     id: "gal-6",
@@ -504,8 +509,13 @@ const INITIAL_GALLERY_ALL = [
     tags: ["ROV Controls", "Robotic Arm"],
     documents: [],
     featured: false,
-    displayOrder: 6
+    displayOrder: 6,
+    sectionId: "imported-gallery"
   }
+];
+
+const INITIAL_GALLERY_SECTIONS = [
+  { id: "imported-gallery", name: "Imported Gallery", displayOrder: 1 }
 ];
 
 const INITIAL_MEDIA_LIBRARY: MediaFile[] = [

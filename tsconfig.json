@@ -5,6 +5,10 @@
     "vite.config.ts",
     "eslint.config.js"
   ],
+  "exclude": [
+    "src/routes/index_old.tsx",
+    "src/routes/admin_utf8.tsx"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

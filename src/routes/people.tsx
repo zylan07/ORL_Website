@@ -1017,9 +1017,17 @@ function PeoplePage() {
     return allMembersRaw.filter(m => m.status !== "past-contributor");
   }, [allMembersRaw]);
 
+  const allMembersPast = useMemo(() => {
+    return allMembersRaw.filter(m => m.status === "past-contributor");
+  }, [allMembersRaw]);
+
   const rawInternships = useDatasetRecords("people-internships", STATIC_INTERNSHIPS) as any[];
   const INTERNSHIPS = useMemo(() => {
     return rawInternships.filter(i => i.status !== "past-contributor");
+  }, [rawInternships]);
+
+  const INTERNSHIPS_PAST = useMemo(() => {
+    return rawInternships.filter(i => i.status === "past-contributor");
   }, [rawInternships]);
 
   // Re-split members into separate list states with original types
@@ -1048,6 +1056,31 @@ function PeoplePage() {
     })) as FacultyMember[];
   }, [allMembers]);
 
+  const TEAM_MEMBERS_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "faculty").map(m => ({
+      id: m.id,
+      role: "faculty",
+      name: m.title || m.name || "",
+      designation: m.designation || "",
+      department: m.department || "",
+      institution: m.institution || "",
+      projectRoles: m.projectRoles || [],
+      associatedProjects: m.associatedProjects || [],
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || "",
+      bio: m.bio || "",
+      qualification: m.qualification || "",
+      specialization: m.specialization || "",
+      researchArea: m.researchArea || "",
+      researchInterests: m.researchInterests || "",
+      email: m.email || "",
+      phone: m.phone || "",
+      orcid: m.orcid || "",
+      googleScholar: m.googleScholar || "",
+      cvId: m.cvId || ""
+    })) as FacultyMember[];
+  }, [allMembersPast]);
+
   const RESEARCH_SCHOLARS = useMemo(() => {
     return allMembers.filter(m => m.role === "scholar" || m.role === "scholars").map(m => ({
       id: m.id,
@@ -1061,6 +1094,19 @@ function PeoplePage() {
     })) as ResearchScholar[];
   }, [allMembers]);
 
+  const RESEARCH_SCHOLARS_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "scholar" || m.role === "scholars").map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      mode: m.mode || "Full Time",
+      status: m.status || "Active",
+      role: m.role_in_project || m.designation || m.role || "",
+      associatedProject: m.associatedProject || "",
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || ""
+    })) as ResearchScholar[];
+  }, [allMembersPast]);
+
   const PROJECT_STAFF = useMemo(() => {
     return allMembers.filter(m => m.role === "staff").map(m => ({
       id: m.id,
@@ -1071,6 +1117,17 @@ function PeoplePage() {
       link: m.link || ""
     })) as ProjectStaff[];
   }, [allMembers]);
+
+  const PROJECT_STAFF_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "staff").map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      role: m.role || m.designation || "",
+      project: m.project || m.associatedProject || "",
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || ""
+    })) as ProjectStaff[];
+  }, [allMembersPast]);
 
   const PHD_GRADUATES = useMemo(() => {
     return allMembers.filter(m => m.role === "phd").map(m => ({
@@ -1084,6 +1141,18 @@ function PeoplePage() {
     })) as PhDGraduate[];
   }, [allMembers]);
 
+  const PHD_GRADUATES_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "phd").map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      researchArea: m.researchArea || "",
+      graduationDate: m.graduationDate || "",
+      status: "Completed" as const,
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || ""
+    })) as PhDGraduate[];
+  }, [allMembersPast]);
+
   const UG_STUDENTS = useMemo(() => {
     return allMembers.filter(m => m.role === "student").map(m => ({
       id: m.id,
@@ -1093,6 +1162,15 @@ function PeoplePage() {
     })) as UGStudent[];
   }, [allMembers]);
 
+  const UG_STUDENTS_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "student").map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      status: "Current Student" as const,
+      imageUrl: m.thumbnail || m.imageUrl || null
+    })) as UGStudent[];
+  }, [allMembersPast]);
+
   const UG_ALUMNI = useMemo(() => {
     return allMembers.filter(m => m.role === "alumni" && !m.programme).map(m => ({
       id: m.id,
@@ -1101,6 +1179,15 @@ function PeoplePage() {
       link: m.link || ""
     })) as UGAlumnus[];
   }, [allMembers]);
+
+  const UG_ALUMNI_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "alumni" && !m.programme).map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || ""
+    })) as UGAlumnus[];
+  }, [allMembersPast]);
 
   const PG_ALUMNI = useMemo(() => {
     return allMembers.filter(m => m.role === "alumni" && m.programme).map(m => ({
@@ -1112,18 +1199,28 @@ function PeoplePage() {
     })) as PGAlumnus[];
   }, [allMembers]);
 
+  const PG_ALUMNI_PAST = useMemo(() => {
+    return allMembersPast.filter(m => m.role === "alumni" && m.programme).map(m => ({
+      id: m.id,
+      name: m.title || m.name || "",
+      programme: m.programme || "",
+      imageUrl: m.thumbnail || m.imageUrl || null,
+      link: m.link || ""
+    })) as PGAlumnus[];
+  }, [allMembersPast]);
+
   // Stats derived dynamically
   const stats = useMemo(() => {
     return [
-      { label: "Team Members", count: TEAM_MEMBERS.length, icon: GraduationCap, theme: "indigo", id: "faculty" },
-      { label: "Research Scholars", count: RESEARCH_SCHOLARS.length, icon: Users, theme: "sky", id: "scholars" },
-      { label: "Project Staff", count: PROJECT_STAFF.length, icon: Briefcase, theme: "teal", id: "staff" },
-      { label: "PhD Graduates", count: PHD_GRADUATES.length, icon: Award, theme: "emerald", id: "phd" },
-      { label: "UG Alumni", count: UG_ALUMNI.length, icon: Users, theme: "blue", id: "ug-alumni" },
-      { label: "PG Alumni", count: PG_ALUMNI.length, icon: Users, theme: "blue", id: "pg-alumni" },
-      { label: "Interns", count: INTERNSHIPS.length, icon: Sparkles, theme: "cyan", id: "interns" }
+      { label: "Team Members", count: TEAM_MEMBERS.length + TEAM_MEMBERS_PAST.length, icon: GraduationCap, theme: "indigo", id: "faculty" },
+      { label: "Research Scholars", count: RESEARCH_SCHOLARS.length + RESEARCH_SCHOLARS_PAST.length, icon: Users, theme: "sky", id: "scholars" },
+      { label: "Project Staff", count: PROJECT_STAFF.length + PROJECT_STAFF_PAST.length, icon: Briefcase, theme: "teal", id: "staff" },
+      { label: "PhD Graduates", count: PHD_GRADUATES.length + PHD_GRADUATES_PAST.length, icon: Award, theme: "emerald", id: "phd" },
+      { label: "UG Alumni", count: UG_ALUMNI.length + UG_ALUMNI_PAST.length, icon: Users, theme: "blue", id: "ug-alumni" },
+      { label: "PG Alumni", count: PG_ALUMNI.length + PG_ALUMNI_PAST.length, icon: Users, theme: "blue", id: "pg-alumni" },
+      { label: "Interns", count: INTERNSHIPS.length + INTERNSHIPS_PAST.length, icon: Sparkles, theme: "cyan", id: "interns" }
     ];
-  }, [TEAM_MEMBERS, RESEARCH_SCHOLARS, PROJECT_STAFF, PHD_GRADUATES, UG_ALUMNI, PG_ALUMNI, INTERNSHIPS]);
+  }, [TEAM_MEMBERS, TEAM_MEMBERS_PAST, RESEARCH_SCHOLARS, RESEARCH_SCHOLARS_PAST, PROJECT_STAFF, PROJECT_STAFF_PAST, PHD_GRADUATES, PHD_GRADUATES_PAST, UG_ALUMNI, UG_ALUMNI_PAST, PG_ALUMNI, PG_ALUMNI_PAST, INTERNSHIPS, INTERNSHIPS_PAST]);
 
   // Section smooth scrolling helper with header offset
   const handleScroll = (id: string) => {
@@ -1141,15 +1238,15 @@ function PeoplePage() {
   };
 
   const navItems = useMemo(() => [
-    { label: "Faculty", id: "faculty", count: TEAM_MEMBERS.length, theme: "indigo" as const },
-    { label: "Research Scholars", id: "scholars", count: RESEARCH_SCHOLARS.length, theme: "sky" as const },
-    { label: "Project Staff", id: "staff", count: PROJECT_STAFF.length, theme: "teal" as const },
-    { label: "PhD Graduates", id: "phd", count: PHD_GRADUATES.length, theme: "emerald" as const },
-    { label: "Current Students", id: "ug-students", count: UG_STUDENTS.length, theme: "blue" as const },
-    { label: "UG Alumni", id: "ug-alumni", count: UG_ALUMNI.length, theme: "blue" as const },
-    { label: "PG Alumni", id: "pg-alumni", count: PG_ALUMNI.length, theme: "indigo" as const },
-    { label: "Internships", id: "interns", count: INTERNSHIPS.length, theme: "cyan" as const }
-  ], [TEAM_MEMBERS, RESEARCH_SCHOLARS, PROJECT_STAFF, PHD_GRADUATES, UG_STUDENTS, UG_ALUMNI, PG_ALUMNI, INTERNSHIPS]);
+    { label: "Faculty", id: "faculty", count: TEAM_MEMBERS.length + TEAM_MEMBERS_PAST.length, theme: "indigo" as const },
+    { label: "Research Scholars", id: "scholars", count: RESEARCH_SCHOLARS.length + RESEARCH_SCHOLARS_PAST.length, theme: "sky" as const },
+    { label: "Project Staff", id: "staff", count: PROJECT_STAFF.length + PROJECT_STAFF_PAST.length, theme: "teal" as const },
+    { label: "PhD Graduates", id: "phd", count: PHD_GRADUATES.length + PHD_GRADUATES_PAST.length, theme: "emerald" as const },
+    { label: "Current Students", id: "ug-students", count: UG_STUDENTS.length + UG_STUDENTS_PAST.length, theme: "blue" as const },
+    { label: "UG Alumni", id: "ug-alumni", count: UG_ALUMNI.length + UG_ALUMNI_PAST.length, theme: "blue" as const },
+    { label: "PG Alumni", id: "pg-alumni", count: PG_ALUMNI.length + PG_ALUMNI_PAST.length, theme: "indigo" as const },
+    { label: "Internships", id: "interns", count: INTERNSHIPS.length + INTERNSHIPS_PAST.length, theme: "cyan" as const }
+  ], [TEAM_MEMBERS, TEAM_MEMBERS_PAST, RESEARCH_SCHOLARS, RESEARCH_SCHOLARS_PAST, PROJECT_STAFF, PROJECT_STAFF_PAST, PHD_GRADUATES, PHD_GRADUATES_PAST, UG_STUDENTS, UG_STUDENTS_PAST, UG_ALUMNI, UG_ALUMNI_PAST, PG_ALUMNI, PG_ALUMNI_PAST, INTERNSHIPS, INTERNSHIPS_PAST]);
 
   // Search & Filter States
   const [facultySearch, setFacultySearch] = useState("");
@@ -1170,7 +1267,14 @@ function PeoplePage() {
     return TEAM_MEMBERS.filter((fac) =>
       String(fac.name ?? "").toLowerCase().includes(facultySearch.toLowerCase().trim())
     );
-  }, [facultySearch]);
+  }, [TEAM_MEMBERS, facultySearch]);
+
+  // Filtered Faculty Past
+  const filteredFacultyPast = useMemo(() => {
+    return TEAM_MEMBERS_PAST.filter((fac) =>
+      String(fac.name ?? "").toLowerCase().includes(facultySearch.toLowerCase().trim())
+    );
+  }, [TEAM_MEMBERS_PAST, facultySearch]);
 
   // Filtered Scholars
   const filteredScholars = useMemo(() => {
@@ -1179,21 +1283,44 @@ function PeoplePage() {
       const matchesStatus = scholarStatusFilter === "All" || sch.status === scholarStatusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [scholarSearch, scholarStatusFilter]);
+  }, [RESEARCH_SCHOLARS, scholarSearch, scholarStatusFilter]);
+
+  // Filtered Scholars Past
+  const filteredScholarsPast = useMemo(() => {
+    return RESEARCH_SCHOLARS_PAST.filter((sch) => {
+      const matchesSearch = String(sch.name ?? "").toLowerCase().includes(scholarSearch.toLowerCase().trim());
+      const matchesStatus = scholarStatusFilter === "All" || sch.status === scholarStatusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [RESEARCH_SCHOLARS_PAST, scholarSearch, scholarStatusFilter]);
 
   // Filtered UG Alumni
   const filteredUgAlumni = useMemo(() => {
     return UG_ALUMNI.filter((al) =>
       String(al.name ?? "").toLowerCase().includes(ugAlumniSearch.toLowerCase().trim())
     );
-  }, [ugAlumniSearch]);
+  }, [UG_ALUMNI, ugAlumniSearch]);
+
+  // Filtered UG Alumni Past
+  const filteredUgAlumniPast = useMemo(() => {
+    return UG_ALUMNI_PAST.filter((al) =>
+      String(al.name ?? "").toLowerCase().includes(ugAlumniSearch.toLowerCase().trim())
+    );
+  }, [UG_ALUMNI_PAST, ugAlumniSearch]);
 
   // Filtered PG Alumni
   const filteredPgAlumni = useMemo(() => {
     return PG_ALUMNI.filter((al) =>
       String(al.name ?? "").toLowerCase().includes(pgAlumniSearch.toLowerCase().trim())
     );
-  }, [pgAlumniSearch]);
+  }, [PG_ALUMNI, pgAlumniSearch]);
+
+  // Filtered PG Alumni Past
+  const filteredPgAlumniPast = useMemo(() => {
+    return PG_ALUMNI_PAST.filter((al) =>
+      String(al.name ?? "").toLowerCase().includes(pgAlumniSearch.toLowerCase().trim())
+    );
+  }, [PG_ALUMNI_PAST, pgAlumniSearch]);
 
   // Filtered & Sorted Internships
   const processedInternships = useMemo(() => {
@@ -1235,7 +1362,49 @@ function PeoplePage() {
     }
 
     return list;
-  }, [internSearch, internSortField, internSortOrder]);
+  }, [INTERNSHIPS, internSearch, internSortField, internSortOrder]);
+
+  // Filtered & Sorted Internships Past
+  const processedInternshipsPast = useMemo(() => {
+    let list = [...INTERNSHIPS_PAST];
+
+    if (internSearch.trim()) {
+      const q = internSearch.toLowerCase().trim();
+      list = list.filter(
+        (i) =>
+          String(i.name ?? "").toLowerCase().includes(q) ||
+          String(i.institution ?? "").toLowerCase().includes(q) ||
+          String(i.topic ?? "").toLowerCase().includes(q)
+      );
+    }
+
+    if (internSortField) {
+      list.sort((a, b) => {
+        let valA = "";
+        let valB = "";
+
+        if (internSortField === "name") {
+          valA = String(a.name ?? "").toLowerCase();
+          valB = String(b.name ?? "").toLowerCase();
+        } else if (internSortField === "institution") {
+          valA = String(a.institution ?? "").toLowerCase();
+          valB = String(b.institution ?? "").toLowerCase();
+        } else if (internSortField === "topic") {
+          valA = String(a.topic ?? "").toLowerCase();
+          valB = String(b.topic ?? "").toLowerCase();
+        } else if (internSortField === "duration") {
+          valA = String(a.duration ?? "").toLowerCase();
+          valB = String(b.duration ?? "").toLowerCase();
+        }
+
+        if (valA < valB) return internSortOrder === "asc" ? -1 : 1;
+        if (valA > valB) return internSortOrder === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return list;
+  }, [INTERNSHIPS_PAST, internSearch, internSortField, internSortOrder]);
 
   const handleInternSort = (field: "name" | "institution" | "topic" | "duration") => {
     if (internSortField === field) {
@@ -1286,7 +1455,7 @@ function PeoplePage() {
         <section id="faculty" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
-              <span className="text-5xs font-mono font-bold uppercase tracking-wider text-indigo-500">Principal Mentors</span>
+              <span className="text-5xs font-mono font-bold uppercase tracking-wider text-indigo-500">Faculty</span>
               <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Team Members</h2>
             </div>
             
@@ -1324,10 +1493,43 @@ function PeoplePage() {
             ))}
             {filteredFaculty.length === 0 && (
               <div className="col-span-2 text-center text-text-muted text-xs py-6">
-                {TEAM_MEMBERS.length === 0 ? "No records available." : "No faculty members found."}
+                {TEAM_MEMBERS.length === 0 ? "No records available." : "No active faculty members found."}
               </div>
             )}
           </div>
+
+          {TEAM_MEMBERS_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Faculty)
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredFacultyPast.map((member) => (
+                  <div
+                    key={member.id}
+                    onClick={() => openDetail(member, "indigo")}
+                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-indigo-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-start gap-4 group select-none"
+                  >
+                    <PersonAvatar imageUrl={member.imageUrl} name={member.name} themeColor="indigo" />
+                    <div className="space-y-1 mt-0.5 min-w-0 flex-1">
+                      <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-indigo-500 transition-colors truncate">
+                        {member.name}
+                      </h3>
+                      <p className="text-[11px] text-text-secondary font-medium font-sans truncate">{member.designation}</p>
+                      <p className="text-5xs text-text-muted font-sans font-medium truncate uppercase tracking-wider">
+                        {member.institution}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {filteredFacultyPast.length === 0 && (
+                  <div className="col-span-2 text-center text-text-muted text-xs py-6">
+                    No past faculty members found matching search filter.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 3. Research Scholars (Sky Theme) */}
@@ -1391,10 +1593,51 @@ function PeoplePage() {
             ))}
             {filteredScholars.length === 0 && (
               <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                {RESEARCH_SCHOLARS.length === 0 ? "No records available." : "No scholars found."}
+                {RESEARCH_SCHOLARS.length === 0 ? "No records available." : "No active scholars found."}
               </div>
             )}
           </div>
+
+          {RESEARCH_SCHOLARS_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Research Scholars)
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                {filteredScholarsPast.map((scholar) => (
+                  <div
+                    key={scholar.id}
+                    onClick={() => openDetail(scholar, "sky")}
+                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-sky-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none text-center"
+                  >
+                    <div className="flex flex-col items-center space-y-3">
+                      <PersonAvatar imageUrl={scholar.imageUrl} name={scholar.name} themeColor="sky" />
+                      <div>
+                        <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-sky-500 transition-colors truncate max-w-full">
+                          {scholar.name}
+                        </h3>
+                        <span className="text-[10px] text-text-muted mt-1 block font-semibold">{scholar.mode}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 border-t border-border/20 pt-2 flex items-center justify-center">
+                      <span className={`px-2 py-0.5 rounded text-5xs font-bold border uppercase tracking-wider ${
+                        scholar.status === "Thesis Submitted"
+                          ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
+                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      }`}>
+                        {scholar.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {filteredScholarsPast.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past scholars found matching search filters.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 4. Project Staff (Teal Theme) */}
@@ -1423,6 +1666,33 @@ function PeoplePage() {
               </div>
             ))}
           </div>
+
+          {PROJECT_STAFF_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Project Staff)
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {PROJECT_STAFF_PAST.map((staff) => (
+                  <div
+                    key={staff.id}
+                    onClick={() => openDetail(staff, "teal")}
+                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-center gap-4 group select-none"
+                  >
+                    <PersonAvatar imageUrl={staff.imageUrl} name={staff.name} themeColor="teal" />
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors truncate">
+                        {staff.name}
+                      </h3>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-teal-500/10 text-teal-500 border border-teal-500/25 uppercase font-mono tracking-wider">
+                        {staff.role}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 5. Graduated Doctoral Scholars (Ph.D.) (Emerald Theme) */}
@@ -1465,6 +1735,46 @@ function PeoplePage() {
               </div>
             ))}
           </div>
+
+          {PHD_GRADUATES_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (PhD Graduates)
+              </h3>
+              <div className="relative pl-6 md:pl-8 border-l border-border/85 space-y-6 ml-2 md:ml-4 py-2">
+                {PHD_GRADUATES_PAST.map((grad) => (
+                  <div key={grad.id} className="relative group">
+                    {/* Timeline Node */}
+                    <span className="absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border border-emerald-500 bg-background flex items-center justify-center ring-4 ring-emerald-500/10 transition duration-300 shrink-0">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
+
+                    <div
+                      onClick={() => openDetail(grad, "emerald")}
+                      className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
+                    >
+                      <div className="space-y-1">
+                        <span className="text-5xs font-mono font-bold text-emerald-500 uppercase tracking-wider">
+                          {grad.name}
+                        </span>
+                        <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
+                          {grad.researchArea}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2.5 py-0.5 rounded">
+                          Graduated: {grad.graduationDate.split(":")[1]?.trim() || grad.graduationDate}
+                        </span>
+                        <span className="rounded px-2.5 py-0.5 text-5xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          {grad.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 6. Undergraduate Students (Blue Theme) */}
@@ -1493,6 +1803,33 @@ function PeoplePage() {
               </div>
             ))}
           </div>
+
+          {UG_STUDENTS_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Undergraduate Students)
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                {UG_STUDENTS_PAST.map((student) => (
+                  <div
+                    key={student.id}
+                    onClick={() => openDetail(student, "blue")}
+                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-blue-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col items-center gap-3 text-center group select-none"
+                  >
+                    <PersonAvatar imageUrl={student.imageUrl} name={student.name} themeColor="blue" />
+                    <div>
+                      <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-blue-500 transition-colors">
+                        {student.name}
+                      </h3>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold border border-blue-500/20 bg-blue-500/5 text-blue-500 mt-1 uppercase font-mono tracking-wider">
+                        {student.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 7. Graduated Project Students (UG) (Blue Theme) */}
@@ -1542,13 +1879,54 @@ function PeoplePage() {
                 {filteredUgAlumni.length === 0 && (
                   <tr>
                     <td colSpan={3} className="p-8 text-center text-text-muted">
-                      {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match the search text."}
+                      {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match the active search."}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {UG_ALUMNI_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (UG Alumni)
+              </h3>
+              <div className="orl-table-container max-h-[350px]">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="w-16 text-center">Sl No</th>
+                      <th>Student Name</th>
+                      <th className="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {filteredUgAlumniPast.map((al, idx) => (
+                      <tr
+                        key={al.id}
+                        onClick={() => openDetail(al, "blue")}
+                        className="cursor-pointer"
+                      >
+                        <td className="text-center font-mono">{idx + 1}</td>
+                        <td className="font-semibold text-foreground leading-snug">{al.name}</td>
+                        <td className="text-right text-5xs font-mono font-bold text-blue-500">
+                          View Profile
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredUgAlumniPast.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="p-8 text-center text-text-muted">
+                          No past UG project students match the search text.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 8. Graduated Project Students (PG) (Blue Theme) */}
@@ -1600,13 +1978,56 @@ function PeoplePage() {
                 {filteredPgAlumni.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-text-muted">
-                      {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match the search text."}
+                      {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match the active search."}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {PG_ALUMNI_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (PG Alumni)
+              </h3>
+              <div className="orl-table-container max-h-[350px]">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="w-16 text-center">Sl No</th>
+                      <th>Name</th>
+                      <th>Programme</th>
+                      <th className="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {filteredPgAlumniPast.map((al, idx) => (
+                      <tr
+                        key={al.id}
+                        onClick={() => openDetail(al, "blue")}
+                        className="cursor-pointer"
+                      >
+                        <td className="text-center font-mono">{idx + 1}</td>
+                        <td className="font-semibold text-foreground leading-snug">{al.name}</td>
+                        <td className="text-text-secondary">{al.programme}</td>
+                        <td className="text-right text-5xs font-mono font-bold text-blue-500">
+                          View Profile
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredPgAlumniPast.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-text-muted">
+                          No past PG project students match the search text.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 9. Internship Section (Cyan Theme - Table Only) */}
@@ -1693,6 +2114,77 @@ function PeoplePage() {
               </tbody>
             </table>
           </div>
+
+          {INTERNSHIPS_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Interns)
+              </h3>
+              <div className="orl-table-container max-h-[500px]">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="w-14 text-center">Sl No</th>
+                      <th
+                        className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => handleInternSort("name")}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          Name
+                          {internSortField === "name" && (
+                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => handleInternSort("institution")}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          Institution
+                          {internSortField === "institution" && (
+                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => handleInternSort("duration")}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          Duration
+                          {internSortField === "duration" && (
+                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                          )}
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {processedInternshipsPast.map((intern, idx) => (
+                      <tr
+                        key={intern.id}
+                        onClick={() => openDetail(intern, "cyan")}
+                        className="cursor-pointer"
+                      >
+                        <td className="text-center font-mono">{idx + 1}</td>
+                        <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
+                        <td className="text-text-secondary leading-normal">{intern.institution}</td>
+                        <td className="font-mono text-[11px]">{intern.duration}</td>
+                      </tr>
+                    ))}
+                    {processedInternshipsPast.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-text-muted">
+                          No past internship records found matching the active search.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 10. Technical Discussions (Amber Theme - Timeline Format) */}

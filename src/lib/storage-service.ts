@@ -543,20 +543,36 @@ const isBrowser = typeof window !== "undefined";
 // -------------------------------------------------------------
 
 export function getRecords(): RepoRecord[] {
+  let records: RepoRecord[] = [];
   if (isBrowser) {
     try {
       const raw = localStorage.getItem(RECORDS_KEY);
-      if (raw) return JSON.parse(raw) as RepoRecord[];
+      if (raw) records = JSON.parse(raw) as RepoRecord[];
     } catch (e) {
       console.error("Error reading records from localStorage:", e);
     }
   }
-  // Fallback to seed records parsed from spreadsheets
-  return (seedData as unknown as RepoRecord[]).map((r) => ({
-    ...r,
-    attachments: r.attachments ?? [],
-    tags: (r.tags ?? []).filter(Boolean),
-  }));
+  if (!records || records.length === 0) {
+    // Fallback to seed records parsed from spreadsheets
+    records = (seedData as unknown as RepoRecord[]).map((r) => ({
+      ...r,
+      attachments: r.attachments ?? [],
+      tags: (r.tags ?? []).filter(Boolean),
+    }));
+  }
+
+  // Awards dynamic defaulting migration check
+  return records.map((r) => {
+    if (r.type === "award") {
+      return {
+        ...r,
+        awardAudience: r.awardAudience || "faculty",
+        awardCategory: r.awardCategory || "Recognition",
+        showcasePriority: typeof r.showcasePriority === "number" ? r.showcasePriority : 0,
+      };
+    }
+    return r;
+  });
 }
 
 export function saveRecords(records: RepoRecord[]): void {

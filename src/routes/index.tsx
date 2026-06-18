@@ -1522,11 +1522,11 @@ function Home() {
             <div className="h-1 w-16 bg-cyan-500 rounded-full mt-2"></div>
           </div>
 
-          <div className="grid gap-6 grid-cols-2 lg:grid-cols-6">
+          <div className="flex flex-wrap justify-center gap-6">
             {stats.map((stat, idx) => (
               <div
                 key={idx}
-                className="rounded-xl border border-border bg-card p-4 hover:border-cyan-500/40 hover:shadow-xs transition duration-300 text-center flex flex-col justify-between min-h-[145px]"
+                className="rounded-xl border border-border bg-card p-4 hover:border-cyan-500/40 hover:shadow-xs transition duration-300 text-center flex flex-col justify-between min-h-[145px] w-[calc(50%-12px)] sm:w-[calc(33.333%-16px)] md:w-[calc(25%-18px)] lg:w-[calc(16.666%-20px)] min-w-[140px] max-w-[180px]"
               >
                 <div>
                   <div className="rounded-full bg-cyan-500/10 p-2 text-cyan-500 w-fit mx-auto mb-2 dark:bg-cyan-500/20">
@@ -1595,9 +1595,9 @@ function Home() {
                         ? (() => { try { return JSON.parse(facility.specs); } catch { return []; } })()
                         : []
                     ).map((spec: any, sIdx: number) => (
-                      <div key={sIdx} className="flex justify-between items-center text-3xs">
+                      <div key={sIdx} className="grid grid-cols-[90px_1fr] gap-x-2 text-3xs items-start text-left">
                         <span className="text-text-muted font-semibold">{spec.label}</span>
-                        <span className="font-bold text-foreground">{spec.value}</span>
+                        <span className="font-bold text-foreground break-words">{spec.value}</span>
                       </div>
                     ))}
                   </div>

@@ -546,6 +546,10 @@ function ResearchPage() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedType, setSelectedType] = useState<"project" | "equipment" | "activity" | null>(null);
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerSearch, setDrawerSearch] = useState("");
+  const [expandedEquipmentIdx, setExpandedEquipmentIdx] = useState<number | null>(null);
+
   // Accordion Expand States
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({
     external: true,
@@ -1198,7 +1202,9 @@ function ResearchPage() {
                   key={cat.id}
                   onClick={() => {
                     setActiveCategory(cat.id);
-                    document.getElementById("equipment")?.scrollIntoView({ behavior: "smooth" });
+                    setDrawerSearch("");
+                    setExpandedEquipmentIdx(null);
+                    setIsDrawerOpen(true);
                   }}
                   className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] group select-none ${
                     isActive
@@ -1458,6 +1464,193 @@ function ResearchPage() {
           type={selectedType}
           onClose={closeDetail}
         />
+      )}
+
+      {/* Slide-over Drawer for Facility Details */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 cursor-pointer"
+            onClick={() => setIsDrawerOpen(false)}
+          />
+
+          <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
+            <div className="w-screen max-w-xl bg-card/95 border-l border-cyan-500/20 shadow-2xl backdrop-blur-md flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0 animate-slide-in-right">
+              {/* Header */}
+              <div className="px-6 py-6 border-b border-border/40 flex items-center justify-between">
+                <div>
+                  <span className="text-5xs font-mono font-bold uppercase tracking-wider text-cyan-500">Facility Details</span>
+                  <h2 id="slide-over-title" className="text-lg font-bold text-foreground font-sans mt-0.5">
+                    {FACILITIES_CATEGORIES.find(c => c.id === activeCategory)?.name}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="rounded-full p-2 bg-secondary text-text-muted hover:text-foreground transition cursor-pointer hover:bg-secondary/80 border border-border/45"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Container */}
+              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin">
+                {/* Description */}
+                <div>
+                  <p className="text-xs text-text-secondary leading-relaxed font-sans">
+                    {FACILITIES_CATEGORIES.find(c => c.id === activeCategory)?.description}
+                  </p>
+                </div>
+
+                {/* Facility Images Carousel */}
+                {(() => {
+                  const cat = FACILITIES_CATEGORIES.find(c => c.id === activeCategory);
+                  const images = cat?.images || (cat?.thumbnail ? [cat.thumbnail] : []);
+                  if (images.length === 0) return null;
+                  return (
+                    <div className="space-y-2 font-sans">
+                      <h4 className="text-4xs font-mono font-bold uppercase tracking-wider text-cyan-500">Facility Images</h4>
+                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                        {images.map((img, idx) => (
+                          <div key={idx} className="relative h-44 w-72 shrink-0 overflow-hidden rounded-lg border border-border/40 bg-muted">
+                            <img
+                              src={resolveAssetUrl(img)}
+                              alt={`${cat?.name} Asset ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Local search inside active category */}
+                <div className="space-y-3 pt-4 border-t border-border/20">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-foreground font-sans">Equipment & Systems</h4>
+                    <span className="text-5xs font-mono font-bold px-2 py-0.5 rounded border bg-secondary text-text-secondary border-border/40">
+                      {EQUIPMENT_DATABASE.filter(eq => eq.category === activeCategory).length} Systems
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+                    <input
+                      type="text"
+                      placeholder="Search equipment in this facility..."
+                      value={drawerSearch}
+                      onChange={(e) => setDrawerSearch(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-card/50 outline-none transition focus:border-cyan-500/50"
+                    />
+                  </div>
+                </div>
+
+                {/* Accordion List */}
+                <div className="space-y-3">
+                  {(() => {
+                    const filtered = EQUIPMENT_DATABASE.filter(eq => {
+                      const matchesCategory = eq.category === activeCategory;
+                      const q = drawerSearch.toLowerCase().trim();
+                      const matchesSearch = !q ||
+                        String(eq.name ?? "").toLowerCase().includes(q) ||
+                        String(eq.shortDescription ?? "").toLowerCase().includes(q);
+                      return matchesCategory && matchesSearch;
+                    }).map(eq => {
+                      // Map to public payload ONLY: name, shortDescription, specifications, applications, notes.
+                      // Omit all image assets completely.
+                      const specs = (() => {
+                        if (!eq.specs) return [];
+                        if (Array.isArray(eq.specs)) return eq.specs;
+                        if (typeof eq.specs === "string") {
+                          try {
+                            const parsed = JSON.parse(eq.specs);
+                            return Array.isArray(parsed) ? parsed : [];
+                          } catch {
+                            return eq.specs.split(",").map((s: string) => {
+                              const parts = s.split(":");
+                              return { label: parts[0]?.trim() || "Spec", value: parts.slice(1).join(":")?.trim() || "" };
+                            });
+                          }
+                        }
+                        return [];
+                      })();
+                      return {
+                        id: eq.id,
+                        name: eq.name,
+                        shortDescription: eq.shortDescription || eq.description || "",
+                        specs,
+                        applications: eq.applications || "",
+                        notes: eq.notes || ""
+                      };
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-center text-text-muted text-xs py-8 border border-dashed border-border/40 rounded-xl">
+                          No matching systems found.
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((eq, idx) => {
+                      const isExpanded = expandedEquipmentIdx === idx;
+                      return (
+                        <div key={eq.id || idx} className="rounded-xl border border-border bg-card overflow-hidden">
+                          <button
+                            onClick={() => setExpandedEquipmentIdx(isExpanded ? null : idx)}
+                            className="w-full flex items-center justify-between p-4 bg-secondary/10 hover:bg-secondary/20 transition text-left cursor-pointer select-none"
+                          >
+                            <span className="text-xs font-bold text-foreground leading-snug">{eq.name}</span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-text-muted shrink-0 ml-2" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-text-muted shrink-0 ml-2" />
+                            )}
+                          </button>
+                          {isExpanded && (
+                            <div className="p-4 border-t border-border/40 space-y-4 font-sans text-xs text-text-secondary leading-relaxed">
+                              {eq.shortDescription && (
+                                <div>
+                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Description</span>
+                                  <p>{eq.shortDescription}</p>
+                                </div>
+                              )}
+                              {eq.specs && eq.specs.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block">Specifications</span>
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    {eq.specs.map((spec: any, sIdx: number) => (
+                                      <div key={sIdx} className="flex justify-between items-start border-b border-border/10 pb-1.5 pr-2">
+                                        <span className="text-text-muted font-medium">{spec.label}</span>
+                                        <span className="font-semibold text-foreground text-right">{spec.value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {eq.applications && (
+                                <div>
+                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Applications</span>
+                                  <p>{eq.applications}</p>
+                                </div>
+                              )}
+                              {eq.notes && (
+                                <div>
+                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Notes</span>
+                                  <p className="italic text-text-muted">{eq.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
