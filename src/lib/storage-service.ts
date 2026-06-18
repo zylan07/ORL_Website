@@ -44,8 +44,10 @@ export interface RepoRecord {
   attachments: Attachment[];
   showcaseImage?: string;
   showInGallery?: boolean;
+  featured?: boolean;
   showcaseCategory?: "faculty" | "student";
   showcasePriority?: number;
+  awardAudience?: "faculty" | "student" | "faculty-student";
 }
 
 export interface CarouselImage {
@@ -60,7 +62,7 @@ export interface CarouselImage {
 export interface UploadedAsset {
   id: string;
   url: string; // Base64 data URL locally, Supabase later
-  type: "image" | "document";
+  type: "image" | "document" | "video";
   fileName: string;
   uploadedAt: string;
   altText: string;
@@ -187,10 +189,28 @@ if (typeof window !== "undefined") {
   );
 }
 
+// In-memory cache for session-based object URLs (e.g., for large videos/documents before they are synced to Supabase)
+const objectUrls = new Map<string, string>();
+
 const pendingAssetQueries = new Set<string>();
 
-export function resolveAssetUrl(idOrUrl: string | null | undefined, type: "avatar" | "image" = "image"): string {
-  const fallback = type === "avatar" ? AVATAR_FALLBACK : IMAGE_FALLBACK;
+export function resolveAssetUrl(idOrUrl: string | null | undefined, type: "avatar" | "image" | "video" | "document" = "image"): string {
+  // 1. Check session-based in-memory object URL cache first (great for previewing newly uploaded assets)
+  if (idOrUrl && typeof window !== "undefined" && objectUrls.has(idOrUrl)) {
+    return objectUrls.get(idOrUrl)!;
+  }
+
+  // 2. Resolve actual type from local assets registry if possible
+  let resolvedType = type;
+  if (idOrUrl && idOrUrl.startsWith("asset_")) {
+    const assets = getAssets();
+    const localAsset = assets[idOrUrl];
+    if (localAsset && localAsset.type) {
+      resolvedType = localAsset.type as any;
+    }
+  }
+
+  const fallback = resolvedType === "avatar" ? AVATAR_FALLBACK : resolvedType === "video" ? "" : IMAGE_FALLBACK;
   if (!idOrUrl) return fallback;
   if (idOrUrl.startsWith("asset_")) {
     // a. Check local registry
@@ -230,7 +250,7 @@ export function resolveAssetUrl(idOrUrl: string | null | undefined, type: "avata
             currentAssets[idOrUrl] = {
               id: idOrUrl,
               url: publicUrl,
-              type: data.metadata && typeof data.metadata === "object" ? (data.metadata as any).asset_type || type : type,
+              type: data.metadata && typeof data.metadata === "object" ? (data.metadata as any).asset_type || resolvedType : resolvedType,
               fileName: data.metadata && typeof data.metadata === "object" ? (data.metadata as any).file_name || "" : "",
               uploadedAt: data.metadata && typeof data.metadata === "object" ? (data.metadata as any).uploaded_at || new Date().toISOString() : new Date().toISOString(),
               altText: data.metadata && typeof data.metadata === "object" ? (data.metadata as any).alt_text || "" : "",
@@ -301,10 +321,12 @@ export function compressImage(file: File, maxWidth = 800, maxHeight = 800, quali
   });
 }
 
-export function readPdfAsBase64(file: File): Promise<string> {
+export function readFileAsBase64(file: File, type: "image" | "document" | "video"): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (file.size > 2 * 1024 * 1024) {
-      reject(new Error("PDF file size exceeds 2MB limit. Please upload a smaller PDF."));
+    const limit = type === "video" ? 15 * 1024 * 1024 : 2 * 1024 * 1024;
+    const typeLabel = type === "video" ? "Video" : "Document/PDF";
+    if (file.size > limit) {
+      reject(new Error(`${typeLabel} file size exceeds ${(limit / (1024 * 1024)).toFixed(0)}MB limit. Please upload a smaller file.`));
       return;
     }
     const reader = new FileReader();
@@ -318,16 +340,37 @@ export function readPdfAsBase64(file: File): Promise<string> {
 
 export async function registerAsset(
   file: File,
-  type: "image" | "document",
+  type: "image" | "document" | "video",
   category = "",
   altText = ""
 ): Promise<string> {
+  // Video validations
+  if (type === "video") {
+    const validTypes = ["video/mp4", "video/webm"];
+    if (!validTypes.includes(file.type)) {
+      throw new Error("Invalid video format. Only MP4 and WebM videos are accepted.");
+    }
+    const maxSize = 15 * 1024 * 1024; // 15MB
+    if (file.size > maxSize) {
+      throw new Error("Video file size exceeds 15MB limit. Please upload a smaller video.");
+    }
+  }
+
   const id = `asset_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   let url = "";
   if (type === "image") {
     url = await compressImage(file);
+  } else if (type === "video" || file.size > 2 * 1024 * 1024) {
+    // Avoid saving massive base64 strings to localStorage to prevent QuotaExceededError
+    url = "";
   } else {
-    url = await readPdfAsBase64(file);
+    url = await readFileAsBase64(file, type);
+  }
+
+  // Register session object URL for immediate local preview
+  if (typeof window !== "undefined") {
+    const objectUrl = URL.createObjectURL(file);
+    objectUrls.set(id, objectUrl);
   }
 
   const asset: UploadedAsset = {
@@ -352,16 +395,25 @@ export async function registerAsset(
         const fileExt = file.name.split(".").pop() || (type === "image" ? "jpg" : "pdf");
         const filePath = `${id}.${fileExt}`;
 
-        // Convert base64 back to Blob
-        const parts = url.split(";base64,");
-        const mimeType = parts[0].split(":")[1];
-        const raw = window.atob(parts[1]);
-        const rawLength = raw.length;
-        const uInt8Array = new Uint8Array(rawLength);
-        for (let i = 0; i < rawLength; ++i) {
-          uInt8Array[i] = raw.charCodeAt(i);
+        let blob: Blob;
+        let mimeType: string;
+
+        if (type === "image") {
+          // Convert base64 back to Blob
+          const parts = url.split(";base64,");
+          mimeType = parts[0].split(":")[1];
+          const raw = window.atob(parts[1]);
+          const rawLength = raw.length;
+          const uInt8Array = new Uint8Array(rawLength);
+          for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+          }
+          blob = new Blob([uInt8Array], { type: mimeType });
+        } else {
+          // Direct file upload for videos & documents (highly optimized, no atob call)
+          blob = file;
+          mimeType = file.type;
         }
-        const blob = new Blob([uInt8Array], { type: mimeType });
 
         const { error: uploadErr } = await supabase.storage
           .from(bucket)

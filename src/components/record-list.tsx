@@ -18,7 +18,7 @@ import {
   type RecordType,
   type RepoRecord,
 } from "@/lib/repository-data";
-import { ShowcaseGallery } from "./showcase-gallery";
+import { ShowcaseGallery, ShowcaseCard } from "./showcase-gallery";
 import { resolveAssetUrl } from "@/lib/storage-service";
 
 function getAutomaticAwardCategory(
@@ -155,26 +155,81 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
   const showcaseGalleryData = useMemo(() => {
     if (type !== "award") return { faculty: [], student: [] };
 
-    const awards = records.filter(
-      (r) => r.type === "award" && r.showInGallery === true
-    );
+    const mapAwardToShowcaseItem = (r: RepoRecord) => {
+      // Image source priority:
+      // 1. showcaseImage (if exists)
+      // 2. fallback image based on audience
+      // 3. placeholder (resolveAssetUrl fallback)
+      let imgUrl = "";
+      if (r.showcaseImage) {
+        imgUrl = resolveAssetUrl(r.showcaseImage);
+      } else {
+        const audience = r.awardAudience || r.showcaseCategory || "faculty";
+        if (audience === "student") {
+          imgUrl = "/images/student_award.png";
+        } else {
+          imgUrl = "/images/faculty_award.png";
+        }
+      }
 
-    const mapped = awards.map((r) => {
       return {
         id: r.id,
-        image: resolveAssetUrl(r.showcaseImage || ""),
+        image: imgUrl,
         recipient: r.recipient || "—",
         title: r.title,
         organization: r.organization || "",
         date: r.date || "",
-        category: r.showcaseCategory || "faculty",
         priority: r.showcasePriority || 0,
       };
+    };
+
+    // Filter awards by Audience category
+    const facultyAwards = records.filter((r) => {
+      if (r.type !== "award") return false;
+      const isShowcaseMember = r.featured === true || r.showInGallery === true || !!r.showcaseImage;
+      if (!isShowcaseMember) return false;
+      const audience = r.awardAudience || r.showcaseCategory || "faculty";
+      return audience === "faculty" || audience === "faculty-student";
     });
 
-    const sorted = [...mapped].sort((a, b) => a.priority - b.priority);
-    const faculty = sorted.filter((item) => item.category === "faculty");
-    const student = sorted.filter((item) => item.category === "student");
+    const studentAwards = records.filter((r) => {
+      if (r.type !== "award") return false;
+      const isShowcaseMember = r.featured === true || r.showInGallery === true || !!r.showcaseImage;
+      if (!isShowcaseMember) return false;
+      const audience = r.awardAudience || r.showcaseCategory || "faculty";
+      return audience === "student" || audience === "faculty-student";
+    });
+
+    const faculty = facultyAwards.map(mapAwardToShowcaseItem).sort((a, b) => a.priority - b.priority);
+    const student = studentAwards.map(mapAwardToShowcaseItem).sort((a, b) => a.priority - b.priority);
+
+    // Fallback if both are empty to keep default entries visible
+    if (faculty.length === 0 && student.length === 0) {
+      return {
+        faculty: [
+          {
+            id: "award-default-1",
+            image: "/images/faculty_award.png",
+            recipient: "Dr. S. Sakthivel Murugan",
+            title: "Best Teacher Award (Academic Year 2023-2024)",
+            organization: "SSN College of Engineering",
+            date: "2024",
+            priority: 1
+          }
+        ],
+        student: [
+          {
+            id: "award-default-2",
+            image: "/images/student_award.png",
+            recipient: "S. Swathi",
+            title: "Best Poster Presentation Award",
+            organization: "IISF 2016",
+            date: "2016",
+            priority: 1
+          }
+        ]
+      };
+    }
 
     return { faculty, student };
   }, [records, type]);
@@ -722,23 +777,28 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
       </div>
 
       {/* Reusable Dual Showcase Carousels */}
-      {type === "award" &&
-        (showcaseGalleryData.faculty.length > 0 ||
-          showcaseGalleryData.student.length > 0) && (
-          <div className="mt-6">
-            <ShowcaseGallery
-              leftTitle="Faculty Awards"
-              leftIcon="🏆"
-              leftItems={showcaseGalleryData.faculty}
-              leftAccent="gold"
-              rightTitle="Student Awards"
-              rightIcon="🎖️"
-              rightItems={showcaseGalleryData.student}
-              rightAccent="cyan"
+      {type === "award" && (
+        <div className="grid gap-6 md:grid-cols-2 w-full mt-6">
+          <div>
+            <ShowcaseCard
+              title="Faculty Awards"
+              icon="🏆"
+              items={showcaseGalleryData.faculty}
+              accent="gold"
               aspectRatio="16/9"
             />
           </div>
-        )}
+          <div>
+            <ShowcaseCard
+              title="Student Awards"
+              icon="🎖️"
+              items={showcaseGalleryData.student}
+              accent="cyan"
+              aspectRatio="16/9"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Filter and Sorting Actions */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">

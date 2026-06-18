@@ -131,7 +131,7 @@ export function StickySectionNav({
         activeButton.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
-          inline: "center",
+          inline: "nearest",
         });
       }
     }

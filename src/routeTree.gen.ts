@@ -10,13 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnicalTrainingRouteImport } from './routes/technical-training'
+import { Route as Research_oldRouteImport } from './routes/research_old'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as PeopleRouteImport } from './routes/people'
+import { Route as Index_oldRouteImport } from './routes/index_old'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollaborationsConsultancyRouteImport } from './routes/collaborations-consultancy'
 import { Route as AwardsRouteImport } from './routes/awards'
+import { Route as Admin_utf8RouteImport } from './routes/admin_utf8'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AcademicActivitiesRouteImport } from './routes/academic-activities'
 import { Route as IndexRouteImport } from './routes/index'
@@ -35,6 +38,11 @@ const TechnicalTrainingRoute = TechnicalTrainingRouteImport.update({
   path: '/technical-training',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Research_oldRoute = Research_oldRouteImport.update({
+  id: '/research_old',
+  path: '/research_old',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResearchRoute = ResearchRouteImport.update({
   id: '/research',
   path: '/research',
@@ -48,6 +56,11 @@ const PublicationsRoute = PublicationsRouteImport.update({
 const PeopleRoute = PeopleRouteImport.update({
   id: '/people',
   path: '/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Index_oldRoute = Index_oldRouteImport.update({
+  id: '/index_old',
+  path: '/index_old',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -69,6 +82,11 @@ const CollaborationsConsultancyRoute =
 const AwardsRoute = AwardsRouteImport.update({
   id: '/awards',
   path: '/awards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Admin_utf8Route = Admin_utf8RouteImport.update({
+  id: '/admin_utf8',
+  path: '/admin_utf8',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -137,13 +155,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
   '/admin': typeof AdminRoute
+  '/admin_utf8': typeof Admin_utf8Route
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/index_old': typeof Index_oldRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
@@ -159,13 +180,16 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
   '/admin': typeof AdminRoute
+  '/admin_utf8': typeof Admin_utf8Route
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/index_old': typeof Index_oldRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
@@ -182,13 +206,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
   '/admin': typeof AdminRoute
+  '/admin_utf8': typeof Admin_utf8Route
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/index_old': typeof Index_oldRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
@@ -206,13 +233,16 @@ export interface FileRouteTypes {
     | '/'
     | '/academic-activities'
     | '/admin'
+    | '/admin_utf8'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/index_old'
     | '/people'
     | '/publications'
     | '/research'
+    | '/research_old'
     | '/technical-training'
     | '/legacy/about'
     | '/legacy/bos'
@@ -228,13 +258,16 @@ export interface FileRouteTypes {
     | '/'
     | '/academic-activities'
     | '/admin'
+    | '/admin_utf8'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/index_old'
     | '/people'
     | '/publications'
     | '/research'
+    | '/research_old'
     | '/technical-training'
     | '/legacy/about'
     | '/legacy/bos'
@@ -250,13 +283,16 @@ export interface FileRouteTypes {
     | '/'
     | '/academic-activities'
     | '/admin'
+    | '/admin_utf8'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/index_old'
     | '/people'
     | '/publications'
     | '/research'
+    | '/research_old'
     | '/technical-training'
     | '/legacy/about'
     | '/legacy/bos'
@@ -273,13 +309,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcademicActivitiesRoute: typeof AcademicActivitiesRoute
   AdminRoute: typeof AdminRoute
+  Admin_utf8Route: typeof Admin_utf8Route
   AwardsRoute: typeof AwardsRoute
   CollaborationsConsultancyRoute: typeof CollaborationsConsultancyRoute
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
+  Index_oldRoute: typeof Index_oldRoute
   PeopleRoute: typeof PeopleRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
+  Research_oldRoute: typeof Research_oldRoute
   TechnicalTrainingRoute: typeof TechnicalTrainingRoute
   LegacyAboutRoute: typeof LegacyAboutRoute
   LegacyBosRoute: typeof LegacyBosRoute
@@ -301,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TechnicalTrainingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/research_old': {
+      id: '/research_old'
+      path: '/research_old'
+      fullPath: '/research_old'
+      preLoaderRoute: typeof Research_oldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/research': {
       id: '/research'
       path: '/research'
@@ -320,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people'
       preLoaderRoute: typeof PeopleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/index_old': {
+      id: '/index_old'
+      path: '/index_old'
+      fullPath: '/index_old'
+      preLoaderRoute: typeof Index_oldRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -348,6 +401,13 @@ declare module '@tanstack/react-router' {
       path: '/awards'
       fullPath: '/awards'
       preLoaderRoute: typeof AwardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_utf8': {
+      id: '/admin_utf8'
+      path: '/admin_utf8'
+      fullPath: '/admin_utf8'
+      preLoaderRoute: typeof Admin_utf8RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -441,13 +501,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcademicActivitiesRoute: AcademicActivitiesRoute,
   AdminRoute: AdminRoute,
+  Admin_utf8Route: Admin_utf8Route,
   AwardsRoute: AwardsRoute,
   CollaborationsConsultancyRoute: CollaborationsConsultancyRoute,
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
+  Index_oldRoute: Index_oldRoute,
   PeopleRoute: PeopleRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
+  Research_oldRoute: Research_oldRoute,
   TechnicalTrainingRoute: TechnicalTrainingRoute,
   LegacyAboutRoute: LegacyAboutRoute,
   LegacyBosRoute: LegacyBosRoute,

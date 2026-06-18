@@ -1,0 +1,131 @@
+﻿diff --git a/src/lib/admin-store.ts b/src/lib/admin-store.ts
+index a8ef7518..e22bd262 100644
+--- a/src/lib/admin-store.ts
++++ b/src/lib/admin-store.ts
+@@ -59,10 +59,12 @@ export interface SiteSettings {
+   peopleStats?: PeopleStatSetting[];
+   
+   // Hero section additions
+-  heroTitle?: string;
++  heroTitle?: string | { en?: string; ta?: string; hi?: string };
+   heroSubtitle?: string;
+-  heroDescription?: string;
++  heroDescription?: string | { en?: string; ta?: string; hi?: string };
+   heroBgImage?: string; // asset ID or URL
++  heroBgVideo?: string; // asset ID or URL
++  heroMediaType?: "image" | "video" | "none";
+   heroPrimaryBtnText?: string;
+   heroPrimaryBtnLink?: string;
+   heroSecondaryBtnText?: string;
+@@ -79,6 +81,20 @@ export interface SiteSettings {
+ // Checking browser context
+ const isBrowser = typeof window !== "undefined";
+ 
++export function trackDeletedId(key: string, id: string): void {
++  if (!isBrowser) return;
++  try {
++    const raw = localStorage.getItem(`uwarl-db-deleted-${key}`);
++    const deleted = raw ? JSON.parse(raw) : [];
++    if (Array.isArray(deleted) && !deleted.includes(id)) {
++      deleted.push(id);
++      localStorage.setItem(`uwarl-db-deleted-${key}`, JSON.stringify(deleted));
++    }
++  } catch (e) {
++    console.error(`Error saving deleted tracking for ${key}:`, e);
++  }
++}
++
+ // ----------------- LOCAL STORAGE HELPERS -----------------
+ const datasetCaches = new Map<string, any[]>();
+ 
+@@ -287,6 +303,55 @@ const INITIAL_INTERNSHIPS: GenericEntity[] = [
+   }
+ ];
+ 
++const INITIAL_FACILITIES: GenericEntity[] = [
++  {
++    id: "underwater-platforms",
++    title: "Underwater Platforms",
++    name: "Underwater Platforms",
++    description: "ROVs, underwater drones and inspection systems.",
++    fullDescription: "Detailed engineering inspection systems, underwater robotic platforms, ROV platforms, and associated testing frameworks utilized to model dynamic underwater vehicle motions.",
++    thumbnail: "",
++    displayOrder: 1
++  },
++  {
++    id: "acoustic-systems",
++    name: "Acoustic & Survey Systems",
++    title: "Acoustic & Survey Systems",
++    description: "Sonars, hydrophones and survey instrumentation.",
++    fullDescription: "Highly precise acoustic instrumentation calibration gear, multi-beam echo sounders, hydrophone arrays, side-scan sonar arrays, and marine positioning devices.",
++    thumbnail: "",
++    displayOrder: 2
++  },
++  {
++    id: "test-facilities",
++    name: "Test Facilities",
++    title: "Test Facilities",
++    description: "Indoor transparent basins, testing tanks, and soil beds.",
++    fullDescription: "Our primary indoor calibrated testing basin (10,874-liter) equipped with overhead translation gantries, hydrophone mounts, and soil profiling beds.",
++    thumbnail: "",
++    displayOrder: 3
++  },
++  {
++    id: "sensors-comm",
++    name: "Sensors & Communication",
++    title: "Sensors & Communication",
++    description: "Inertial measurement sensors, transceivers and cameras.",
++    fullDescription: "Magnetic induction subsea transceivers, underwater optical fiber transceivers, depth gauges, and high-frequency communication modules.",
++    thumbnail: "",
++    displayOrder: 4
++  },
++  {
++    id: "field-equipment",
++    name: "Field Equipment",
++    title: "Field Equipment",
++    description: "Spools, winches, amplifiers and ocean safety gear.",
++    fullDescription: "Hydraulic spools, electrical winches, power amplifiers, signal filters, and offshore safety gears supporting field trials in estuary zones.",
++    thumbnail: "",
++    displayOrder: 5
++  }
++];
++
++
+ const INITIAL_MOUS: GenericEntity[] = [
+   {
+     id: "mou-1",
+@@ -538,10 +603,16 @@ const DEFAULT_SETTINGS: SiteSettings = {
+       displayOrder: 4
+     }
+   ],
+-  heroTitle: "Ocean Research Laboratory",
+-  heroSubtitle: "α«åα«┤α«┐ α«åα«░α«╛α«»α»ìα«Üα»ìα«Üα«┐ α«åα«»α»ìα«╡α«òα««α»ì / αñ╕αñ«αÑüαñªαÑìαñ░ αñàαñ¿αÑüαñ╕αñéαñºαñ╛αñ¿ αñ¬αÑìαñ░αñ»αÑïαñùαñ╢αñ╛αñ▓αñ╛",
++  heroTitle: {
++    en: "Ocean Research Laboratory",
++    ta: "α«åα«┤α«┐ α«åα«░α«╛α«»α»ìα«Üα»ìα«Üα«┐ α«åα«»α»ìα«╡α«òα««α»ì",
++    hi: "αñ╕αñ«αÑüαñªαÑìαñ░ αñàαñ¿αÑüαñ╕αñéαñºαñ╛αñ¿ αñ¬αÑìαñ░αñ»αÑïαñùαñ╢αñ╛αñ▓αñ╛"
++  },
++  heroSubtitle: "Ocean Research Laboratory, National Institute of Technical Teachers Training and Research (NITTTR), Chennai.\nA Pioneering Center for Ocean Engineering, Underwater Acoustics & Marine Technology",
+   heroDescription: "The Ocean Research Laboratory (ORL) at NITTTR Chennai is dedicated to advancing underwater acoustics, ocean engineering, marine sensing technologies, and subsea exploration systems through research, innovation, technical training, and field validation.",
+   heroBgImage: "",
++  heroBgVideo: "",
++  heroMediaType: "none",
+   heroPrimaryBtnText: "Explore Research",
+   heroPrimaryBtnLink: "/research",
+   heroSecondaryBtnText: "Contact Us",
+@@ -826,6 +897,7 @@ export function resetSiteToDefaults(): void {
+     "assets-v1",
+     "research-projects",
+     "research-equipment",
++    "research-facilities",
+     "research-activities",
+     "people-members",
+     "people-internships",
+@@ -873,6 +945,7 @@ export function useSiteSettings(): SiteSettings {
+ export const DATA_SEEDS = {
+   "research-projects": INITIAL_PROJECTS,
+   "research-equipment": INITIAL_EQUIPMENT,
++  "research-facilities": INITIAL_FACILITIES,
+   "research-activities": INITIAL_FIELD_ACTIVITIES,
+   "people-members": INITIAL_PEOPLE,
+   "people-internships": INITIAL_INTERNSHIPS,

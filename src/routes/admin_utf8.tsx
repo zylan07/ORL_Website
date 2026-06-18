@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   LayoutDashboard,
@@ -64,10 +64,10 @@ import {
   type CarouselImage
 } from "@/lib/repository-data";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin_utf8")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard — Website Content Manager" },
+      { title: "Admin Dashboard â€” Website Content Manager" },
       { name: "robots", content: "noindex" }
     ]
   }),
@@ -1331,7 +1331,7 @@ function Admin() {
                           <td className="px-4 py-3 font-semibold">{item.title}</td>
                           <td className="px-4 py-3 text-text-secondary">{item.fundingAgency}</td>
                           <td className="px-4 py-3 font-mono text-text-muted">{item.amount}</td>
-                          <td className="px-4 py-3 text-text-secondary">{item.role || "—"}</td>
+                          <td className="px-4 py-3 text-text-secondary">{item.role || "â€”"}</td>
                           <td className="px-4 py-3 text-center">
                             <OrderControls
                               index={idx}
@@ -1630,7 +1630,7 @@ function Admin() {
                             </span>
                             <span className="text-4xs text-text-muted">{item.designation}</span>
                           </td>
-                          <td className="px-4 py-3 text-text-secondary font-medium">{item.specialization || "—"}</td>
+                          <td className="px-4 py-3 text-text-secondary font-medium">{item.specialization || "â€”"}</td>
                           <td className="px-4 py-3">
                             <div className="space-y-0.5 text-4xs font-mono text-text-muted">
                               {item.orcid && <span className="block">ORCID: {item.orcid}</span>}
@@ -1736,9 +1736,9 @@ function Admin() {
                               {item.status === "past-contributor" ? "Past" : "Active"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-text-muted font-semibold">{item.mode || "—"}</td>
-                          <td className="px-4 py-3 font-mono font-bold text-teal-500 uppercase text-5xs whitespace-nowrap">{item.academicStatus || item.status || "—"}</td>
-                          <td className="px-4 py-3 text-text-secondary font-medium">{item.associatedProject || "—"}</td>
+                          <td className="px-4 py-3 text-text-muted font-semibold">{item.mode || "â€”"}</td>
+                          <td className="px-4 py-3 font-mono font-bold text-teal-500 uppercase text-5xs whitespace-nowrap">{item.academicStatus || item.status || "â€”"}</td>
+                          <td className="px-4 py-3 text-text-secondary font-medium">{item.associatedProject || "â€”"}</td>
                           <td className="px-4 py-3 text-center">
                             <OrderControls
                               index={idx}
@@ -1836,8 +1836,8 @@ function Admin() {
                               {item.status === "past-contributor" ? "Past" : "Active"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-text-muted font-semibold">{item.designation || item.role_in_project || "—"}</td>
-                          <td className="px-4 py-3 text-text-secondary font-medium">{item.associatedProject || "—"}</td>
+                          <td className="px-4 py-3 text-text-muted font-semibold">{item.designation || item.role_in_project || "â€”"}</td>
+                          <td className="px-4 py-3 text-text-secondary font-medium">{item.associatedProject || "â€”"}</td>
                           <td className="px-4 py-3 text-center">
                             <OrderControls
                               index={idx}
@@ -1935,8 +1935,8 @@ function Admin() {
                               {item.status === "past-contributor" ? "Past" : "Active"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-text-secondary">{item.researchArea || "—"}</td>
-                          <td className="px-4 py-3 text-text-muted font-mono">{item.graduationDate || "—"}</td>
+                          <td className="px-4 py-3 text-text-secondary">{item.researchArea || "â€”"}</td>
+                          <td className="px-4 py-3 text-text-muted font-mono">{item.graduationDate || "â€”"}</td>
                           <td className="px-4 py-3 text-center">
                             <OrderControls
                               index={idx}
@@ -2320,7 +2320,7 @@ function Admin() {
                           <span className="text-4xs text-text-muted">{item.institution}</span>
                         </td>
                         <td className="px-4 py-3 text-text-secondary font-semibold">{item.duration}</td>
-                        <td className="px-4 py-3 text-text-muted italic">{item.topic || "—"}</td>
+                        <td className="px-4 py-3 text-text-muted italic">{item.topic || "â€”"}</td>
                         <td className="px-4 py-3 font-semibold">
                           {item.cvId ? (
                             <span className="text-teal-500 font-bold">Uploaded</span>
@@ -2729,10 +2729,10 @@ function Admin() {
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
                         <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
                         <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
-                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.recipient || "—"}</td>
-                        <td className="px-4 py-3">{item.showInGallery ? "Yes ✅" : "No ❌"}</td>
-                        <td className="px-4 py-3 capitalize">{item.showcaseCategory || "—"}</td>
-                        <td className="px-4 py-3 font-mono">{item.showcasePriority ?? "—"}</td>
+                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.recipient || "â€”"}</td>
+                        <td className="px-4 py-3">{item.showInGallery ? "Yes âœ…" : "No âŒ"}</td>
+                        <td className="px-4 py-3 capitalize">{item.showcaseCategory || "â€”"}</td>
+                        <td className="px-4 py-3 font-mono">{item.showcasePriority ?? "â€”"}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -2862,7 +2862,7 @@ function Admin() {
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
                         <td className="px-4 py-3 text-text-secondary">{item.place}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
-                        <td className="px-4 py-3 text-text-secondary font-mono">{item.code || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary font-mono">{item.code || "â€”"}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -3115,7 +3115,7 @@ function Admin() {
                         </td>
                         <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.duration}</td>
-                        <td className="px-4 py-3 text-text-secondary font-mono">{item.mode || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary font-mono">{item.mode || "â€”"}</td>
                         <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
@@ -3189,7 +3189,7 @@ function Admin() {
                     {repoRecords.filter(r => r.type === "dc").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "â€”"}</td>
                         <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
                         <td className="px-4 py-3 text-right">
@@ -3251,7 +3251,7 @@ function Admin() {
                     {repoRecords.filter(r => r.type === "talk").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.recipient || item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.recipient || item.subtitle || "â€”"}</td>
                         <td className="px-4 py-3 text-text-secondary">{item.organization} {item.place && `, ${item.place}`}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
                         <td className="px-4 py-3 text-right">
@@ -3379,7 +3379,7 @@ function Admin() {
                       <tr key={item.id} className="hover:bg-secondary/10">
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
                         <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "—"}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.subtitle || "â€”"}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
@@ -3549,7 +3549,7 @@ function Admin() {
                             <span className="font-bold block">{item.name}</span>
                             <span className="text-4xs text-text-muted">{item.designation}</span>
                           </td>
-                          <td className="px-4 py-3 font-mono text-text-secondary">{item.email || "—"}</td>
+                          <td className="px-4 py-3 font-mono text-text-secondary">{item.email || "â€”"}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex gap-1 justify-center">
                               <button
@@ -4287,7 +4287,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-secondary text-text-muted disabled:opacity-40"
                                     title="Move Up"
                                   >
-                                    ▲
+                                    â–²
                                   </button>
                                   <button
                                     type="button"
@@ -4303,7 +4303,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-secondary text-text-muted disabled:opacity-40"
                                     title="Move Down"
                                   >
-                                    ▼
+                                    â–¼
                                   </button>
                                   <button
                                     type="button"
@@ -4314,7 +4314,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-destructive/10 text-destructive text-3xs font-bold"
                                     title="Delete"
                                   >
-                                    ✕
+                                    âœ•
                                   </button>
                                 </div>
                               </div>
@@ -4378,7 +4378,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-secondary text-text-muted disabled:opacity-40"
                                     title="Move Up"
                                   >
-                                    ▲
+                                    â–²
                                   </button>
                                   <button
                                     type="button"
@@ -4394,7 +4394,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-secondary text-text-muted disabled:opacity-40"
                                     title="Move Down"
                                   >
-                                    ▼
+                                    â–¼
                                   </button>
                                   <button
                                     type="button"
@@ -4405,7 +4405,7 @@ function Admin() {
                                     className="p-1 rounded hover:bg-destructive/10 text-destructive text-3xs font-bold"
                                     title="Delete"
                                   >
-                                    ✕
+                                    âœ•
                                   </button>
                                 </div>
                               </div>
@@ -5056,7 +5056,7 @@ function Admin() {
                           value={editingItem.data.date || ""}
                           onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, date: e.target.value } })}
                           className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                          placeholder="e.g. 2023–2024"
+                          placeholder="e.g. 2023â€“2024"
                         />
                       </label>
                       <label className="block space-y-1">

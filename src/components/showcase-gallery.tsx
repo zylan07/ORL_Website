@@ -28,29 +28,6 @@ export function ShowcaseCard({
 }: ShowcaseCardProps) {
   const [activeIdx, setActiveIdx] = useState(0);
 
-  // Auto-rotating Carousel logic (5s rotation)
-  useEffect(() => {
-    if (items.length <= 1) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % items.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [items, activeIdx]);
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  const currentItem = items[activeIdx];
-
-  const handlePrev = () => {
-    setActiveIdx((prev) => (prev - 1 + items.length) % items.length);
-  };
-
-  const handleNext = () => {
-    setActiveIdx((prev) => (prev + 1) % items.length);
-  };
-
   // Define accent styles
   const isGold = accent === "gold";
 
@@ -72,6 +49,57 @@ export function ShowcaseCard({
     : "shadow-[0_4px_24px_rgba(6,182,212,0.08)] hover:shadow-[0_8px_32px_rgba(6,182,212,0.18)]";
 
   const aspectClass = aspectRatio === "4/3" ? "aspect-4/3" : "aspect-16/9";
+
+  // Auto-rotating Carousel logic (5s rotation)
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % items.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [items, activeIdx]);
+
+  if (items.length === 0) {
+    const emptyMsg = title.toLowerCase().includes("faculty") 
+      ? "No faculty awards available yet." 
+      : title.toLowerCase().includes("student") 
+      ? "No student awards available yet." 
+      : "No awards available yet.";
+
+    return (
+      <div
+        className={`ocean-glass rounded-2xl p-5 border ${borderClass} ${glowClass} flex flex-col justify-between transition-all duration-500 h-full`}
+      >
+        <div>
+          {/* Card Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl" role="img" aria-label={title}>
+              {icon}
+            </span>
+            <h2 className={`text-lg font-bold tracking-wide ${textAccentClass}`}>
+              {title}
+            </h2>
+          </div>
+
+          {/* Empty State Area */}
+          <div className={`relative w-full ${aspectClass} rounded-xl overflow-hidden bg-black/60 border border-border/40 shadow-inner flex flex-col items-center justify-center py-12 text-center`}>
+            <span className="text-2xl mb-2">🏅</span>
+            <p className="text-sm font-semibold text-muted-foreground">{emptyMsg}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentItem = items[activeIdx];
+
+  const handlePrev = () => {
+    setActiveIdx((prev) => (prev - 1 + items.length) % items.length);
+  };
+
+  const handleNext = () => {
+    setActiveIdx((prev) => (prev + 1) % items.length);
+  };
 
   return (
     <div

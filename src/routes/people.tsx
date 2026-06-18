@@ -1012,8 +1012,15 @@ function PeoplePage() {
     ...STATIC_PG_ALUMNI.map(m => ({ ...m, role: "alumni", title: m.name, programme: m.programme })),
   ], []);
 
-  const allMembers = useDatasetRecords("people-members", staticMembers) as any[];
-  const INTERNSHIPS = useDatasetRecords("people-internships", STATIC_INTERNSHIPS) as any[];
+  const allMembersRaw = useDatasetRecords("people-members", staticMembers) as any[];
+  const allMembers = useMemo(() => {
+    return allMembersRaw.filter(m => m.status !== "past-contributor");
+  }, [allMembersRaw]);
+
+  const rawInternships = useDatasetRecords("people-internships", STATIC_INTERNSHIPS) as any[];
+  const INTERNSHIPS = useMemo(() => {
+    return rawInternships.filter(i => i.status !== "past-contributor");
+  }, [rawInternships]);
 
   // Re-split members into separate list states with original types
   const TEAM_MEMBERS = useMemo(() => {
