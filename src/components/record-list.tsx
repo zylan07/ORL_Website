@@ -156,10 +156,6 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
     if (type !== "award") return { faculty: [], student: [] };
 
     const mapAwardToShowcaseItem = (r: RepoRecord) => {
-      // Image source priority:
-      // 1. showcaseImage (if exists)
-      // 2. fallback image based on audience
-      // 3. placeholder (resolveAssetUrl fallback)
       let imgUrl = "";
       if (r.showcaseImage) {
         imgUrl = resolveAssetUrl(r.showcaseImage);
@@ -183,19 +179,17 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
       };
     };
 
-    // Filter awards by Audience category
+    // Filter awards by Audience category - Enforce showcaseImage only
     const facultyAwards = records.filter((r) => {
       if (r.type !== "award") return false;
-      const isShowcaseMember = r.featured === true || r.showInGallery === true || !!r.showcaseImage;
-      if (!isShowcaseMember) return false;
+      if (!r.showcaseImage) return false;
       const audience = r.awardAudience || r.showcaseCategory || "faculty";
       return audience === "faculty" || audience === "faculty-student";
     });
 
     const studentAwards = records.filter((r) => {
       if (r.type !== "award") return false;
-      const isShowcaseMember = r.featured === true || r.showInGallery === true || !!r.showcaseImage;
-      if (!isShowcaseMember) return false;
+      if (!r.showcaseImage) return false;
       const audience = r.awardAudience || r.showcaseCategory || "faculty";
       return audience === "student" || audience === "faculty-student";
     });

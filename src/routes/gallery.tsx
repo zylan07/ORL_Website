@@ -19,9 +19,7 @@ import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
 
 const gallerySearchSchema = z.object({
-  tab: z
-    .enum(["research", "field", "facilities", "events", "internships"])
-    .optional(),
+  tab: z.string().optional(),
 });
 
 export const Route = createFileRoute("/gallery")({
@@ -44,7 +42,8 @@ export const Route = createFileRoute("/gallery")({
 export interface GalleryRecord {
   id: string;
   title: string;
-  category: "research" | "field" | "facilities" | "events" | "internships";
+  category?: string; // legacy fallback
+  sectionId?: string; // dynamic section mapping
   date?: string;
   description?: string;
   thumbnail?: string;
@@ -68,6 +67,11 @@ interface PlaceholderProps {
 
 function ElegantPlaceholder({ category, title }: PlaceholderProps) {
   const gradients: Record<string, string> = {
+    sky: "from-blue-950/40 via-sky-900/20 to-sky-950/40 text-sky-400 border-sky-500/20",
+    emerald: "from-emerald-950/40 via-emerald-900/20 to-emerald-950/40 text-emerald-400 border-emerald-500/20",
+    teal: "from-teal-950/40 via-teal-900/20 to-teal-950/40 text-teal-400 border-teal-500/20",
+    cyan: "from-cyan-950/40 via-cyan-900/20 to-cyan-950/40 text-cyan-400 border-cyan-500/20",
+    indigo: "from-indigo-950/40 via-indigo-900/20 to-indigo-950/40 text-indigo-400 border-indigo-500/20",
     research: "from-blue-950/40 via-sky-900/20 to-sky-950/40 text-sky-400 border-sky-500/20",
     field: "from-emerald-950/40 via-emerald-900/20 to-emerald-950/40 text-emerald-400 border-emerald-500/20",
     facilities: "from-teal-950/40 via-teal-900/20 to-teal-950/40 text-teal-400 border-teal-500/20",
@@ -75,7 +79,7 @@ function ElegantPlaceholder({ category, title }: PlaceholderProps) {
     internships: "from-indigo-950/40 via-indigo-900/20 to-indigo-950/40 text-indigo-400 border-indigo-500/20"
   };
 
-  const bgGradient = gradients[category] || gradients.research;
+  const bgGradient = gradients[category] || gradients.sky;
 
   return (
     <div className={`w-full h-44 rounded-lg bg-gradient-to-br ${bgGradient} border flex flex-col items-center justify-center p-4 text-center select-none overflow-hidden relative group-hover:scale-[1.01] transition duration-300`}>
@@ -96,6 +100,12 @@ interface MediaModalProps {
 
 function MediaModal({ item, onClose }: MediaModalProps) {
   const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  const sections = useDatasetRecords("gallery-sections", DATA_SEEDS["gallery-sections"]);
+  const sectionName = useMemo(() => {
+    const s = sections.find((x) => x.id === item.sectionId);
+    return s ? s.name : "Archive Record";
+  }, [sections, item.sectionId]);
 
   const imagesList = useMemo(() => {
     const list: string[] = [];
@@ -134,14 +144,6 @@ function MediaModal({ item, onClose }: MediaModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, hasMultiple, imagesList.length]);
 
-  const categoryLabels: Record<string, string> = {
-    research: "Research Activity",
-    field: "Field Activity",
-    facilities: "Laboratory Infrastructure",
-    events: "Event & Workshop",
-    internships: "Internship Showcase"
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-opacity duration-300 animate-fade-in"
@@ -163,7 +165,7 @@ function MediaModal({ item, onClose }: MediaModalProps) {
         {/* Modal Header */}
         <div className="space-y-2.5 pr-8 font-sans">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-5xs font-bold uppercase tracking-wider bg-secondary border border-border/45 text-text-secondary">
-            {categoryLabels[item.category] || "Archive Record"}
+            {sectionName}
           </span>
           <h3 className="text-lg font-black leading-snug text-foreground">
             {item.title}
@@ -300,6 +302,13 @@ function GalleryPage() {
 
   // Shadow GALLERY_RECORDS reactively
   const GALLERY_RECORDS = useDatasetRecords("gallery-records", STATIC_GALLERY_RECORDS) as GalleryRecord[];
+  
+  // Shadow dynamic gallery sections
+  const sections = useDatasetRecords("gallery-sections", DATA_SEEDS["gallery-sections"]);
+
+  const sortedSections = useMemo(() => {
+    return [...sections].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [sections]);
 
   const { tab } = Route.useSearch();
 
@@ -319,7 +328,6 @@ function GalleryPage() {
   const handleScroll = (id: string) => {
     const el = document.getElementById(id);
     if (!el) {
-      // Clear filters so section renders, then scroll
       setSearchQuery("");
       setSelectedCategory("all");
       setSelectedYear("all");
@@ -352,7 +360,7 @@ function GalleryPage() {
       }
     });
     return Array.from(years).sort((a, b) => b.localeCompare(a));
-  }, []);
+  }, [GALLERY_RECORDS]);
 
   // Filtered gallery records based on combined search, category, and year selection
   const filteredRecords = useMemo(() => {
@@ -364,15 +372,15 @@ function GalleryPage() {
       list = list.filter(
         (rec) =>
           rec.title.toLowerCase().includes(q) ||
-          rec.category.toLowerCase().includes(q) ||
+          (rec.category && rec.category.toLowerCase().includes(q)) ||
           (rec.description && rec.description.toLowerCase().includes(q)) ||
           (rec.tags && rec.tags.some((t) => t.toLowerCase().includes(q)))
       );
     }
 
-    // 2. Category Dropdown
+    // 2. Section ID Dropdown (holds selected category)
     if (selectedCategory !== "all") {
-      list = list.filter((rec) => rec.category === selectedCategory);
+      list = list.filter((rec) => rec.sectionId === selectedCategory);
     }
 
     // 3. Year Dropdown
@@ -385,36 +393,26 @@ function GalleryPage() {
     }
 
     return list;
-  }, [searchQuery, selectedCategory, selectedYear]);
+  }, [GALLERY_RECORDS, searchQuery, selectedCategory, selectedYear]);
 
-  // Categories mapping metadata
-  const categoriesList = useMemo(() => {
-    return [
-      { id: "research", label: "Research Activities", theme: "research", icon: ImageIcon },
-      { id: "field", label: "Field Activities", theme: "field", icon: Anchor },
-      { id: "facilities", label: "Facilities", theme: "facilities", icon: Layers },
-      { id: "events", label: "Events & Workshops", theme: "events", icon: Calendar },
-      { id: "internships", label: "Internships", theme: "internships", icon: Sparkles }
-    ];
-  }, []);
-
-  // Partition records by category for structural rendering
-  const researchRecs = useMemo(() => filteredRecords.filter(r => r.category === "research"), [filteredRecords]);
-  const fieldRecs = useMemo(() => filteredRecords.filter(r => r.category === "field"), [filteredRecords]);
-  const facilitiesRecs = useMemo(() => filteredRecords.filter(r => r.category === "facilities"), [filteredRecords]);
-  const eventsRecs = useMemo(() => filteredRecords.filter(r => r.category === "events"), [filteredRecords]);
-  const internshipsRecs = useMemo(() => filteredRecords.filter(r => r.category === "internships"), [filteredRecords]);
+  // Dynamic navigation items based on sortedSections
+  const navItems = useMemo(() => {
+    const icons = [ImageIcon, Anchor, Layers, Calendar, Sparkles];
+    const themes = ["sky", "emerald", "teal", "cyan", "indigo"] as const;
+    return sortedSections.map((sec, idx) => {
+      const count = GALLERY_RECORDS.filter(r => r.sectionId === sec.id).length;
+      return {
+        label: sec.name,
+        id: sec.id,
+        icon: icons[idx % icons.length],
+        count,
+        theme: themes[idx % themes.length]
+      };
+    });
+  }, [sortedSections, GALLERY_RECORDS]);
 
   // Check if any matches exist at all
   const hasMatches = filteredRecords.length > 0;
-
-  const navItems = useMemo(() => [
-    { label: "Research", id: "research", icon: ImageIcon, count: GALLERY_RECORDS.filter(r => r.category === "research").length, theme: "sky" as const },
-    { label: "Field Activities", id: "field", icon: Anchor, count: GALLERY_RECORDS.filter(r => r.category === "field").length, theme: "emerald" as const },
-    { label: "Facilities", id: "facilities", icon: Layers, count: GALLERY_RECORDS.filter(r => r.category === "facilities").length, theme: "teal" as const },
-    { label: "Events", id: "events", icon: Calendar, count: GALLERY_RECORDS.filter(r => r.category === "events").length, theme: "cyan" as const },
-    { label: "Internships", id: "internships", icon: Sparkles, count: GALLERY_RECORDS.filter(r => r.category === "internships").length, theme: "indigo" as const }
-  ], [GALLERY_RECORDS]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
@@ -432,8 +430,6 @@ function GalleryPage() {
           <p className="mx-auto max-w-xl text-xs font-semibold text-cyan-500 uppercase tracking-widest leading-relaxed">
             Professional media archive of subsea deployments, trials, and research
           </p>
- 
-
         </div>
       </section>
 
@@ -457,15 +453,15 @@ function GalleryPage() {
 
           {/* Combined Filters */}
           <div className="flex gap-2 w-full sm:w-auto">
-            {/* Category Select */}
+            {/* Category/Section Select */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="text-xs bg-card/65 border border-border rounded-xl px-3 py-2 outline-none focus:border-cyan-500/50 cursor-pointer w-full sm:w-40 font-sans"
             >
               <option value="all">All Categories</option>
-              {categoriesList.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+              {sortedSections.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
 
@@ -487,280 +483,85 @@ function GalleryPage() {
       {/* Main Content Area */}
       <div className="mx-auto max-w-5xl px-6 mt-12 space-y-16">
         
-        {/* Research Activities (Deep Ocean Blue Theme) */}
-        {researchRecs.length > 0 && (
-          <section id="research" className="scroll-mt-28 space-y-6">
-            <div className="border-b border-sky-500/20 pb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                Research Activities
-              </h2>
-              <span className="text-xs font-mono font-bold text-sky-600 dark:text-sky-400">
-                {researchRecs.length} {researchRecs.length === 1 ? "Record" : "Records"}
-              </span>
-            </div>
-            
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {researchRecs.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => openDetail(rec)}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-sky-500/35 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group"
-                >
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
-                    {rec.thumbnail ? (
-                      <img
-                        src={resolveAssetUrl(rec.thumbnail)}
-                        alt={rec.title}
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <ElegantPlaceholder category="research" title={rec.title} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-5xs font-bold uppercase tracking-wider text-sky-500">
-                        Research
-                      </span>
-                      {rec.date && (
-                        <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
-                      )}
-                    </div>
-                    <h3 className="text-xs font-bold text-foreground leading-snug truncate">
-                      {rec.title}
-                    </h3>
-                    {rec.description && (
-                      <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                        {rec.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Render sections dynamically */}
+        {sortedSections.map((sec, idx) => {
+          const sectionRecs = filteredRecords
+            .filter(r => r.sectionId === sec.id)
+            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-        {/* Field Activities (Ocean Emerald Theme) */}
-        {fieldRecs.length > 0 && (
-          <section id="field" className="scroll-mt-28 space-y-6">
-            <div className="border-b border-emerald-500/20 pb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                Field Activities
-              </h2>
-              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                {fieldRecs.length} {fieldRecs.length === 1 ? "Record" : "Records"}
-              </span>
-            </div>
-            
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {fieldRecs.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => openDetail(rec)}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-emerald-500/35 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group"
-                >
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
-                    {rec.thumbnail ? (
-                      <img
-                        src={resolveAssetUrl(rec.thumbnail)}
-                        alt={rec.title}
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <ElegantPlaceholder category="field" title={rec.title} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-5xs font-bold uppercase tracking-wider text-emerald-500">
-                        Field Testing
-                      </span>
-                      {rec.date && (
-                        <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
-                      )}
-                    </div>
-                    <h3 className="text-xs font-bold text-foreground leading-snug truncate">
-                      {rec.title}
-                    </h3>
-                    {rec.description && (
-                      <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                        {rec.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+          if (sectionRecs.length === 0) return null;
 
-        {/* Facilities (Marine Teal Theme) */}
-        {facilitiesRecs.length > 0 && (
-          <section id="facilities" className="scroll-mt-28 space-y-6">
-            <div className="border-b border-teal-500/20 pb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                Laboratory Infrastructure
-              </h2>
-              <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
-                {facilitiesRecs.length} {facilitiesRecs.length === 1 ? "Record" : "Records"}
-              </span>
-            </div>
-            
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {facilitiesRecs.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => openDetail(rec)}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-teal-500/35 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group"
-                >
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
-                    {rec.thumbnail ? (
-                      <img
-                        src={resolveAssetUrl(rec.thumbnail)}
-                        alt={rec.title}
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <ElegantPlaceholder category="facilities" title={rec.title} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-5xs font-bold uppercase tracking-wider text-teal-500">
-                        Facilities
-                      </span>
-                      {rec.date && (
-                        <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
-                      )}
-                    </div>
-                    <h3 className="text-xs font-bold text-foreground leading-snug truncate">
-                      {rec.title}
-                    </h3>
-                    {rec.description && (
-                      <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                        {rec.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+          const themes = ["sky", "emerald", "teal", "cyan", "indigo"] as const;
+          const theme = themes[idx % themes.length];
+          
+          const textAccent = 
+            theme === "sky" ? "text-sky-500" :
+            theme === "emerald" ? "text-emerald-500" :
+            theme === "teal" ? "text-teal-500" :
+            theme === "cyan" ? "text-cyan-500" :
+            "text-indigo-500";
 
-        {/* Events & Workshops (Amber Theme) */}
-        {eventsRecs.length > 0 && (
-          <section id="events" className="scroll-mt-28 space-y-6">
-            <div className="border-b border-amber-500/20 pb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                Events & Workshops
-              </h2>
-              <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
-                {eventsRecs.length} {eventsRecs.length === 1 ? "Record" : "Records"}
-              </span>
-            </div>
-            
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {eventsRecs.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => openDetail(rec)}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-amber-500/35 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group"
-                >
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
-                    {rec.thumbnail ? (
-                      <img
-                        src={resolveAssetUrl(rec.thumbnail)}
-                        alt={rec.title}
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <ElegantPlaceholder category="events" title={rec.title} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-5xs font-bold uppercase tracking-wider text-amber-500">
-                        Events
-                      </span>
-                      {rec.date && (
-                        <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
-                      )}
-                    </div>
-                    <h3 className="text-xs font-bold text-foreground leading-snug truncate">
-                      {rec.title}
-                    </h3>
-                    {rec.description && (
-                      <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                        {rec.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+          const borderThemeClass = 
+            theme === "sky" ? "border-sky-500/20 hover:border-sky-500/35" :
+            theme === "emerald" ? "border-emerald-500/20 hover:border-emerald-500/35" :
+            theme === "teal" ? "border-teal-500/20 hover:border-teal-500/35" :
+            theme === "cyan" ? "border-cyan-500/20 hover:border-cyan-500/35" :
+            "border-indigo-500/20 hover:border-indigo-500/35";
 
-        {/* Internships Showcase (Indigo Theme) */}
-        {internshipsRecs.length > 0 && (
-          <section id="internships" className="scroll-mt-28 space-y-6">
-            <div className="border-b border-indigo-500/20 pb-2 flex items-center justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-                Internships
-              </h2>
-              <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                {internshipsRecs.length} {internshipsRecs.length === 1 ? "Record" : "Records"}
-              </span>
-            </div>
-            
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {internshipsRecs.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => openDetail(rec)}
-                  className="rounded-xl border border-border bg-card p-4 hover:border-indigo-500/35 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group animate-fade-in"
-                >
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
-                    {rec.thumbnail ? (
-                      <img
-                        src={resolveAssetUrl(rec.thumbnail)}
-                        alt={rec.title}
-                        className="w-full h-44 object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <ElegantPlaceholder category="internships" title={rec.title} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-5xs font-bold uppercase tracking-wider text-indigo-500">
-                        Internship
-                      </span>
-                      {rec.date && (
-                        <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
+          return (
+            <section key={sec.id} id={sec.id} className="scroll-mt-28 space-y-6">
+              <div className={`border-b border-border/25 pb-2 flex items-center justify-between`}>
+                <h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
+                  {sec.name}
+                </h2>
+                <span className={`text-xs font-mono font-bold ${textAccent}`}>
+                  {sectionRecs.length} {sectionRecs.length === 1 ? "Record" : "Records"}
+                </span>
+              </div>
+              
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                {sectionRecs.map((rec) => (
+                  <div
+                    key={rec.id}
+                    onClick={() => openDetail(rec)}
+                    className={`rounded-xl border border-border bg-card p-4 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group ${borderThemeClass}`}
+                  >
+                    <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
+                      {rec.thumbnail ? (
+                        <img
+                          src={resolveAssetUrl(rec.thumbnail)}
+                          alt={rec.title}
+                          className="w-full h-44 object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <ElegantPlaceholder category={theme} title={rec.title} />
                       )}
                     </div>
-                    <h3 className="text-xs font-bold text-foreground leading-snug line-clamp-1">
-                      {rec.title}
-                    </h3>
-                    {rec.description && (
-                      <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                        {rec.description}
-                      </p>
-                    )}
+                    <div className="space-y-1.5 font-sans">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-5xs font-bold uppercase tracking-wider ${textAccent}`}>
+                          {sec.name}
+                        </span>
+                        {rec.date && (
+                          <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
+                        )}
+                      </div>
+                      <h3 className="text-xs font-bold text-foreground leading-snug truncate">
+                        {rec.title}
+                      </h3>
+                      {rec.description && (
+                        <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
+                          {rec.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         {/* Global Empty State */}
         {!hasMatches && (

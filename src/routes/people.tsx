@@ -1456,7 +1456,7 @@ function PeoplePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
               <span className="text-5xs font-mono font-bold uppercase tracking-wider text-indigo-500">Faculty</span>
-              <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Team Members</h2>
+              <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Faculty</h2>
             </div>
             
             {/* Search filter */}

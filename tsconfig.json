@@ -6,8 +6,7 @@
     "eslint.config.js"
   ],
   "exclude": [
-    "src/routes/index_old.tsx",
-    "src/routes/admin_utf8.tsx"
+    "src/routes_backup/**/*"
   ],
   "compilerOptions": {
     "target": "ES2022",

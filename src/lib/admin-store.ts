@@ -829,6 +829,7 @@ export function exportSiteBackup(): string {
     "collaborations-institutions",
     "collaborations-activities",
     "gallery-records",
+    "gallery-sections",
     "home-research-focus",
     "home-highlights",
     "home-quick-access",
@@ -915,6 +916,7 @@ export function resetSiteToDefaults(): void {
     "collaborations-institutions",
     "collaborations-activities",
     "gallery-records",
+    "gallery-sections",
     "home-research-focus",
     "home-highlights",
     "home-quick-access",
@@ -963,8 +965,42 @@ export const DATA_SEEDS = {
   "collaborations-institutions": INITIAL_PARTNERS,
   "collaborations-activities": INITIAL_CONSULTANCY,
   "gallery-records": INITIAL_GALLERY_ALL,
+  "gallery-sections": INITIAL_GALLERY_SECTIONS,
   "media-library": INITIAL_MEDIA_LIBRARY,
   "home-research-focus": INITIAL_HOME_RESEARCH_FOCUS,
   "home-highlights": INITIAL_HOME_HIGHLIGHTS,
   "home-quick-access": INITIAL_HOME_QUICK_ACCESS
 };
+
+// --- ONE-TIME GALLERY MIGRATION ---
+if (isBrowser) {
+  try {
+    const migrated = localStorage.getItem("uwarl-gallery-migration-v1");
+    if (migrated !== "true") {
+      // Ensure "gallery-sections" has "Imported Gallery"
+      let sections = getStoredData("gallery-sections", INITIAL_GALLERY_SECTIONS);
+      if (!sections.some(s => s.id === "imported-gallery")) {
+        sections = [{ id: "imported-gallery", name: "Imported Gallery", displayOrder: 1 }, ...sections];
+        saveStoredData("gallery-sections", sections);
+      }
+      
+      // Map existing gallery-records images to this section
+      let gallery = getStoredData("gallery-records", INITIAL_GALLERY_ALL);
+      let updated = false;
+      gallery = gallery.map(item => {
+        if (!item.sectionId) {
+          item.sectionId = "imported-gallery";
+          updated = true;
+        }
+        return item;
+      });
+      if (updated) {
+        saveStoredData("gallery-records", gallery);
+      }
+      
+      localStorage.setItem("uwarl-gallery-migration-v1", "true");
+    }
+  } catch (err) {
+    console.error("Gallery migration error:", err);
+  }
+}

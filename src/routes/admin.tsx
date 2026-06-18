@@ -464,6 +464,7 @@ function Admin() {
   const partners = useDatasetRecords("collaborations-institutions", DATA_SEEDS["collaborations-institutions"]);
   const consultancy = useDatasetRecords("collaborations-activities", DATA_SEEDS["collaborations-activities"]);
   const gallery = useDatasetRecords("gallery-records", DATA_SEEDS["gallery-records"]);
+  const gallerySections = useDatasetRecords("gallery-sections", DATA_SEEDS["gallery-sections"]);
 
   // Local config state for awards carousels
   const [carouselConfig, setCarouselConfigState] = useState(getCarouselConfig());
@@ -472,6 +473,8 @@ function Admin() {
   const [editingItem, setEditingItem] = useState<{ key: string; isNew: boolean; index?: number; data: any } | null>(null);
   const [deletingFacility, setDeletingFacility] = useState<any>(null);
   const [targetMoveCategory, setTargetMoveCategory] = useState<string>("");
+  const [deletingSection, setDeletingSection] = useState<any>(null);
+  const [selectedAdminSection, setSelectedAdminSection] = useState("imported-gallery");
 
   // Sidebar list mapping
   const SIDEBAR_ITEMS = [
@@ -561,6 +564,47 @@ function Admin() {
     const updated = internships.map(i => i.id === id ? { ...i, status: newStatus } : i);
     saveDatasetRecords("people-internships", updated);
     toast.success("Internship status updated successfully.");
+  };
+
+  const handleMoveGalleryRecord = (id: string, direction: "up" | "down", sectionId: string) => {
+    const sectionRecs = gallery
+      .filter(r => r.sectionId === sectionId)
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    
+    const listIndex = sectionRecs.findIndex(r => r.id === id);
+    if (listIndex === -1) return;
+    
+    let swapWithId = "";
+    if (direction === "up" && listIndex > 0) {
+      swapWithId = sectionRecs[listIndex - 1].id;
+    } else if (direction === "down" && listIndex < sectionRecs.length - 1) {
+      swapWithId = sectionRecs[listIndex + 1].id;
+    }
+    
+    if (!swapWithId) return;
+    
+    const idxA = gallery.findIndex(r => r.id === id);
+    const idxB = gallery.findIndex(r => r.id === swapWithId);
+    if (idxA !== -1 && idxB !== -1) {
+      const updated = [...gallery];
+      const tempOrder = updated[idxA].displayOrder || 0;
+      updated[idxA].displayOrder = updated[idxB].displayOrder || 0;
+      updated[idxB].displayOrder = tempOrder || 1;
+      
+      if (updated[idxA].displayOrder === updated[idxB].displayOrder) {
+        const temp = updated[idxA];
+        updated[idxA] = updated[idxB];
+        updated[idxB] = temp;
+        let secOrder = 1;
+        updated.forEach(item => {
+          if (item.sectionId === sectionId) {
+            item.displayOrder = secOrder++;
+          }
+        });
+      }
+      saveDatasetRecords("gallery-records", updated);
+      toast.success("Gallery record display order updated.");
+    }
   };
 
   // Swap within filtered list in award-banners carouselConfig
@@ -2545,67 +2589,181 @@ function Admin() {
             <div>
               <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Photo Gallery Manager</h1>
               <p className="text-xs text-text-secondary mt-1">
-                Upload image assets, categorize items, and arrange priority layouts on the public gallery grid.
+                Upload image assets, categorize items, manage dynamic gallery sections, and arrange layouts on the public gallery page.
               </p>
             </div>
 
+            {/* Gallery Sections Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Uploaded Photo Showcase Cards</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Gallery Sections & Categories</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "gallery-records", isNew: true, data: { title: "", category: "research", date: "", tags: "", description: "", thumbnail: "", images: [] } })}
+                  onClick={() => setEditingItem({ key: "gallery-sections", isNew: true, data: { name: "", displayOrder: gallerySections.length + 1 } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Section
+                </button>
+              </div>
+
+              <div className="orl-table-container">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="w-16 text-center">Order</th>
+                      <th>Section Name</th>
+                      <th>Images Count</th>
+                      <th className="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {gallerySections
+                      .slice()
+                      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                      .map((sec, idx) => {
+                        const count = gallery.filter(r => r.sectionId === sec.id).length;
+                        return (
+                          <tr key={sec.id}>
+                            <td className="text-center font-mono">{sec.displayOrder}</td>
+                            <td className="font-bold text-foreground">{sec.name}</td>
+                            <td className="text-text-secondary font-mono">{count} images</td>
+                            <td className="text-right">
+                              <div className="inline-flex items-center gap-1.5 justify-end">
+                                <OrderControls
+                                  index={idx}
+                                  total={gallerySections.length}
+                                  onMoveUp={() => handleMoveItem("gallery-sections", gallerySections, idx, "up")}
+                                  onMoveDown={() => handleMoveItem("gallery-sections", gallerySections, idx, "down")}
+                                />
+                                <button
+                                  onClick={() => setEditingItem({ key: "gallery-sections", isNew: false, index: idx, data: sec })}
+                                  className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  disabled={sec.id === "imported-gallery"} // protect Imported Gallery
+                                  onClick={() => {
+                                    const count = gallery.filter(r => r.sectionId === sec.id).length;
+                                    if (count > 0) {
+                                      setDeletingSection(sec);
+                                    } else {
+                                      if (confirm(`Delete section "${sec.name}"?`)) {
+                                        const filtered = gallerySections.filter(s => s.id !== sec.id);
+                                        saveDatasetRecords("gallery-sections", filtered);
+                                        toast.success("Section deleted successfully.");
+                                      }
+                                    }
+                                  }}
+                                  className="p-1 rounded text-text-muted hover:text-destructive disabled:opacity-40"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Photos Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-border/40 pb-3">
+                <div className="space-y-1">
+                  <h3 className="font-extrabold text-xs text-foreground uppercase">Uploaded Photo Showcase Cards</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-text-muted font-bold uppercase">Section:</span>
+                    <select
+                      value={selectedAdminSection}
+                      onChange={(e) => setSelectedAdminSection(e.target.value)}
+                      className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs outline-none focus:border-teal-500 font-semibold w-48"
+                    >
+                      {gallerySections.map((sec: any) => (
+                        <option key={sec.id} value={sec.id}>{sec.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditingItem({ key: "gallery-records", isNew: true, data: { title: "", category: "research", sectionId: selectedAdminSection, date: "", tags: "", description: "", thumbnail: "", images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans self-start sm:self-auto"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add Gallery Photo
                 </button>
               </div>
 
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                {gallery.map((item, idx) => (
-                  <div key={item.id} className="rounded-xl border border-border bg-card overflow-hidden flex flex-col justify-between shadow-xs hover:border-teal-500/25 transition">
-                    <div>
-                      <div className="aspect-video bg-muted relative overflow-hidden">
-                        <img src={resolveAssetUrl(item.thumbnail || (item.images && item.images[0]))} className="h-full w-full object-cover" />
-                        <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-4xs uppercase tracking-wider px-2 py-0.5 rounded font-bold">
-                          {item.category}
-                        </span>
-                      </div>
-                      <div className="p-4 space-y-1">
-                        <h4 className="font-bold text-xs text-foreground leading-snug">{item.title}</h4>
-                        <p className="text-4xs text-text-muted leading-relaxed line-clamp-2">{item.description}</p>
-                      </div>
-                    </div>
+                {(() => {
+                  const filtered = gallery
+                    .filter((item) => item.sectionId === selectedAdminSection)
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-                    <div className="p-3 bg-secondary/20 border-t border-border/60 flex items-center justify-between gap-1.5">
-                      <OrderControls
-                        index={idx}
-                        total={gallery.length}
-                        onMoveUp={() => handleMoveItem("gallery-records", gallery, idx, "up")}
-                        onMoveDown={() => handleMoveItem("gallery-records", gallery, idx, "down")}
-                      />
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setEditingItem({ key: "gallery-records", isNew: false, index: idx, data: item })}
-                          className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this gallery image?")) {
-                              const filtered = gallery.filter((_, i) => i !== idx);
-                              saveDatasetRecords("gallery-records", filtered);
-                              toast.success("Gallery record deleted successfully.");
-                            }
-                          }}
-                          className="p-1 rounded text-text-muted hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="col-span-full text-center py-8 text-text-muted">
+                        No images uploaded in this section yet.
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  }
+
+                  return filtered.map((item) => {
+                    const globalIdx = gallery.findIndex((x) => x.id === item.id);
+                    const sectionIdx = filtered.findIndex((x) => x.id === item.id);
+                    return (
+                      <div key={item.id} className="rounded-xl border border-border bg-card overflow-hidden flex flex-col justify-between shadow-xs hover:border-teal-500/25 transition">
+                        <div>
+                          <div className="aspect-video bg-muted relative overflow-hidden">
+                            {item.thumbnail ? (
+                              <img src={resolveAssetUrl(item.thumbnail)} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-teal-950/40 via-secondary to-teal-950/40 flex items-center justify-center font-bold text-teal-500 text-3xs">
+                                Placeholder
+                              </div>
+                            )}
+                            <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-4xs uppercase tracking-wider px-2 py-0.5 rounded font-bold">
+                              {gallerySections.find(s => s.id === item.sectionId)?.name || "Gallery"}
+                            </span>
+                          </div>
+                          <div className="p-4 space-y-1">
+                            <h4 className="font-bold text-xs text-foreground leading-snug">{item.title}</h4>
+                            <p className="text-4xs text-text-muted leading-relaxed line-clamp-2">{item.description}</p>
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-secondary/20 border-t border-border/60 flex items-center justify-between gap-1.5">
+                          <OrderControls
+                            index={sectionIdx}
+                            total={filtered.length}
+                            onMoveUp={() => handleMoveGalleryRecord(item.id, "up", selectedAdminSection)}
+                            onMoveDown={() => handleMoveGalleryRecord(item.id, "down", selectedAdminSection)}
+                          />
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => setEditingItem({ key: "gallery-records", isNew: false, index: globalIdx, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Delete this gallery image?")) {
+                                  const updated = gallery.filter((x) => x.id !== item.id);
+                                  saveDatasetRecords("gallery-records", updated);
+                                  toast.success("Gallery record deleted successfully.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
@@ -6035,17 +6193,15 @@ function Admin() {
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Category Tab</span>
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Gallery Section</span>
                         <select
-                          value={editingItem.data.category || "research"}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, category: e.target.value } })}
+                          value={editingItem.data.sectionId || "imported-gallery"}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, sectionId: e.target.value } })}
                           className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
                         >
-                          <option value="research">Research Projects & Surveys</option>
-                          <option value="field">Field Activities & Deployments</option>
-                          <option value="facilities">Laboratory Infrastructure</option>
-                          <option value="events">Workshops & Guest Lectures</option>
-                          <option value="internships">Academic Internships</option>
+                          {gallerySections.map((sec: any) => (
+                            <option key={sec.id} value={sec.id}>{sec.name}</option>
+                          ))}
                         </select>
                       </label>
                       <label className="block space-y-1">
@@ -6097,6 +6253,31 @@ function Admin() {
                       onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, documents: val } })}
                       category="gallery"
                     />
+                  </div>
+                )}
+
+                {/* 13B. EDITOR: PHOTO GALLERY SECTIONS */}
+                {editingItem.key === "gallery-sections" && (
+                  <div className="space-y-4 font-sans text-xs">
+                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">Gallery Section Editor</span>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Section Name</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.name || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, name: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                      />
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Display Order</span>
+                      <input
+                        type="number"
+                        value={editingItem.data.displayOrder || 1}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, displayOrder: Number(e.target.value) } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                      />
+                    </label>
                   </div>
                 )}
 
@@ -6530,7 +6711,8 @@ function Admin() {
                       key === "collaborations-mous" ||
                       key === "collaborations-institutions" ||
                       key === "collaborations-activities" ||
-                      key === "gallery-records"
+                      key === "gallery-records" ||
+                      key === "gallery-sections"
                     ) {
                       const dataset = getDatasetRecords(key, DATA_SEEDS[key as keyof typeof DATA_SEEDS] || []);
                       if (isNew) {
@@ -6715,7 +6897,7 @@ function Admin() {
                               // Delete facility
                               const filteredFac = facilities.filter(f => f.id !== deletingFacility.id);
                               saveDatasetRecords("research-facilities", filteredFac);
-                              
+                               
                               setDeletingFacility(null);
                               toast.success("Removed facility category. Associated equipment is now uncategorized.");
                             }}
@@ -6759,6 +6941,179 @@ function Admin() {
                           className="px-4 py-2 rounded-lg border border-border hover:bg-secondary text-text-secondary hover:text-foreground font-bold uppercase tracking-wider text-4xs"
                         >
                           Cancel / Keep Facility
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== SAFETY DELETION DIALOG FOR GALLERY SECTIONS ==================== */}
+        {deletingSection && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs font-sans"
+            onClick={() => setDeletingSection(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-extrabold uppercase text-foreground border-b border-border/40 pb-2">
+                Delete Gallery Section
+              </h3>
+              
+              {(() => {
+                const affectedImages = gallery.filter(r => r.sectionId === deletingSection.id);
+                const affectedCount = affectedImages.length;
+                return (
+                  <div className="mt-4 space-y-4 text-xs">
+                    <p className="leading-relaxed">
+                      You are about to delete the section <span className="font-bold text-teal-500">"{deletingSection.name}"</span>.
+                    </p>
+                    {affectedCount > 0 && (
+                      <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+                        <span className="font-bold">Warning:</span> This section contains <span className="font-extrabold">{affectedCount} image records</span>. Please select an action to prevent accidental orphaning:
+                      </div>
+                    )}
+
+                    {affectedCount > 0 && (
+                      <div className="space-y-4 pt-2">
+                        {/* Option 1: Move to another section */}
+                        <div className="space-y-1">
+                          <label className="block text-[10px] font-bold text-text-muted uppercase">
+                            Option 1: Move images to another section
+                          </label>
+                          <div className="flex gap-2">
+                            <select
+                              value={targetMoveCategory}
+                              onChange={(e) => setTargetMoveCategory(e.target.value)}
+                              className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-2xs outline-none focus:border-teal-500"
+                            >
+                              <option value="">-- Select Destination Section --</option>
+                              {gallerySections
+                                .filter(s => s.id !== deletingSection.id)
+                                .map(s => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.name}
+                                  </option>
+                                ))
+                              }
+                            </select>
+                            <button
+                              disabled={!targetMoveCategory}
+                              onClick={() => {
+                                const updatedGallery = gallery.map(item => {
+                                  if (item.sectionId === deletingSection.id) {
+                                    return { ...item, sectionId: targetMoveCategory };
+                                  }
+                                  return item;
+                                });
+                                saveDatasetRecords("gallery-records", updatedGallery);
+                                
+                                const filteredSecs = gallerySections.filter(s => s.id !== deletingSection.id);
+                                saveDatasetRecords("gallery-sections", filteredSecs);
+                                
+                                setDeletingSection(null);
+                                setTargetMoveCategory("");
+                                toast.success(`Moved images to section and removed "${deletingSection.name}" section successfully.`);
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-teal-950 font-bold uppercase tracking-wider text-5xs disabled:opacity-40"
+                            >
+                              Move & Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Option 2: Move to Imported Gallery */}
+                        {deletingSection.id !== "imported-gallery" && gallerySections.some(s => s.id === "imported-gallery") && (
+                          <div className="border-t border-border/20 pt-3 flex flex-col gap-2">
+                            <span className="text-[10px] font-bold text-text-muted uppercase block">
+                              Option 2: Move images to Imported Gallery
+                            </span>
+                            <button
+                              onClick={() => {
+                                const updatedGallery = gallery.map(item => {
+                                  if (item.sectionId === deletingSection.id) {
+                                    return { ...item, sectionId: "imported-gallery" };
+                                  }
+                                  return item;
+                                });
+                                saveDatasetRecords("gallery-records", updatedGallery);
+                                
+                                const filteredSecs = gallerySections.filter(s => s.id !== deletingSection.id);
+                                saveDatasetRecords("gallery-sections", filteredSecs);
+                                
+                                setDeletingSection(null);
+                                toast.success(`Moved images to Imported Gallery and deleted "${deletingSection.name}" section successfully.`);
+                              }}
+                              className="w-full text-center py-2 rounded-lg border border-border/80 hover:bg-secondary text-foreground text-4xs font-bold uppercase tracking-wider transition"
+                            >
+                              Move Images to Imported Gallery & Delete Section
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Option 3: Delete images also */}
+                        <div className="border-t border-border/20 pt-3 flex flex-col gap-2">
+                          <span className="text-[10px] font-bold text-text-muted uppercase block">
+                            Option 3: Delete all images in this section too
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you absolutely sure you want to delete all ${affectedCount} images?`)) {
+                                const updatedGallery = gallery.filter(item => item.sectionId !== deletingSection.id);
+                                saveDatasetRecords("gallery-records", updatedGallery);
+                                
+                                const filteredSecs = gallerySections.filter(s => s.id !== deletingSection.id);
+                                saveDatasetRecords("gallery-sections", filteredSecs);
+                                
+                                setDeletingSection(null);
+                                toast.success("Section and all associated images deleted successfully.");
+                              }
+                            }}
+                            className="w-full text-center py-2 rounded-lg bg-destructive hover:bg-destructive/95 text-white text-4xs font-bold uppercase tracking-wider transition"
+                          >
+                            Delete Section and All Associated Images
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {affectedCount === 0 && (
+                      <div className="pt-2 flex justify-end gap-2">
+                        <button
+                          onClick={() => setDeletingSection(null)}
+                          className="px-3 py-2 rounded-lg border border-border hover:bg-secondary font-bold uppercase tracking-wider text-4xs"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            const filteredSecs = gallerySections.filter(s => s.id !== deletingSection.id);
+                            saveDatasetRecords("gallery-sections", filteredSecs);
+                            setDeletingSection(null);
+                            toast.success("Section removed successfully.");
+                          }}
+                          className="px-3 py-2 rounded-lg bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-wider text-4xs"
+                        >
+                          Delete Section
+                        </button>
+                      </div>
+                    )}
+
+                    {affectedCount > 0 && (
+                      <div className="border-t border-border/20 pt-3 flex justify-end">
+                        <button
+                          onClick={() => {
+                            setDeletingSection(null);
+                            setTargetMoveCategory("");
+                          }}
+                          className="px-4 py-2 rounded-lg border border-border hover:bg-secondary text-text-secondary hover:text-foreground font-bold uppercase tracking-wider text-4xs"
+                        >
+                          Cancel / Keep Section
                         </button>
                       </div>
                     )}

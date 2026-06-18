@@ -48,6 +48,7 @@ export interface RepoRecord {
   showcaseCategory?: "faculty" | "student";
   showcasePriority?: number;
   awardAudience?: "faculty" | "student" | "faculty-student";
+  awardCategory?: string;
 }
 
 export interface CarouselImage {
