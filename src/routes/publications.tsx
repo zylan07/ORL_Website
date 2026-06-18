@@ -15,6 +15,9 @@ import {
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { parseDateSafe } from "@/lib/utils";
+import { PageHero } from "@/components/page-hero";
+import { useSiteSettings, useDatasetRecords, DATA_SEEDS } from "@/lib/admin-store";
+import { resolveAssetUrl } from "@/lib/storage-service";
 
 const publicationsSearchSchema = z.object({
   tab: z.enum(["journals", "conferences", "books"]).optional(),
@@ -169,9 +172,125 @@ function PublicationTable({
   );
 }
 
+function PublicationCarouselCard({ group }: { group: any }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const items = group.items || [];
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % items.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [items]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="flex flex-col h-full rounded-xl border border-border bg-card p-4 shadow-sm hover:border-indigo-500/35 transition-all duration-300">
+      <div className="border-b border-border/40 pb-2 mb-3">
+        <h3 className="font-bold text-xs md:text-sm tracking-tight text-foreground line-clamp-1">{group.name}</h3>
+        {group.description && (
+          <p className="text-[11px] text-text-secondary leading-relaxed mt-0.5 line-clamp-2">{group.description}</p>
+        )}
+      </div>
+
+      {/* Carousel display area */}
+      <div className="relative rounded-lg overflow-hidden aspect-video bg-black/10 border border-border/40 select-none">
+        {items.map((item: any, idx: number) => (
+          <div
+            key={item.id}
+            className={`absolute inset-0 transition-opacity duration-700 ${
+              idx === activeIdx ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <img
+              src={resolveAssetUrl(item.image)}
+              alt={item.altText || item.caption || group.name}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Caption overlays */}
+            {(item.caption || item.description) && (
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 text-white text-left font-sans">
+                {item.caption && (
+                  <p className="text-[10px] md:text-xs font-bold leading-tight line-clamp-1">{item.caption}</p>
+                )}
+                {item.description && (
+                  <p className="text-[9px] md:text-[10px] text-slate-300 leading-normal line-clamp-1 mt-0.5">{item.description}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Carousel controls - arrows */}
+        {items.length > 1 && (
+          <>
+            <button
+              onClick={() => setActiveIdx((prev) => (prev - 1 + items.length) % items.length)}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-black/60 text-white text-[10px] hover:bg-black/80 transition cursor-pointer select-none z-10"
+              aria-label="Previous image"
+            >
+              ◀
+            </button>
+            <button
+              onClick={() => setActiveIdx((prev) => (prev + 1) % items.length)}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-black/60 text-white text-[10px] hover:bg-black/80 transition cursor-pointer select-none z-10"
+              aria-label="Next image"
+            >
+              ▶
+            </button>
+          </>
+        )}
+        
+        {/* Carousel indicator dots */}
+        {items.length > 1 && (
+          <div className="absolute bottom-2 right-2 flex gap-1 z-10">
+            {items.map((_: any, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => setActiveIdx(idx)}
+                className={`h-1 w-1 rounded-full transition-all ${
+                  idx === activeIdx ? "w-2.5 bg-white" : "w-1 bg-white/50 hover:bg-white"
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PublicationsPage() {
   const { tab } = Route.useSearch();
   const records = useRecords();
+  const settings = useSiteSettings();
+  
+  const rawGroups = useDatasetRecords("publication-carousel-groups", DATA_SEEDS["publication-carousel-groups"]);
+  const rawItems = useDatasetRecords("publication-carousel-items", DATA_SEEDS["publication-carousel-items"]);
+
+  // Filter visible groups & sort
+  const visibleGroups = useMemo(() => {
+    return [...rawGroups]
+      .filter(g => g.visible !== false)
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [rawGroups]);
+
+  // Associate items with groups
+  const carouselData = useMemo(() => {
+    return visibleGroups.map(group => {
+      const items = [...rawItems]
+        .filter(item => item.groupId === group.id)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      return {
+        ...group,
+        items
+      };
+    });
+  }, [visibleGroups, rawItems]);
 
   const [q, setQ] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
@@ -258,39 +377,29 @@ function PublicationsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 transition-colors duration-300 page-publications">
+      <PageHero
+        title={settings.publicationsHero?.title || "Publications"}
+        subtitle={settings.publicationsHero?.subtitle || "Disseminating Scientific Insights & Research Breakthroughs"}
+        description={settings.publicationsHero?.description || "Explore the peer-reviewed research outputs, IEEE conference papers, book chapters, and engineering reference volumes authored by ORL faculty and researchers."}
+        mediaType={settings.publicationsHero?.mediaType || "none"}
+        mediaUrl={settings.publicationsHero?.mediaUrl || ""}
+        mediaPosition={settings.publicationsHero?.mediaPosition || "background"}
+        overlayOpacity={settings.publicationsHero?.overlayOpacity !== undefined ? settings.publicationsHero.overlayOpacity : 60}
+      />
+
       <StickySectionNav items={navItems} />
 
       {/* Main Content Area */}
       <div className="mx-auto max-w-6xl px-6 mt-10 space-y-10">
-        {/* Page Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <nav
-            className="text-3xs text-text-muted justify-center flex mb-2"
-            aria-label="Breadcrumb"
-          >
-            <ol className="flex items-center gap-1.5">
-              <li>
-                <Link to="/" className="hover:text-accent transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span>›</span>
-                <span className="font-medium text-text-secondary">
-                  Publications
-                </span>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            Publications
-          </h1>
-          <p className="text-sm text-text-secondary leading-relaxed font-sans">
-            Explore the peer-reviewed research outputs, IEEE conference papers,
-            book chapters, and engineering reference volumes authored by ORL
-            faculty and researchers.
-          </p>
-        </div>
+        
+        {/* Dynamic Publications Carousels */}
+        {carouselData.length > 0 && (
+          <div className="grid gap-6 md:grid-cols-3 w-full">
+            {carouselData.map(group => (
+              <PublicationCarouselCard key={group.id} group={group} />
+            ))}
+          </div>
+        )}
 
         {/* Global Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-secondary/20 max-w-6xl mx-auto">

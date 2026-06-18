@@ -47,10 +47,12 @@ import {
   useDatasetRecords,
   DATA_SEEDS,
   trackDeletedId,
+  DEFAULT_SETTINGS,
   type SiteSettings,
   type GenericEntity,
   type KeyContactSetting,
-  type PeopleStatSetting
+  type PeopleStatSetting,
+  type PageHeroConfig
 } from "@/lib/admin-store";
 import { resolveAssetUrl, registerAsset, getAssets, type UploadedAsset, type Attachment } from "@/lib/storage-service";
 import {
@@ -441,11 +443,163 @@ function AttachmentsManager({
   );
 }
 
+// ----------------- PAGE HERO CONFIGURATION EDITOR -----------------
+function PageHeroEditor({
+  settingsKey,
+  label
+}: {
+  settingsKey: "researchHero" | "publicationsHero" | "trainingHero" | "academicHero" | "peopleHero" | "galleryHero" | "awardsHero" | "collaborationsHero";
+  label: string;
+}) {
+  const settings = useSiteSettings();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const defaultVal = DEFAULT_SETTINGS[settingsKey] || {
+    title: "",
+    subtitle: "",
+    description: "",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  };
+  const heroConfig = settings[settingsKey] || defaultVal;
+
+  const handleUpdate = (updated: Partial<PageHeroConfig>) => {
+    saveSettings({
+      ...settings,
+      [settingsKey]: {
+        ...heroConfig,
+        ...updated
+      }
+    });
+  };
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm transition-all duration-300 mb-6">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-secondary/15 hover:bg-secondary/35 transition font-sans cursor-pointer select-none text-left"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-teal-500/10 text-teal-500">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-extrabold text-foreground uppercase tracking-wider">{label} Banner Configuration</h4>
+            <p className="text-[10px] text-text-muted mt-0.5 font-normal normal-case">Customize title, subtitle, media, position, and overlay opacity</p>
+          </div>
+        </div>
+        <div>
+          {isOpen ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="p-4 border-t border-border/60 space-y-4 font-sans text-xs">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Hero Title</label>
+              <input
+                type="text"
+                value={heroConfig.title || ""}
+                onChange={(e) => handleUpdate({ title: e.target.value })}
+                placeholder="Enter page title..."
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 transition-all font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Hero Subtitle</label>
+              <input
+                type="text"
+                value={heroConfig.subtitle || ""}
+                onChange={(e) => handleUpdate({ subtitle: e.target.value })}
+                placeholder="Enter page subtitle..."
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 transition-all font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Hero Description</label>
+            <ResizingTextarea
+              value={heroConfig.description || ""}
+              onChange={(val) => handleUpdate({ description: val })}
+              placeholder="Enter page description text..."
+              maxLength={500}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Media Type</label>
+              <select
+                value={heroConfig.mediaType || "none"}
+                onChange={(e) => handleUpdate({ mediaType: e.target.value as any })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 transition-all cursor-pointer font-bold"
+              >
+                <option value="none">No Media (Solid Color / Banner)</option>
+                <option value="image">Background Image</option>
+                <option value="video">Background Video</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Media Position</label>
+              <select
+                value={heroConfig.mediaPosition || "background"}
+                onChange={(e) => handleUpdate({ mediaPosition: e.target.value as any })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 transition-all cursor-pointer font-bold"
+              >
+                <option value="background">Background (Overlay Text)</option>
+                <option value="left">Left Column (Side-by-side)</option>
+                <option value="right">Right Column (Side-by-side)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Overlay Opacity</label>
+                <span className="text-[10px] font-mono font-bold text-teal-500">{heroConfig.overlayOpacity ?? 60}%</span>
+              </div>
+              <div className="flex items-center gap-2 py-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={heroConfig.overlayOpacity ?? 60}
+                  onChange={(e) => handleUpdate({ overlayOpacity: parseInt(e.target.value, 10) })}
+                  className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-teal-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {(heroConfig.mediaType === "image" || heroConfig.mediaType === "video") && (
+            <div className="pt-2">
+              <AssetUploadInput
+                label={heroConfig.mediaType === "image" ? "Hero Banner Image" : "Hero Banner Video"}
+                value={heroConfig.mediaUrl || ""}
+                type={heroConfig.mediaType}
+                onChange={(val) => handleUpdate({ mediaUrl: val })}
+                category={`${settingsKey}-hero`}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ----------------- ADMIN DASHBOARD CONTENT MANAGER -----------------
 function Admin() {
   const settings = useSiteSettings();
   const [activeTab, setActiveTab] = useState<string>("home");
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [activeSubTabPub, setActiveSubTabPub] = useState<"catalog" | "groups" | "items">("catalog");
+  const [selectedPubGroup, setSelectedPubGroup] = useState<string>("pcg-1");
 
   // Load all repository academic records reactive hooks
   const repoRecords = useRecords();
@@ -454,8 +608,15 @@ function Admin() {
   const focusCards = useDatasetRecords("home-research-focus", DATA_SEEDS["home-research-focus"]);
   const metrics = useDatasetRecords("home-highlights", DATA_SEEDS["home-highlights"]);
   const quickAccess = useDatasetRecords("home-quick-access", DATA_SEEDS["home-quick-access"]);
-  const equipment = useDatasetRecords("research-equipment", DATA_SEEDS["research-equipment"]);
-  const facilities = useDatasetRecords("research-facilities", DATA_SEEDS["research-facilities"]);
+  const rawEquipment = useDatasetRecords("research-equipment", DATA_SEEDS["research-equipment"]);
+  const equipment = useMemo(() => {
+    return [...rawEquipment].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [rawEquipment]);
+
+  const rawFacilities = useDatasetRecords("research-facilities", DATA_SEEDS["research-facilities"]);
+  const facilities = useMemo(() => {
+    return [...rawFacilities].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [rawFacilities]);
   const projects = useDatasetRecords("research-projects", DATA_SEEDS["research-projects"]);
   const fieldActivities = useDatasetRecords("research-activities", DATA_SEEDS["research-activities"]);
   const members = useDatasetRecords("people-members", DATA_SEEDS["people-members"]);
@@ -465,6 +626,8 @@ function Admin() {
   const consultancy = useDatasetRecords("collaborations-activities", DATA_SEEDS["collaborations-activities"]);
   const gallery = useDatasetRecords("gallery-records", DATA_SEEDS["gallery-records"]);
   const gallerySections = useDatasetRecords("gallery-sections", DATA_SEEDS["gallery-sections"]);
+  const carouselGroups = useDatasetRecords("publication-carousel-groups", DATA_SEEDS["publication-carousel-groups"]);
+  const carouselItems = useDatasetRecords("publication-carousel-items", DATA_SEEDS["publication-carousel-items"]);
 
   // Local config state for awards carousels
   const [carouselConfig, setCarouselConfigState] = useState(getCarouselConfig());
@@ -1187,6 +1350,8 @@ function Admin() {
               </p>
             </div>
 
+            <PageHeroEditor settingsKey="researchHero" label="Research & Facilities" />
+
             {/* Funded Projects List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
@@ -1417,12 +1582,12 @@ function Admin() {
             {/* Facility Manager List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Laboratory Facilities Categories</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Research Groups Manager</h3>
                 <button
                   onClick={() => setEditingItem({ key: "research-facilities", isNew: true, data: { name: "", description: "", fullDescription: "", thumbnail: "" } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Facility Category
+                  <Plus className="h-3.5 w-3.5" /> Add Research Group
                 </button>
               </div>
 
@@ -1431,8 +1596,8 @@ function Admin() {
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
                       <th className="px-4 py-2">Image</th>
-                      <th className="px-4 py-2">Category Name</th>
-                      <th className="px-4 py-2">Short Summary</th>
+                      <th className="px-4 py-2">Group Name</th>
+                      <th className="px-4 py-2">Description</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
@@ -1482,12 +1647,12 @@ function Admin() {
             {/* Equipment & Facilities List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Facilities & Laboratory Equipment</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Equipment & Systems Manager</h3>
                 <button
                   onClick={() => setEditingItem({ key: "research-equipment", isNew: true, data: { name: "", category: facilities[0]?.id || "sensors-comm", specs: "", purpose: "", url: "", thumbnail: "" } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Equipment
+                  <Plus className="h-3.5 w-3.5" /> Add Equipment & Systems
                 </button>
               </div>
 
@@ -1497,7 +1662,7 @@ function Admin() {
                     <tr>
                       <th className="px-4 py-2">Image</th>
                       <th className="px-4 py-2">Name</th>
-                      <th className="px-4 py-2">Sub-Category</th>
+                      <th className="px-4 py-2">Group / Category</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
@@ -1509,7 +1674,9 @@ function Admin() {
                           <img src={resolveAssetUrl(item.thumbnail)} className="h-8 w-12 rounded object-cover border" />
                         </td>
                         <td className="px-4 py-3 font-semibold">{item.name}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-teal-500 uppercase text-5xs">{item.category}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-teal-500 uppercase text-5xs">
+                          {facilities.find(f => f.id === item.category)?.name || item.category}
+                        </td>
                         <td className="px-4 py-3 text-center">
                           <OrderControls
                             index={idx}
@@ -1628,6 +1795,8 @@ function Admin() {
                 Maintain faculty credentials, CV PDFs, scholar registry cards, project staff details, UG assistant profiles, and internships.
               </p>
             </div>
+
+            <PageHeroEditor settingsKey="peopleHero" label="People" />
 
             {/* Faculty List Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
@@ -2439,6 +2608,8 @@ function Admin() {
               </p>
             </div>
 
+            <PageHeroEditor settingsKey="collaborationsHero" label="Collaborations & Consultancy" />
+
             {/* MoUs List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
@@ -2592,6 +2763,8 @@ function Admin() {
                 Upload image assets, categorize items, manage dynamic gallery sections, and arrange layouts on the public gallery page.
               </p>
             </div>
+
+            <PageHeroEditor settingsKey="galleryHero" label="Photo Gallery" />
 
             {/* Gallery Sections Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
@@ -2776,70 +2949,343 @@ function Admin() {
             <div>
               <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Publications registry Manager</h1>
               <p className="text-xs text-text-secondary mt-1">
-                Maintain academic journal papers, book chapters, and conferences in a structured format.
+                Maintain academic journal papers, book chapters, and conferences in a structured format, and manage homepage/inner carousels.
               </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Peer-Reviewed Papers</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "publication", subtype: "Journal", title: "", organization: "", authors: "", doi: "", date: "", summary: "", attachments: [] } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Publication
-                </button>
-              </div>
+            <PageHeroEditor settingsKey="publicationsHero" label="Publications" />
 
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Paper Title / Authors</th>
-                      <th className="px-4 py-2">Venue / Publisher</th>
-                      <th className="px-4 py-2 font-mono">Date</th>
-                      <th className="px-4 py-2">Subtype</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => r.type === "publication").map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3">
-                          <span className="font-bold block leading-snug">{item.title}</span>
-                          <span className="text-4xs text-text-muted block mt-0.5">{item.authors}</span>
-                          {item.doi && <span className="text-4xs text-teal-500 font-mono block mt-1">DOI: {item.doi}</span>}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
-                        <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
-                        <td className="px-4 py-3 text-teal-500 font-bold font-mono text-5xs uppercase">{item.subtype}</td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
-                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this publication record?")) {
-                                  deleteRecord(item.id);
-                                  toast.success("Publication record removed.");
-                                }
-                              }}
-                              className="p-1 rounded text-text-muted hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {/* Sub-tabs Navigation */}
+            <div className="flex border-b border-border/80">
+              <button
+                type="button"
+                onClick={() => setActiveSubTabPub("catalog")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                  activeSubTabPub === "catalog"
+                    ? "border-teal-500 text-teal-500 font-extrabold"
+                    : "border-transparent text-text-muted hover:text-foreground"
+                }`}
+              >
+                Publications Catalog
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubTabPub("groups")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                  activeSubTabPub === "groups"
+                    ? "border-teal-500 text-teal-500 font-extrabold"
+                    : "border-transparent text-text-muted hover:text-foreground"
+                }`}
+              >
+                Carousel Groups
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubTabPub("items")}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                  activeSubTabPub === "items"
+                    ? "border-teal-500 text-teal-500 font-extrabold"
+                    : "border-transparent text-text-muted hover:text-foreground"
+                }`}
+              >
+                Carousel Items
+              </button>
             </div>
+
+            {activeSubTabPub === "catalog" && (
+              <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+                <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                  <h3 className="font-extrabold text-xs text-foreground uppercase">Peer-Reviewed Papers</h3>
+                  <button
+                    onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "publication", subtype: "Journal", title: "", organization: "", authors: "", doi: "", date: "", summary: "", attachments: [] } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Publication
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                      <tr>
+                        <th className="px-4 py-2">Paper Title / Authors</th>
+                        <th className="px-4 py-2">Venue / Publisher</th>
+                        <th className="px-4 py-2 font-mono">Date</th>
+                        <th className="px-4 py-2">Subtype</th>
+                        <th className="px-4 py-2 w-20 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {repoRecords.filter(r => r.type === "publication").map((item, idx) => (
+                        <tr key={item.id} className="hover:bg-secondary/10">
+                          <td className="px-4 py-3">
+                            <span className="font-bold block leading-snug">{item.title}</span>
+                            <span className="text-4xs text-text-muted block mt-0.5">{item.authors}</span>
+                            {item.doi && <span className="text-4xs text-teal-500 font-mono block mt-1">DOI: {item.doi}</span>}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
+                          <td className="px-4 py-3 font-mono text-text-muted">{item.date}</td>
+                          <td className="px-4 py-3 text-teal-500 font-bold font-mono text-5xs uppercase">{item.subtype}</td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex gap-1.5 justify-end">
+                              <button
+                                onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                                className="p-1 rounded text-teal-500 hover:bg-teal-500/10 cursor-pointer"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm("Remove this publication record?")) {
+                                    deleteRecord(item.id);
+                                    toast.success("Publication record removed.");
+                                  }
+                                }}
+                                className="p-1 rounded text-text-muted hover:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeSubTabPub === "groups" && (
+              <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+                <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                  <h3 className="font-extrabold text-xs text-foreground uppercase">Publications Carousel Groups</h3>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem({ key: "publication-carousel-groups", isNew: true, data: { name: "", description: "", displayOrder: carouselGroups.length + 1, visible: true } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Carousel Group
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                      <tr>
+                        <th className="px-4 py-2">Group Name</th>
+                        <th className="px-4 py-2">Description</th>
+                        <th className="px-4 py-2 text-center w-24">Images Count</th>
+                        <th className="px-4 py-2 text-center w-24">Visible</th>
+                        <th className="px-4 py-2 text-center w-28">Reorder</th>
+                        <th className="px-4 py-2 w-20 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {carouselGroups.map((group, idx) => {
+                        const count = carouselItems.filter(item => item.groupId === group.id).length;
+                        return (
+                          <tr key={group.id} className="hover:bg-secondary/10">
+                            <td className="px-4 py-3 font-semibold">{group.name || group.title}</td>
+                            <td className="px-4 py-3 text-text-secondary">{group.description}</td>
+                            <td className="px-4 py-3 text-center font-mono font-bold text-teal-500">({count} Images)</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${group.visible !== false ? "bg-teal-500/10 text-teal-500 border border-teal-500/20" : "bg-destructive/10 text-destructive border border-destructive/20"}`}>
+                                {group.visible !== false ? "Visible" : "Hidden"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <OrderControls
+                                index={idx}
+                                total={carouselGroups.length}
+                                onMoveUp={() => handleMoveItem("publication-carousel-groups", carouselGroups, idx, "up")}
+                                onMoveDown={() => handleMoveItem("publication-carousel-groups", carouselGroups, idx, "down")}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex gap-1.5 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingItem({ key: "publication-carousel-groups", isNew: false, index: idx, data: group })}
+                                  className="p-1 rounded text-teal-500 hover:bg-teal-500/10 cursor-pointer"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm("Are you sure you want to delete this carousel group? It will orphan its associated slides.")) {
+                                      const updated = carouselGroups.filter(g => g.id !== group.id);
+                                      saveDatasetRecords("publication-carousel-groups", updated);
+                                      toast.success("Carousel group deleted.");
+                                    }
+                                  }}
+                                  className="p-1 rounded text-text-muted hover:text-destructive cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeSubTabPub === "items" && (
+              <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-border/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-text-muted uppercase">Select Carousel Group:</span>
+                    <select
+                      value={selectedPubGroup}
+                      onChange={(e) => setSelectedPubGroup(e.target.value)}
+                      className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-teal-500 font-semibold cursor-pointer"
+                    >
+                      {carouselGroups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name || g.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={carouselGroups.length === 0}
+                    onClick={() => setEditingItem({
+                      key: "publication-carousel-items",
+                      isNew: true,
+                      data: {
+                        groupId: selectedPubGroup || carouselGroups[0]?.id || "",
+                        image: "",
+                        caption: "",
+                        description: "",
+                        altText: "",
+                        displayOrder: carouselItems.filter(item => item.groupId === selectedPubGroup).length + 1
+                      }
+                    })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 disabled:opacity-50 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Slide Image
+                  </button>
+                </div>
+
+                {carouselGroups.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-border rounded-xl">
+                    <p className="text-sm text-text-muted italic">Create a Carousel Group first before adding items.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-border">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                        <tr>
+                          <th className="px-4 py-2 w-16">Preview</th>
+                          <th className="px-4 py-2">Caption / Description</th>
+                          <th className="px-4 py-2">Alt Text</th>
+                          <th className="px-4 py-2 text-center w-28">Reorder</th>
+                          <th className="px-4 py-2 w-20 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {(() => {
+                          const filteredItems = carouselItems
+                            .filter(item => item.groupId === selectedPubGroup)
+                            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+                          if (filteredItems.length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-text-muted italic">
+                                  No slide images inside this group. Click 'Add Slide Image' to populate.
+                                </td>
+                              </tr>
+                            );
+                          }
+
+                          return filteredItems.map((item, idx) => (
+                            <tr key={item.id} className="hover:bg-secondary/10">
+                              <td className="px-4 py-2">
+                                <img src={resolveAssetUrl(item.image)} className="h-9 w-16 rounded object-cover border" alt={item.altText} />
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="font-bold block leading-snug">{item.caption || item.title}</span>
+                                <span className="text-4xs text-text-muted block mt-0.5">{item.description}</span>
+                              </td>
+                              <td className="px-4 py-3 text-text-secondary max-w-[200px] truncate">{item.altText || <span className="text-text-muted/65 italic">None</span>}</td>
+                              <td className="px-4 py-3 text-center">
+                                <OrderControls
+                                  index={idx}
+                                  total={filteredItems.length}
+                                  onMoveUp={() => {
+                                    const groupItems = [...carouselItems].filter(x => x.groupId === selectedPubGroup).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+                                    if (idx > 0) {
+                                      const temp = groupItems[idx];
+                                      groupItems[idx] = groupItems[idx - 1];
+                                      groupItems[idx - 1] = temp;
+                                      const mappedGroup = groupItems.map((x, i) => ({ ...x, displayOrder: i + 1 }));
+                                      const mergedList = carouselItems.map(original => {
+                                        const found = mappedGroup.find(m => m.id === original.id);
+                                        return found ? found : original;
+                                      });
+                                      saveDatasetRecords("publication-carousel-items", mergedList);
+                                      toast.success("Slide order updated.");
+                                    }
+                                  }}
+                                  onMoveDown={() => {
+                                    const groupItems = [...carouselItems].filter(x => x.groupId === selectedPubGroup).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+                                    if (idx < groupItems.length - 1) {
+                                      const temp = groupItems[idx];
+                                      groupItems[idx] = groupItems[idx + 1];
+                                      groupItems[idx + 1] = temp;
+                                      const mappedGroup = groupItems.map((x, i) => ({ ...x, displayOrder: i + 1 }));
+                                      const mergedList = carouselItems.map(original => {
+                                        const found = mappedGroup.find(m => m.id === original.id);
+                                        return found ? found : original;
+                                      });
+                                      saveDatasetRecords("publication-carousel-items", mergedList);
+                                      toast.success("Slide order updated.");
+                                    }
+                                  }}
+                                />
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex gap-1.5 justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const rawIdx = carouselItems.findIndex(x => x.id === item.id);
+                                      setEditingItem({ key: "publication-carousel-items", isNew: false, index: rawIdx, data: item });
+                                    }}
+                                    className="p-1 rounded text-teal-500 hover:bg-teal-500/10 cursor-pointer"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (confirm("Remove this slide image from group?")) {
+                                        const updated = carouselItems.filter(x => x.id !== item.id);
+                                        saveDatasetRecords("publication-carousel-items", updated);
+                                        toast.success("Slide image deleted.");
+                                      }
+                                    }}
+                                    className="p-1 rounded text-text-muted hover:text-destructive cursor-pointer"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
           </div>
         )}
@@ -2853,6 +3299,8 @@ function Admin() {
                 Customize structural honors lists and design beautiful showcase carousel banners with live mockups.
               </p>
             </div>
+
+            <PageHeroEditor settingsKey="awardsHero" label="Awards & Recognition" />
 
 
             {/* General Awards Table List */}
@@ -2929,6 +3377,8 @@ function Admin() {
                 Administer training sessions, course codes, syllabus documents, and coordinate PDP schedules.
               </p>
             </div>
+
+            <PageHeroEditor settingsKey="trainingHero" label="Technical Training" />
 
             {/* 1. Host Institution Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
@@ -3320,6 +3770,8 @@ function Admin() {
                 Maintain timelines of doctoral committees (DC), keynote talk invitations, workshops, and Board of Studies (BoS) listings.
               </p>
             </div>
+
+            <PageHeroEditor settingsKey="academicHero" label="Academic Activities" />
 
             {/* 1. Doctoral Committee Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
@@ -4584,10 +5036,18 @@ function Admin() {
                     </div>
 
                     <AssetUploadInput
-                      label="Equipment Calibration Photo (Administrative Asset Only)"
+                      label="Equipment Calibration Photo (Primary / Single Image Fallback)"
                       value={editingItem.data.thumbnail || ""}
                       type="image"
                       onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
+                      category="equipment"
+                    />
+
+                    <MultiAssetUploadInput
+                      label="Equipment Photos Gallery (Multiple Images)"
+                      values={editingItem.data.images || []}
+                      type="image"
+                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, images: val } })}
                       category="equipment"
                     />
                   </div>
@@ -6281,6 +6741,127 @@ function Admin() {
                   </div>
                 )}
 
+                {/* EDITOR: PUBLICATIONS CAROUSEL GROUPS */}
+                {editingItem.key === "publication-carousel-groups" && (
+                  <div className="space-y-4 font-sans text-xs">
+                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">Publications Carousel Group Editor</span>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Group Name</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.name || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, name: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                        placeholder="e.g. Subsea Robotics & Vehicles"
+                      />
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Description</span>
+                      <ResizingTextarea
+                        value={editingItem.data.description || ""}
+                        onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, description: val } })}
+                        maxLength={250}
+                        placeholder="Brief summary of this highlight category..."
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Display Order</span>
+                        <input
+                          type="number"
+                          value={editingItem.data.displayOrder || 1}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, displayOrder: Number(e.target.value) } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Visibility Status</span>
+                        <select
+                          value={editingItem.data.visible !== false ? "true" : "false"}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, visible: e.target.value === "true" } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                        >
+                          <option value="true">Visible / Show Publicly</option>
+                          <option value="false">Hidden / Draft</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* EDITOR: PUBLICATIONS CAROUSEL ITEMS */}
+                {editingItem.key === "publication-carousel-items" && (
+                  <div className="space-y-4 font-sans text-xs">
+                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">Publications Carousel Image Slide Editor</span>
+                    
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Target Group</span>
+                      <select
+                        value={editingItem.data.groupId || (carouselGroups[0]?.id || "")}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, groupId: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                      >
+                        {carouselGroups.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name || g.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Slide Caption (Title)</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.caption || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, caption: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                        placeholder="e.g. ORCA Buoyancy Trial"
+                      />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Slide Description (Subtitle)</span>
+                      <ResizingTextarea
+                        value={editingItem.data.description || ""}
+                        onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, description: val } })}
+                        maxLength={250}
+                        placeholder="Detail of the slide image..."
+                      />
+                    </label>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Image Alt Text (Accessibility description)</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.altText || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, altText: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                          placeholder="e.g. A robotic arm balancing subsea..."
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Display Order</span>
+                        <input
+                          type="number"
+                          value={editingItem.data.displayOrder || 1}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, displayOrder: Number(e.target.value) } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                        />
+                      </label>
+                    </div>
+
+                    <AssetUploadInput
+                      label="Slide Image (Enforces 16:9 Aspect Ratio on Public Page)"
+                      value={editingItem.data.image || ""}
+                      type="image"
+                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, image: val } })}
+                      category="publications-carousel"
+                    />
+                  </div>
+                )}
+
                 {/* 14. EDITOR: HOME QUICK ACCESS CARDS */}
                 {editingItem.key === "home-quick-access" && (
                   <div className="space-y-4 font-sans text-xs">
@@ -6712,14 +7293,27 @@ function Admin() {
                       key === "collaborations-institutions" ||
                       key === "collaborations-activities" ||
                       key === "gallery-records" ||
-                      key === "gallery-sections"
+                      key === "gallery-sections" ||
+                      key === "publication-carousel-groups" ||
+                      key === "publication-carousel-items"
                     ) {
                       const dataset = getDatasetRecords(key, DATA_SEEDS[key as keyof typeof DATA_SEEDS] || []);
+                      const finalData = { ...data };
+                      if (key === "publication-carousel-groups") {
+                        finalData.title = finalData.name;
+                      } else if (key === "publication-carousel-items") {
+                        finalData.title = finalData.caption;
+                      }
                       if (isNew) {
                         const newId = `${key.slice(0, 3)}-${Date.now()}`;
-                        dataset.push({ ...data, id: newId, displayOrder: dataset.length + 1 });
-                      } else if (index !== undefined) {
-                        dataset[index] = data;
+                        dataset.push({ ...finalData, id: newId, displayOrder: dataset.length + 1 });
+                      } else {
+                        const idxInRaw = dataset.findIndex(item => item.id === finalData.id);
+                        if (idxInRaw !== -1) {
+                          dataset[idxInRaw] = finalData;
+                        } else if (index !== undefined) {
+                          dataset[index] = finalData;
+                        }
                       }
                       saveDatasetRecords(key, dataset);
                       toast.success("Dataset records saved successfully.");

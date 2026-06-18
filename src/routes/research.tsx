@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { getDatasetRecords, DATA_SEEDS, useDatasetRecords } from "@/lib/admin-store";
+import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } from "@/lib/admin-store";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
 import { z } from "zod";
 import {
   Compass,
@@ -122,6 +123,150 @@ const FACILITIES_CATEGORIES: FacilityCategory[] = [
     images: [PLACEHOLDER_IMAGES.facility]
   }
 ];
+
+function EquipmentModalContent({ item }: { item: any }) {
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+  
+  const specsArray = useMemo(() => {
+    if (!item.specs) return [];
+    if (Array.isArray(item.specs)) return item.specs;
+    if (typeof item.specs === "string") {
+      try {
+        const parsed = JSON.parse(item.specs);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return item.specs.split(",").map((s: string) => {
+          const parts = s.split(":");
+          return { label: parts[0]?.trim() || "Spec", value: parts.slice(1).join(":")?.trim() || "" };
+        });
+      }
+    }
+    return [];
+  }, [item.specs]);
+
+  const galleryImages = useMemo(() => {
+    const list: string[] = [];
+    if (item.thumbnail || item.image) list.push(item.thumbnail || item.image);
+    if (item.images && Array.isArray(item.images)) {
+      item.images.forEach((img: string) => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    }
+    return list;
+  }, [item.thumbnail, item.image, item.images]);
+
+  return (
+    <div className="space-y-4 text-left font-sans text-xs">
+      {/* Equipment Image Gallery Carousel */}
+      {galleryImages.length > 0 && (
+        <div className="space-y-2">
+          <div className="relative rounded-xl overflow-hidden aspect-video bg-black/10 border border-border/40 select-none">
+            {galleryImages.map((img: string, idx: number) => (
+              <div
+                key={idx}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  idx === activeImgIdx ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <img
+                  src={resolveAssetUrl(img)}
+                  alt={`${item.name} Image ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveImgIdx((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-full bg-black/60 text-white text-xs hover:bg-black/80 transition cursor-pointer select-none z-10 font-bold"
+                >
+                  ◀
+                </button>
+                <button
+                  onClick={() => setActiveImgIdx((prev) => (prev + 1) % galleryImages.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-full bg-black/60 text-white text-xs hover:bg-black/80 transition cursor-pointer select-none z-10 font-bold"
+                >
+                  ▶
+                </button>
+
+                <div className="absolute bottom-3 right-3 flex gap-1.5 z-10">
+                  {galleryImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImgIdx(idx)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx === activeImgIdx ? "w-4 bg-white" : "w-1.5 bg-white/50 hover:bg-white"
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          
+          {/* Thumbnails below main image */}
+          {galleryImages.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImgIdx(idx)}
+                  className={`relative h-12 w-20 shrink-0 rounded-lg overflow-hidden border transition-all ${
+                    idx === activeImgIdx ? "border-cyan-500 ring-2 ring-cyan-500/20" : "border-border/60 opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={resolveAssetUrl(img)} alt="thumbnail" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Description */}
+      {(item.description || item.purpose) && (
+        <div className="space-y-2 pt-4 border-t border-border/30 first:pt-0 first:border-0">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Description</h4>
+          <p className="text-xs text-text-secondary leading-relaxed font-sans">{item.description || item.purpose}</p>
+        </div>
+      )}
+
+      {/* Specifications */}
+      {specsArray.length > 0 && (
+        <div className="space-y-3 pt-4 border-t border-border/30">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Technical Specifications</h4>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {specsArray.map((spec: any, sIdx: number) => (
+              <div key={sIdx} className="flex justify-between items-start text-xs border-b border-border/10 pb-1.5 pr-2">
+                <span className="text-text-muted font-medium font-sans">{spec.label}</span>
+                <span className="font-semibold text-foreground font-sans text-right">{spec.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      {item.notes && (
+        <div className="space-y-2 pt-4 border-t border-border/30">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Notes</h4>
+          <p className="text-xs text-text-muted italic leading-relaxed font-sans">{item.notes}</p>
+        </div>
+      )}
+
+      {/* Applications */}
+      {item.applications && (
+        <div className="space-y-2 pt-4 border-t border-border/30">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Applications</h4>
+          <p className="text-xs text-text-secondary leading-relaxed font-sans">{item.applications}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DetailModalProps {
   item: any;
@@ -273,7 +418,9 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
 
         {/* Modal Content Flow */}
         <div className="space-y-6">
-          {type === "activity" ? (
+          {type === "equipment" ? (
+            <EquipmentModalContent item={item} />
+          ) : type === "activity" ? (
             // Dedicated Field Activity modal layout
             <>
               {/* Gallery (top) */}
@@ -539,6 +686,8 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
 }
 
 function ResearchPage() {
+  const settings = useSiteSettings();
+  const groups = useDatasetRecords("research-facilities", DATA_SEEDS["research-facilities"]);
   const PROJECTS_DATABASE = useDatasetRecords("research-projects", DATA_SEEDS["research-projects"]) as ProjectRecord[];
   const EQUIPMENT_DATABASE = useDatasetRecords("research-equipment", DATA_SEEDS["research-equipment"]);
   const FIELD_ACTIVITIES_DATABASE = useDatasetRecords("research-activities", DATA_SEEDS["research-activities"]) as any[];
@@ -777,7 +926,7 @@ function ResearchPage() {
   const navItems = [
     { label: "Funded Projects", id: "projects", icon: FlaskConical, count: PROJECTS_DATABASE.filter(p => p.type === "external" || p.type === "internal").length, theme: "teal" as const },
     { label: "PhD Research", id: "phd-projects-header", icon: BookOpen, count: PROJECTS_DATABASE.filter(p => p.type === "phd").length, theme: "indigo" as const },
-    { label: "Facilities", id: "facilities", icon: Cpu, count: EQUIPMENT_DATABASE.length, theme: "cyan" as const },
+    { label: "Research Groups", id: "facilities", icon: Cpu, count: EQUIPMENT_DATABASE.length, theme: "cyan" as const },
     { label: "Field Activities", id: "field-activities", icon: Anchor, count: FIELD_ACTIVITIES_DATABASE.length, theme: "emerald" as const },
     { label: "Student Projects", id: "student-projects-header", icon: Users, count: PROJECTS_DATABASE.filter(p => p.type === "student").length, theme: "sky" as const }
   ];
@@ -807,20 +956,15 @@ function ResearchPage() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300 page-research">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-950/20 via-background to-background py-16 px-6 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.1),rgba(255,255,255,0))]" />
-        <div className="mx-auto max-w-5xl text-center space-y-4 relative z-10">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-500 border border-cyan-500/25">
-            Ocean Engineering & Applied Acoustics
-          </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-sans">
-            Research & Facilities
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-text-secondary leading-relaxed font-sans">
-            Explore authentic research projects, advanced oceanographic testing facilities, subsea robotic platforms, and coastal deployments mapping the depths of shallow water basins.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        title={settings.researchHero?.title || "Research & Facilities"}
+        subtitle={settings.researchHero?.subtitle || "Ocean Engineering & Applied Acoustics"}
+        description={settings.researchHero?.description || "Explore authentic research projects, advanced oceanographic testing facilities, subsea robotic platforms, and coastal deployments mapping the depths of shallow water basins."}
+        mediaType={settings.researchHero?.mediaType || "none"}
+        mediaUrl={settings.researchHero?.mediaUrl || ""}
+        mediaPosition={settings.researchHero?.mediaPosition || "background"}
+        overlayOpacity={settings.researchHero?.overlayOpacity !== undefined ? settings.researchHero.overlayOpacity : 60}
+      />
 
       {/* Sticky Section Navigation */}
       <StickySectionNav items={navItems} onItemClick={handleNavScroll} />
@@ -1185,129 +1329,81 @@ function ResearchPage() {
           </div>
         </section>
 
-        {/* 4. Facilities */}
-        <section id="facilities" className="space-y-6">
+        {/* 4. Research Groups & Equipment */}
+        <section id="facilities" className="space-y-12">
           <div>
             <span className="text-5xs font-mono font-bold uppercase tracking-wider text-cyan-500">Infrastructure Divisions</span>
-            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Laboratory Facilities</h2>
+            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Research Groups & Equipment</h2>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {FACILITIES_CATEGORIES.map((cat) => {
-              const IconComp = cat.icon;
-              const isActive = activeCategory === cat.id;
-              const catThumb = cat.thumbnail || cat.images?.[0];
+          <div className="space-y-12">
+            {[...groups].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map((group) => {
+              const groupEquipment = EQUIPMENT_DATABASE.filter(eq => eq.category === group.id)
+                .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
               return (
-                <div
-                  key={cat.id}
-                  onClick={() => {
-                    setActiveCategory(cat.id);
-                    setDrawerSearch("");
-                    setExpandedEquipmentIdx(null);
-                    setIsDrawerOpen(true);
-                  }}
-                  className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] group select-none ${
-                    isActive
-                      ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
-                      : "border-border bg-card/60 hover:border-cyan-500/35"
-                  }`}
-                >
-                  <div className="space-y-2">
-                    {catThumb && (
-                      <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border/40 mb-3 bg-secondary/50">
-                        <img
-                          src={resolveAssetUrl(catThumb)}
-                          alt={cat.name}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                        />
+                <div key={group.id} className="space-y-4 pt-6 first:pt-0 border-t border-border/20 first:border-t-0 animate-fade-in">
+                  {/* Group Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-3">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground font-sans">{group.name || group.title}</h3>
+                      {(group.description || group.fullDescription) && (
+                        <p className="text-xs text-text-secondary font-sans leading-relaxed mt-0.5 max-w-3xl">
+                          {group.description || group.fullDescription}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded self-start sm:self-auto">
+                      {groupEquipment.length} Systems
+                    </span>
+                  </div>
+
+                  {/* Equipment Grid for this Group */}
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    {groupEquipment.map((eq) => {
+                      const primaryImage = eq.thumbnail || (eq.images && eq.images[0]) || "";
+                      return (
+                        <div
+                          key={eq.id}
+                          onClick={() => openDetail(eq, "equipment")}
+                          className="p-4 rounded-xl border border-border bg-card/65 hover:border-cyan-500/35 shadow-xs hover:shadow-md hover:translate-y-[-2px] transition-all duration-300 flex flex-col justify-between cursor-pointer group"
+                        >
+                          <div className="space-y-3">
+                            {primaryImage && (
+                              <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-secondary/50 border border-border/40">
+                                <img
+                                  src={resolveAssetUrl(primaryImage)}
+                                  alt={eq.name}
+                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                />
+                              </div>
+                            )}
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-bold text-cyan-500/80 uppercase tracking-wider block font-mono">
+                                {group.name || group.title}
+                              </span>
+                              <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors font-sans">
+                                {eq.name}
+                              </h4>
+                              {(eq.shortDescription || eq.description) && (
+                                <p className="text-[11px] text-text-secondary leading-relaxed font-sans line-clamp-3">
+                                  {eq.shortDescription || eq.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {groupEquipment.length === 0 && (
+                      <div className="col-span-3 text-text-muted text-xs font-sans py-4 italic">
+                        No equipment or instrumentation currently registered in this group.
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <div className={`p-2 rounded-lg border transition ${
-                        isActive ? "bg-cyan-500/10 border-cyan-500/25" : "bg-secondary/40 border-border/40 group-hover:border-cyan-500/20"
-                      }`}>
-                        <IconComp className={`h-4.5 w-4.5 ${isActive ? "text-cyan-500" : "text-text-secondary"}`} />
-                      </div>
-                      <span className={`text-5xs font-mono font-bold px-2 py-0.5 rounded border transition ${
-                        isActive ? "bg-cyan-500/15 text-cyan-500 border-cyan-500/20" : "bg-secondary text-text-secondary border-border/40"
-                      }`}>
-                        {cat.count} Systems
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-foreground text-xs leading-snug">{cat.name}</h3>
-                    <p className="text-4xs text-text-secondary leading-relaxed font-sans">{cat.description}</p>
-                  </div>
-                  <div className="mt-4 flex items-center gap-1 text-5xs font-bold uppercase tracking-wider text-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Explore Assets <ChevronRight className="h-3 w-3" />
                   </div>
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        {/* 5. Equipment & Instrumentation */}
-        <section id="equipment" className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/40 pb-4">
-            <div>
-              <span className="text-5xs font-mono font-bold uppercase tracking-wider text-cyan-500">Asset Catalog</span>
-              <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">
-                Equipment & Instrumentation
-              </h2>
-              <p className="text-4xs text-text-secondary mt-1 font-sans">
-                Active Group: <span className="font-bold text-cyan-500">{FACILITIES_CATEGORIES.find(c => c.id === activeCategory)?.name}</span>
-              </p>
-            </div>
-
-            {/* Local Equipment search */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Search active group..."
-                value={facilitiesSearch}
-                onChange={(e) => setFacilitiesSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-card/50 outline-none w-44 transition focus:border-cyan-500/50"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {filteredEquipment.map((eq) => {
-              const eqThumb = eq.thumbnail || eq.image;
-              return (
-                <div
-                  key={eq.id}
-                  onClick={() => openDetail(eq, "equipment")}
-                  className="p-5 rounded-2xl border border-border bg-card hover:border-cyan-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 flex flex-col justify-between cursor-pointer group"
-                >
-                  <div className="space-y-3">
-                    {eqThumb && (
-                      <div className="relative aspect-video w-full overflow-hidden rounded-md bg-secondary/50 border border-border/40">
-                        <img
-                          src={resolveAssetUrl(eqThumb)}
-                          alt={eq.name}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center text-5xs font-bold uppercase tracking-wider text-cyan-500 bg-cyan-500/5 px-2 py-0.5 rounded border border-cyan-500/20">
-                        {FACILITIES_CATEGORIES.find(c => c.id === eq.category)?.name || eq.category}
-                      </span>
-                      <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
-                        {eq.name}
-                      </h4>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {filteredEquipment.length === 0 && (
-              <div className="col-span-3 text-center text-text-muted text-xs py-8">
-                {EQUIPMENT_DATABASE.filter(eq => eq.category === activeCategory).length === 0 ? "No records available." : "No instrumentation systems found in this division matching your search."}
-              </div>
-            )}
           </div>
         </section>
 
@@ -1464,193 +1560,6 @@ function ResearchPage() {
           type={selectedType}
           onClose={closeDetail}
         />
-      )}
-
-      {/* Slide-over Drawer for Facility Details */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 cursor-pointer"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-
-          <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
-            <div className="w-screen max-w-xl bg-card/95 border-l border-cyan-500/20 shadow-2xl backdrop-blur-md flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0 animate-slide-in-right">
-              {/* Header */}
-              <div className="px-6 py-6 border-b border-border/40 flex items-center justify-between">
-                <div>
-                  <span className="text-5xs font-mono font-bold uppercase tracking-wider text-cyan-500">Facility Details</span>
-                  <h2 id="slide-over-title" className="text-lg font-bold text-foreground font-sans mt-0.5">
-                    {FACILITIES_CATEGORIES.find(c => c.id === activeCategory)?.name}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="rounded-full p-2 bg-secondary text-text-muted hover:text-foreground transition cursor-pointer hover:bg-secondary/80 border border-border/45"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Scrollable Container */}
-              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin">
-                {/* Description */}
-                <div>
-                  <p className="text-xs text-text-secondary leading-relaxed font-sans">
-                    {FACILITIES_CATEGORIES.find(c => c.id === activeCategory)?.description}
-                  </p>
-                </div>
-
-                {/* Facility Images Carousel */}
-                {(() => {
-                  const cat = FACILITIES_CATEGORIES.find(c => c.id === activeCategory);
-                  const images = cat?.images || (cat?.thumbnail ? [cat.thumbnail] : []);
-                  if (images.length === 0) return null;
-                  return (
-                    <div className="space-y-2 font-sans">
-                      <h4 className="text-4xs font-mono font-bold uppercase tracking-wider text-cyan-500">Facility Images</h4>
-                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-                        {images.map((img, idx) => (
-                          <div key={idx} className="relative h-44 w-72 shrink-0 overflow-hidden rounded-lg border border-border/40 bg-muted">
-                            <img
-                              src={resolveAssetUrl(img)}
-                              alt={`${cat?.name} Asset ${idx + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Local search inside active category */}
-                <div className="space-y-3 pt-4 border-t border-border/20">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-foreground font-sans">Equipment & Systems</h4>
-                    <span className="text-5xs font-mono font-bold px-2 py-0.5 rounded border bg-secondary text-text-secondary border-border/40">
-                      {EQUIPMENT_DATABASE.filter(eq => eq.category === activeCategory).length} Systems
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
-                    <input
-                      type="text"
-                      placeholder="Search equipment in this facility..."
-                      value={drawerSearch}
-                      onChange={(e) => setDrawerSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-card/50 outline-none transition focus:border-cyan-500/50"
-                    />
-                  </div>
-                </div>
-
-                {/* Accordion List */}
-                <div className="space-y-3">
-                  {(() => {
-                    const filtered = EQUIPMENT_DATABASE.filter(eq => {
-                      const matchesCategory = eq.category === activeCategory;
-                      const q = drawerSearch.toLowerCase().trim();
-                      const matchesSearch = !q ||
-                        String(eq.name ?? "").toLowerCase().includes(q) ||
-                        String(eq.shortDescription ?? "").toLowerCase().includes(q);
-                      return matchesCategory && matchesSearch;
-                    }).map(eq => {
-                      // Map to public payload ONLY: name, shortDescription, specifications, applications, notes.
-                      // Omit all image assets completely.
-                      const specs = (() => {
-                        if (!eq.specs) return [];
-                        if (Array.isArray(eq.specs)) return eq.specs;
-                        if (typeof eq.specs === "string") {
-                          try {
-                            const parsed = JSON.parse(eq.specs);
-                            return Array.isArray(parsed) ? parsed : [];
-                          } catch {
-                            return eq.specs.split(",").map((s: string) => {
-                              const parts = s.split(":");
-                              return { label: parts[0]?.trim() || "Spec", value: parts.slice(1).join(":")?.trim() || "" };
-                            });
-                          }
-                        }
-                        return [];
-                      })();
-                      return {
-                        id: eq.id,
-                        name: eq.name,
-                        shortDescription: eq.shortDescription || eq.description || "",
-                        specs,
-                        applications: eq.applications || "",
-                        notes: eq.notes || ""
-                      };
-                    });
-
-                    if (filtered.length === 0) {
-                      return (
-                        <div className="text-center text-text-muted text-xs py-8 border border-dashed border-border/40 rounded-xl">
-                          No matching systems found.
-                        </div>
-                      );
-                    }
-
-                    return filtered.map((eq, idx) => {
-                      const isExpanded = expandedEquipmentIdx === idx;
-                      return (
-                        <div key={eq.id || idx} className="rounded-xl border border-border bg-card overflow-hidden">
-                          <button
-                            onClick={() => setExpandedEquipmentIdx(isExpanded ? null : idx)}
-                            className="w-full flex items-center justify-between p-4 bg-secondary/10 hover:bg-secondary/20 transition text-left cursor-pointer select-none"
-                          >
-                            <span className="text-xs font-bold text-foreground leading-snug">{eq.name}</span>
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4 text-text-muted shrink-0 ml-2" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-text-muted shrink-0 ml-2" />
-                            )}
-                          </button>
-                          {isExpanded && (
-                            <div className="p-4 border-t border-border/40 space-y-4 font-sans text-xs text-text-secondary leading-relaxed">
-                              {eq.shortDescription && (
-                                <div>
-                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Description</span>
-                                  <p>{eq.shortDescription}</p>
-                                </div>
-                              )}
-                              {eq.specs && eq.specs.length > 0 && (
-                                <div className="space-y-1.5">
-                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block">Specifications</span>
-                                  <div className="grid gap-2 sm:grid-cols-2">
-                                    {eq.specs.map((spec: any, sIdx: number) => (
-                                      <div key={sIdx} className="flex justify-between items-start border-b border-border/10 pb-1.5 pr-2">
-                                        <span className="text-text-muted font-medium">{spec.label}</span>
-                                        <span className="font-semibold text-foreground text-right">{spec.value}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {eq.applications && (
-                                <div>
-                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Applications</span>
-                                  <p>{eq.applications}</p>
-                                </div>
-                              )}
-                              {eq.notes && (
-                                <div>
-                                  <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block mb-1">Notes</span>
-                                  <p className="italic text-text-muted">{eq.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

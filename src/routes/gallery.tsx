@@ -14,9 +14,10 @@ import {
   ChevronRight,
   ExternalLink,
 } from "lucide-react";
-import { getDatasetRecords, DATA_SEEDS, useDatasetRecords } from "@/lib/admin-store";
+import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } from "@/lib/admin-store";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
 
 const gallerySearchSchema = z.object({
   tab: z.string().optional(),
@@ -295,6 +296,7 @@ const STATIC_GALLERY_RECORDS = GALLERY_RECORDS;
 // ----------------- MAIN GALLERY COMPONENT -----------------
 
 function GalleryPage() {
+  const settings = useSiteSettings();
   const [selectedItem, setSelectedItem] = useState<GalleryRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -418,20 +420,15 @@ function GalleryPage() {
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
       
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-950/20 via-background to-background py-16 px-6 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.12),rgba(255,255,255,0))]" />
-        <div className="mx-auto max-w-5xl text-center space-y-6 relative z-10">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/25">
-            ORL Media Center
-          </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-sans">
-            Photo Gallery
-          </h1>
-          <p className="mx-auto max-w-xl text-xs font-semibold text-cyan-500 uppercase tracking-widest leading-relaxed">
-            Professional media archive of subsea deployments, trials, and research
-          </p>
-        </div>
-      </section>
+      <PageHero
+        title={settings.galleryHero?.title || "Photo Gallery"}
+        subtitle={settings.galleryHero?.subtitle || "Professional media archive of subsea deployments, trials, and research"}
+        description={settings.galleryHero?.description || "A visual record of our research journey, laboratory workspace, field testing, and milestone achievements."}
+        mediaType={settings.galleryHero?.mediaType || "none"}
+        mediaUrl={settings.galleryHero?.mediaUrl || ""}
+        mediaPosition={settings.galleryHero?.mediaPosition || "background"}
+        overlayOpacity={settings.galleryHero?.overlayOpacity !== undefined ? settings.galleryHero.overlayOpacity : 60}
+      />
 
       <StickySectionNav items={navItems} />
  

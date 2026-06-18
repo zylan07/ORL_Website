@@ -18,9 +18,10 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
-import { getDatasetRecords, DATA_SEEDS, useDatasetRecords } from "@/lib/admin-store";
+import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } from "@/lib/admin-store";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
 
 const collabSearchSchema = z.object({
   tab: z.enum(["mous", "services", "institutions", "activities"]).optional(),
@@ -279,6 +280,7 @@ function UnifiedDetailModal({ item, themeColor, onClose }: DetailModalProps) {
 // ----------------- MAIN COMPONENT -----------------
 
 function CollaborationsPage() {
+  const settings = useSiteSettings();
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>("emerald");
   const [searchQuery, setSearchQuery] = useState("");
@@ -341,25 +343,24 @@ function CollaborationsPage() {
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
       
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-950/20 via-background to-background py-16 px-6 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.12),rgba(255,255,255,0))]" />
-        <div className="mx-auto max-w-5xl text-center space-y-6 relative z-10">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/25">
-            ORL Partnerships
-          </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-sans">
-            Collaborations & Consultancy
-          </h1>
-          <p className="mx-auto max-w-xl text-xs font-semibold text-cyan-500 uppercase tracking-widest leading-relaxed">
-            "Alone we can do so little; together we can do so much"
+      <PageHero
+        title={settings.collaborationsHero?.title || "Collaborations & Consultancy"}
+        subtitle={settings.collaborationsHero?.subtitle || "Bridging Academia, Industry, and Marine Field Operations"}
+        description={settings.collaborationsHero?.description || "MoUs, industry projects, consultancy initiatives, and technical committees where ORL faculty actively participate."}
+        mediaType={settings.collaborationsHero?.mediaType || "none"}
+        mediaUrl={settings.collaborationsHero?.mediaUrl || ""}
+        mediaPosition={settings.collaborationsHero?.mediaPosition || "background"}
+        overlayOpacity={settings.collaborationsHero?.overlayOpacity !== undefined ? settings.collaborationsHero.overlayOpacity : 60}
+      />
+
+      {/* Team statement quote block */}
+      <div className="mx-auto max-w-4xl px-6 mt-6">
+        <div className="mx-auto max-w-2xl border-l-2 border-border/60 pl-4 py-1.5 text-left bg-secondary/20 rounded-r-lg">
+          <p className="text-xs text-text-secondary leading-relaxed font-sans italic font-medium">
+            "We as a team are looking forward and willing to collaborate with research institute / organization / college / individual who shares equal interest and wishes to achieve high goals in underwater related fields."
           </p>
-          <div className="mx-auto max-w-2xl border-l-2 border-border/60 pl-4 py-1.5 text-left bg-secondary/20 rounded-r-lg">
-            <p className="text-xs text-text-secondary leading-relaxed font-sans italic font-medium">
-              "We as a team are looking forward and willing to collaborate with research institute / organization / college / individual who shares equal interest and wishes to achieve high goals in underwater related fields."
-            </p>
-          </div>
         </div>
-      </section>
+      </div>
 
       {/* Sticky Section Navigation */}
       <StickySectionNav items={navItems} />

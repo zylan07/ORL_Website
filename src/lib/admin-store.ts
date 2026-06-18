@@ -586,7 +586,7 @@ const INITIAL_MEDIA_LIBRARY: MediaFile[] = [
   }
 ];
 
-const DEFAULT_SETTINGS: SiteSettings = {
+export const DEFAULT_SETTINGS: SiteSettings = {
   siteName: "Ocean Research Laboratory",
   siteDescription: "National Institute of Technical Teachers Training and Research (NITTTR), Chennai",
   contactEmail: "orl@nitttrc.ac.in",
@@ -927,7 +927,9 @@ export function exportSiteBackup(): string {
     "home-research-focus",
     "home-highlights",
     "home-quick-access",
-    "media-library"
+    "media-library",
+    "publication-carousel-groups",
+    "publication-carousel-items"
   ];
   
   keys.forEach(key => {
@@ -1016,7 +1018,9 @@ export function resetSiteToDefaults(): void {
     "home-quick-access",
     "media-library",
     "repo-records-v3",
-    "repo-carousels-v1"
+    "repo-carousels-v1",
+    "publication-carousel-groups",
+    "publication-carousel-items"
   ];
   keys.forEach(k => {
     localStorage.removeItem(`uwarl-db-${k}`);
@@ -1047,6 +1051,21 @@ export function useSiteSettings(): SiteSettings {
   );
 }
 
+const INITIAL_PUB_CAROUSEL_GROUPS: GenericEntity[] = [
+  { id: "pcg-1", title: "Acoustic Telemetry Validation", name: "Acoustic Telemetry Validation", description: "Highlights of ocean transceivers testing, ambient measurements, and coastal shallow trials.", displayOrder: 1, visible: true },
+  { id: "pcg-2", title: "Subsea Robotics & Vehicles", name: "Subsea Robotics & Vehicles", description: "Design documentation, trim calibrations, and deployment profiles of custom autonomous subsea systems.", displayOrder: 2, visible: true },
+  { id: "pcg-3", title: "Optical Restoration Trials", name: "Optical Restoration Trials", description: "Signal analysis, de-noising validations, and high-frequency optical transceivers.", displayOrder: 3, visible: true }
+];
+
+const INITIAL_PUB_CAROUSEL_ITEMS: GenericEntity[] = [
+  { id: "pci-1", groupId: "pcg-1", image: "/images/laboratory_workspace.png", title: "Basin Sensor Testbed", caption: "Basin Sensor Testbed", description: "Transducer arrays calibrated in laboratory testing tank.", altText: "Transducer arrays in laboratory testing tank", displayOrder: 1 },
+  { id: "pci-2", groupId: "pcg-1", image: "/images/academic_seminar.png", title: "Field Acoustic Telemetry", caption: "Field Acoustic Telemetry", description: "Acoustic signal verification in coastal shallow estuary zone.", altText: "Acoustic signal verification in coastal shallow estuary zone", displayOrder: 2 },
+  { id: "pci-3", groupId: "pcg-2", image: "/images/underwater_robot.png", title: "ORCA Trim Calibrations", caption: "ORCA Trim Calibrations", description: "Trim tank balancing trials for inspecting ocean platforms.", altText: "ORCA trim tank balancing trials for inspecting ocean platforms", displayOrder: 1 },
+  { id: "pci-4", groupId: "pcg-2", image: "/images/laboratory_workspace.png", title: "Hull Integrity Test", caption: "Hull Integrity Test", description: "Validating structural seals of vehicle housings under pressure.", altText: "Validating structural seals of vehicle housings under pressure", displayOrder: 2 },
+  { id: "pci-5", groupId: "pcg-3", image: "/images/academic_seminar.png", title: "Optical Scatter Array", caption: "Optical Scatter Array", description: "Testing high-frequency light pulses through micro-turbulent media.", altText: "Testing high-frequency light pulses through micro-turbulent media", displayOrder: 1 },
+  { id: "pci-6", groupId: "pcg-3", image: "/images/underwater_robot.png", title: "Subsea Fiber Interface", caption: "Subsea Fiber Interface", description: "Calibrating receiver diodes for multi-point high-speed telemetry.", altText: "Calibrating receiver diodes for multi-point high-speed telemetry", displayOrder: 2 }
+];
+
 // ----------------- DATA SEEDS REGISTRY EXPORTS -----------------
 export const DATA_SEEDS = {
   "research-projects": INITIAL_PROJECTS,
@@ -1063,7 +1082,9 @@ export const DATA_SEEDS = {
   "media-library": INITIAL_MEDIA_LIBRARY,
   "home-research-focus": INITIAL_HOME_RESEARCH_FOCUS,
   "home-highlights": INITIAL_HOME_HIGHLIGHTS,
-  "home-quick-access": INITIAL_HOME_QUICK_ACCESS
+  "home-quick-access": INITIAL_HOME_QUICK_ACCESS,
+  "publication-carousel-groups": INITIAL_PUB_CAROUSEL_GROUPS,
+  "publication-carousel-items": INITIAL_PUB_CAROUSEL_ITEMS
 };
 
 // --- ONE-TIME GALLERY MIGRATION ---

@@ -97,6 +97,7 @@ export function StickySectionNav({
   }, [items]);
 
   const handleScroll = (id: string) => {
+    setActiveId(id);
     if (onItemClick) {
       onItemClick(id);
       return;
@@ -124,17 +125,11 @@ export function StickySectionNav({
       const containerWidth = container.offsetWidth;
       const buttonLeft = activeButton.offsetLeft;
       const buttonWidth = activeButton.offsetWidth;
-      const scrollLeft = container.scrollLeft;
 
-      const isLeftOutOfView = buttonLeft < scrollLeft;
-      const isRightOutOfView = (buttonLeft + buttonWidth) > (scrollLeft + containerWidth);
-
-      if (isLeftOutOfView || isRightOutOfView) {
-        container.scrollTo({
-          left: buttonLeft - (containerWidth / 2) + (buttonWidth / 2),
-          behavior: "smooth"
-        });
-      }
+      container.scrollTo({
+        left: buttonLeft - (containerWidth / 2) + (buttonWidth / 2),
+        behavior: "smooth"
+      });
     }
   }, [activeId]);
 
@@ -143,7 +138,7 @@ export function StickySectionNav({
       ref={navRef}
       className="sticky top-[56px] z-30 w-full border-b border-border bg-background/85 backdrop-blur-md px-6 py-3 shadow-sm transition-all duration-300"
     >
-      <div className="mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 w-full">
+      <div className="relative mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 w-full">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id;

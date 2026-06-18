@@ -19,6 +19,8 @@ import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { parseDateSafe } from "@/lib/utils";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
+import { useSiteSettings } from "@/lib/admin-store";
 
 const technicalTrainingSearchSchema = z.object({
   tab: z.enum(["host", "itec", "itp", "pdp", "coordinator", "pg"]).optional(),
@@ -174,6 +176,7 @@ function TrainingTable({
 }
 
 function TechnicalTrainingPage() {
+  const settings = useSiteSettings();
   const { tab } = Route.useSearch();
   const records = useRecords();
 
@@ -298,39 +301,20 @@ function TechnicalTrainingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 transition-colors duration-300 page-technical-training">
+      <PageHero
+        title={settings.trainingHero?.title || "Technical Training & Courses"}
+        subtitle={settings.trainingHero?.subtitle || "Capacity building, professional training programmes, and international technical delegations"}
+        description={settings.trainingHero?.description || "ITEC international sessions, professional development programs, and post-graduate engineering courses taught and coordinated by the laboratory faculty."}
+        mediaType={settings.trainingHero?.mediaType || "none"}
+        mediaUrl={settings.trainingHero?.mediaUrl || ""}
+        mediaPosition={settings.trainingHero?.mediaPosition || "background"}
+        overlayOpacity={settings.trainingHero?.overlayOpacity !== undefined ? settings.trainingHero.overlayOpacity : 60}
+      />
+
       <StickySectionNav items={navItems} />
 
       {/* Main Content Area */}
       <div className="mx-auto max-w-6xl px-6 mt-10 space-y-10">
-        {/* Page Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <nav
-            className="text-3xs text-text-muted justify-center flex mb-2"
-            aria-label="Breadcrumb"
-          >
-            <ol className="flex items-center gap-1.5">
-              <li>
-                <Link to="/" className="hover:text-accent transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span>›</span>
-                <span className="font-medium text-text-secondary">
-                  Technical Training
-                </span>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            Technical Training & Courses
-          </h1>
-          <p className="text-sm text-text-secondary leading-relaxed font-sans">
-            Capacity building, professional training programmes, international
-            technical delegations, and post-graduate engineering courses taught
-            and coordinated by the laboratory faculty.
-          </p>
-        </div>
 
         {/* Global Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-secondary/20 max-w-6xl mx-auto">

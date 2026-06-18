@@ -70,6 +70,7 @@ interface Props {
   type: RecordType;
   subtype?: string;
   breadcrumb?: string[];
+  hideHeader?: boolean;
 }
 
 const PAGE_SIZE = 25;
@@ -138,7 +139,7 @@ const getSectionAccentClass = (type: RecordType): string => {
   }
 };
 
-export function RecordList({ type, subtype, breadcrumb }: Props) {
+export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
   // force update when global store updates
   const records = useRecords();
   const meta = TYPE_META[type];
@@ -758,17 +759,19 @@ export function RecordList({ type, subtype, breadcrumb }: Props) {
       )}
 
       {/* Page Header */}
-      <div className="border-b border-border pb-4">
-        <h1 className="text-2xl font-bold text-foreground">
-          {title}{" "}
-          <span className="font-normal text-muted-foreground">
-            ({results.length})
-          </span>
-        </h1>
-        <p className="mt-1.5 max-w-3xl text-sm text-muted-foreground">
-          {description}
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="border-b border-border pb-4">
+          <h1 className="text-2xl font-bold text-foreground">
+            {title}{" "}
+            <span className="font-normal text-muted-foreground">
+              ({results.length})
+            </span>
+          </h1>
+          <p className="mt-1.5 max-w-3xl text-sm text-muted-foreground">
+            {description}
+          </p>
+        </div>
+      )}
 
       {/* Reusable Dual Showcase Carousels */}
       {type === "award" && (

@@ -990,6 +990,7 @@ const STATIC_INTERNSHIPS = INTERNSHIPS;
 // ----------------- PEOPLE PAGE ROUTE COMPONENT -----------------
 
 function PeoplePage() {
+  const settings = useSiteSettings();
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>("cyan");
 
@@ -1427,25 +1428,15 @@ function PeoplePage() {
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300 page-people">
       
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-950/20 via-background to-background py-16 px-6 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.12),rgba(255,255,255,0))]" />
-        <div className="mx-auto max-w-5xl text-center space-y-6 relative z-10">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/25">
-            ORL Research Personnel
-          </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl font-sans">
-            People
-          </h1>
-          <p className="mx-auto max-w-xl text-xs font-semibold text-cyan-500 uppercase tracking-widest leading-relaxed">
-            The bigger the dream, the more important the team.
-          </p>
-          <p className="mx-auto max-w-2xl text-xs text-text-secondary leading-relaxed font-sans">
-            Meet the faculty, research scholars, project engineers, and student cohorts driving underwater acoustic telemetry, subsea vehicle designs, and optical communication trials.
-          </p>
-
-
-        </div>
-      </section>
+      <PageHero
+        title={settings.peopleHero?.title || "People"}
+        subtitle={settings.peopleHero?.subtitle || "ORL Research Personnel"}
+        description={settings.peopleHero?.description || "Meet the faculty, research scholars, project engineers, and student cohorts driving underwater acoustic telemetry, subsea vehicle designs, and optical communication trials."}
+        mediaType={settings.peopleHero?.mediaType || "none"}
+        mediaUrl={settings.peopleHero?.mediaUrl || ""}
+        mediaPosition={settings.peopleHero?.mediaPosition || "background"}
+        overlayOpacity={settings.peopleHero?.overlayOpacity !== undefined ? settings.peopleHero.overlayOpacity : 60}
+      />
 
       <StickySectionNav items={navItems} />
 

@@ -16,6 +16,8 @@ import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { parseDateSafe } from "@/lib/utils";
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
+import { useSiteSettings } from "@/lib/admin-store";
 
 const academicActivitiesSearchSchema = z.object({
   tab: z.enum(["dc", "talks", "workshops", "bos"]).optional(),
@@ -174,6 +176,7 @@ function AcademicTable({
 }
 
 function AcademicActivitiesPage() {
+  const settings = useSiteSettings();
   const { tab } = Route.useSearch();
   const records = useRecords();
 
@@ -280,39 +283,20 @@ function AcademicActivitiesPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 transition-colors duration-300 page-academic-activities">
+      <PageHero
+        title={settings.academicHero?.title || "Academic Activities"}
+        subtitle={settings.academicHero?.subtitle || "Workshops, Seminars, & Technical Events"}
+        description={settings.academicHero?.description || "Explore doctoral research supervision, academic committee memberships, invited presentations, keynotes, workshops, and educational governance roles managed by ORL members."}
+        mediaType={settings.academicHero?.mediaType || "none"}
+        mediaUrl={settings.academicHero?.mediaUrl || ""}
+        mediaPosition={settings.academicHero?.mediaPosition || "background"}
+        overlayOpacity={settings.academicHero?.overlayOpacity !== undefined ? settings.academicHero.overlayOpacity : 60}
+      />
+
       <StickySectionNav items={navItems} />
 
       {/* Main Content Area */}
       <div className="mx-auto max-w-6xl px-6 mt-10 space-y-10">
-        {/* Page Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <nav
-            className="text-3xs text-text-muted justify-center flex mb-2"
-            aria-label="Breadcrumb"
-          >
-            <ol className="flex items-center gap-1.5">
-              <li>
-                <Link to="/" className="hover:text-accent transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span>›</span>
-                <span className="font-medium text-text-secondary">
-                  Academic Activities
-                </span>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            Academic Activities
-          </h1>
-          <p className="text-sm text-text-secondary leading-relaxed font-sans">
-            Explore doctoral research guidance, academic committee memberships,
-            invited presentations, keynotes, workshops, and educational
-            governance roles managed by ORL members.
-          </p>
-        </div>
 
         {/* Global Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-secondary/20 max-w-6xl mx-auto">
