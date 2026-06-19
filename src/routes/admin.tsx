@@ -619,6 +619,7 @@ function Admin() {
   }, [rawFacilities]);
   const projects = useDatasetRecords("research-projects", DATA_SEEDS["research-projects"]);
   const fieldActivities = useDatasetRecords("research-activities", DATA_SEEDS["research-activities"]);
+  const discussions = useDatasetRecords("research-discussions", DATA_SEEDS["research-discussions"]);
   const members = useDatasetRecords("people-members", DATA_SEEDS["people-members"]);
   const internships = useDatasetRecords("people-internships", DATA_SEEDS["people-internships"]);
   const mous = useDatasetRecords("collaborations-mous", DATA_SEEDS["collaborations-mous"]);
@@ -1783,6 +1784,75 @@ function Admin() {
               </div>
             </div>
 
+            {/* Technical Discussions Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Technical Discussions & Scientific Colloquia</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "research-discussions", isNew: true, data: { title: "", date: "", participants: "", summary: "", thumbnail: "", documents: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Discussion
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Session Title</th>
+                      <th className="px-4 py-2">Date Reference</th>
+                      <th className="px-4 py-2">Participants</th>
+                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {discussions.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3">
+                          <span className="font-bold block leading-snug">{item.title || item.name}</span>
+                          {item.summary && <span className="text-4xs text-text-muted leading-relaxed max-w-sm block mt-0.5">{item.summary}</span>}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-text-secondary font-mono">{item.date}</td>
+                        <td className="px-4 py-3 text-text-muted">{item.participants || "—"}</td>
+                        <td className="px-4 py-3 text-center">
+                          <OrderControls
+                            index={idx}
+                            total={discussions.length}
+                            onMoveUp={() => handleMoveItem("research-discussions", discussions, idx, "up")}
+                            onMoveDown={() => handleMoveItem("research-discussions", discussions, idx, "down")}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "research-discussions", isNew: false, index: idx, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this technical discussion record?")) {
+                                  const filtered = discussions.filter((_, i) => i !== idx);
+                                  saveDatasetRecords("research-discussions", filtered);
+                                  toast.success("Technical discussion removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -2736,6 +2806,75 @@ function Admin() {
                                   const filtered = consultancy.filter((_, i) => i !== idx);
                                   saveDatasetRecords("collaborations-activities", filtered);
                                   toast.success("Consultancy record removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Partner Institutions */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Partner Institutions</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "collaborations-institutions", isNew: true, data: { name: "", location: "", collaborationArea: "", notes: "", thumbnail: "", documents: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Partner
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Institution Name</th>
+                      <th className="px-4 py-2">Location</th>
+                      <th className="px-4 py-2">Collaboration Focus</th>
+                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {partners.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3">
+                          <span className="font-bold block">{item.name || item.title}</span>
+                          {item.notes && <span className="text-4xs text-text-muted leading-relaxed max-w-sm block">{item.notes}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-text-secondary">{item.location}</td>
+                        <td className="px-4 py-3 font-medium text-text-muted">{item.collaborationArea || "—"}</td>
+                        <td className="px-4 py-3 text-center">
+                          <OrderControls
+                            index={idx}
+                            total={partners.length}
+                            onMoveUp={() => handleMoveItem("collaborations-institutions", partners, idx, "up")}
+                            onMoveDown={() => handleMoveItem("collaborations-institutions", partners, idx, "down")}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "collaborations-institutions", isNew: false, index: idx, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this partner institution record?")) {
+                                  const filtered = partners.filter((_, i) => i !== idx);
+                                  saveDatasetRecords("collaborations-institutions", filtered);
+                                  toast.success("Partner institution removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -4623,79 +4762,226 @@ function Admin() {
                 {/* 5. EDITOR: FUNDED PROJECT RECORD */}
                 {editingItem.key === "research-projects" && (
                   <div className="space-y-4">
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Project Title</span>
-                      <input
-                        type="text"
-                        value={editingItem.data.title || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
-                      />
-                    </label>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Sponsoring Agency</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.fundingAgency || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, fundingAgency: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Sponsorship Amount</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.amount || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, amount: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Duration Term</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.duration || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Principal Investigator</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.pi || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, pi: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                        />
-                      </label>
-                    </div>
+                    {editingItem.data.type === "phd" ? (
+                      <>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Scholar Name</span>
+                          <input
+                            type="text"
+                            value={editingItem.data.scholar || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, scholar: e.target.value } })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Research Title</span>
+                          <input
+                            type="text"
+                            value={editingItem.data.title || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          />
+                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Publication Count</span>
+                            <input
+                              type="number"
+                              value={editingItem.data.publicationCount || 0}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publicationCount: parseInt(e.target.value) || 0 } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Status</span>
+                            <select
+                              value={editingItem.data.status || "Active"}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, status: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            >
+                              <option value="Active">Active</option>
+                              <option value="Coursework Completed">Coursework Completed</option>
+                              <option value="Thesis Submitted">Thesis Submitted</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          </label>
+                        </div>
+                      </>
+                    ) : editingItem.data.type === "student" ? (
+                      <>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Project Title</span>
+                          <input
+                            type="text"
+                            value={editingItem.data.title || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          />
+                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Sponsoring Agency</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.fundingAgency || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, fundingAgency: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Sponsorship Amount</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.amount || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, amount: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Duration Term</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.duration || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Role</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.role || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, role: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Project Title</span>
+                          <input
+                            type="text"
+                            value={editingItem.data.title || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          />
+                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Project Category</span>
+                            <select
+                              value={editingItem.data.type || "external"}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, type: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                            >
+                              <option value="external">External Funded</option>
+                              <option value="internal">Internal Funded</option>
+                            </select>
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Sponsoring Agency</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.fundingAgency || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, fundingAgency: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Sponsorship Amount</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.amount || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, amount: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Duration Term</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.duration || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Principal Investigator</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.pi || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, pi: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Co-Investigator(s)</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.copi || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, copi: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Team Members (Comma Separated)</span>
+                            <input
+                              type="text"
+                              value={editingItem.data.team || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, team: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Publications Count</span>
+                            <input
+                              type="number"
+                              value={editingItem.data.publicationCount || 0}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publicationCount: parseInt(e.target.value) || 0 } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            />
+                          </label>
+                          <label className="block space-y-1">
+                            <span className="text-[10px] font-bold text-text-muted uppercase">Project Status</span>
+                            <select
+                              value={editingItem.data.status || "Ongoing"}
+                              onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, status: e.target.value } })}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                            >
+                              <option value="Ongoing">Ongoing</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          </label>
+                        </div>
 
-                    <div>
-                      <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Detailed Project Scope</span>
-                      <ResizingTextarea
-                        value={editingItem.data.description || ""}
-                        onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, description: val } })}
-                        maxLength={500}
-                      />
-                    </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Detailed Project Scope</span>
+                          <ResizingTextarea
+                            value={editingItem.data.description || ""}
+                            onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, description: val } })}
+                            maxLength={500}
+                          />
+                        </div>
 
-                    <AssetUploadInput
-                      label="Project Thumbnail Image"
-                      value={editingItem.data.thumbnail || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
-                      category="projects"
-                    />
+                        <AssetUploadInput
+                          label="Project Thumbnail Image"
+                          value={editingItem.data.thumbnail || ""}
+                          type="image"
+                          onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
+                          category="projects"
+                        />
 
-                    {/* PDF Document separation trigger */}
-                    <AssetUploadInput
-                      label="Attach Research Report PDF"
-                      value={Array.isArray(editingItem.data.documents) ? editingItem.data.documents[0] || "" : editingItem.data.documents || ""}
-                      type="document"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, documents: val ? [val] : [] } })}
-                      category="reports"
-                    />
+                        <AssetUploadInput
+                          label="Attach Research Report PDF"
+                          value={Array.isArray(editingItem.data.documents) ? editingItem.data.documents[0] || "" : editingItem.data.documents || ""}
+                          type="document"
+                          onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, documents: val ? [val] : [] } })}
+                          category="reports"
+                        />
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -4720,22 +5006,6 @@ function Admin() {
                         placeholder="Brief summary of this facility category"
                       />
                     </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Full Description</span>
-                      <ResizingTextarea
-                        value={editingItem.data.fullDescription || ""}
-                        onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, fullDescription: val } })}
-                        maxLength={1000}
-                        placeholder="Detailed engineering and operational description of this facility category"
-                      />
-                    </div>
-                    <AssetUploadInput
-                      label="Carousel Cover Photograph"
-                      value={editingItem.data.thumbnail || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
-                      category="facilities"
-                    />
                   </div>
                 )}
 
@@ -7253,6 +7523,50 @@ function Admin() {
                   </div>
                 )}
 
+                {editingItem.key === "research-discussions" && (
+                  <div className="space-y-4 font-sans text-xs">
+                    <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono font-bold">Technical Discussion Record</span>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Discussion Title</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.title || editingItem.data.name || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value, name: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Date Reference</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.date || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, date: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                          placeholder="e.g. October 2019"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Participants / Cohorts</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.participants || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, participants: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Session Summary</span>
+                      <ResizingTextarea
+                        value={editingItem.data.summary || editingItem.data.description || ""}
+                        onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, summary: val, description: val } })}
+                        maxLength={500}
+                      />
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Modal Action buttons */}
@@ -7288,6 +7602,7 @@ function Admin() {
                       key === "research-equipment" ||
                       key === "research-activities" ||
                       key === "research-facilities" ||
+                      key === "research-discussions" ||
                       key === "people-internships" ||
                       key === "collaborations-mous" ||
                       key === "collaborations-institutions" ||

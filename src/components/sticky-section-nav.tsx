@@ -136,9 +136,13 @@ export function StickySectionNav({
   return (
     <div
       ref={navRef}
-      className="sticky top-[56px] z-30 w-full border-b border-border bg-background/85 backdrop-blur-md px-6 py-3 shadow-sm transition-all duration-300"
+      className="sticky top-[56px] z-30 w-full border-b border-border bg-background/85 backdrop-blur-md py-3 shadow-sm transition-all duration-300 relative"
     >
-      <div className="relative mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 w-full">
+      {/* Absolute scroll fade indicators */}
+      <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+
+      <div className="mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-6 w-full">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id;

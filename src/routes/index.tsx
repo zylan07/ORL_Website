@@ -510,7 +510,7 @@ function HeroCanvas() {
 
       // Sea plant vegetation near bottom corners (do not obstruct text)
       // Restricted to left 18% and right 18% boundary
-      const plantCount = isMobile ? 8 : 26;
+      const plantCount = 0;
       for (let i = 0; i < plantCount; i++) {
         let x = 0;
         const side = Math.random() < 0.5 ? "left" : "right";
@@ -572,7 +572,7 @@ function HeroCanvas() {
       }
 
       // Fish silhouettes: schools and solo fish layered in depth
-      const fishCount = isMobile ? 5 : 18;
+      const fishCount = 0;
       const hasSchool = !isMobile;
       const schoolDirection = Math.random() < 0.5 ? 1 : -1;
       const schoolSpeed = Math.random() * 0.12 + 0.24; // Slow swimming
@@ -1820,84 +1820,7 @@ function Home() {
         </div>
       </section>
 
-      {/* 11. CONTACT PREVIEW SECTION */}
-      <section className="bg-secondary/40 border-t border-border py-16" id="contact-preview">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="max-w-2xl mx-auto text-center mb-10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="h-0.5 w-6 bg-accent"></span>
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                Connect With Us
-              </span>
-              <span className="h-0.5 w-6 bg-accent"></span>
-            </div>
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">
-              Contact Information
-            </h2>
-            <p className="text-xs text-text-muted mt-1">
-              Get in touch for research inquiries, academic collaborations, or program details.
-            </p>
-          </div>
 
-          {/* Stylyzed logo visual */}
-          <div className="bg-gradient-to-br from-sky-500/10 to-indigo-500/10 dark:from-sky-500/5 dark:to-indigo-500/5 border border-border/45 p-4 rounded-xl text-center mb-8 max-w-xs mx-auto shadow-xs">
-            <Building2 className="h-7 w-7 text-accent mx-auto mb-2 animate-bounce" style={{ animationDuration: '3.5s' }} />
-            <div className="text-3xs font-mono font-bold uppercase tracking-wider text-accent-secondary">
-              NITTTR Chennai Campus
-            </div>
-            <div className="text-4xs text-text-muted mt-0.5">ECE Department Laboratory</div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
-            <div className="rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center shadow-xs h-full">
-              <div className="rounded-full bg-accent/10 p-2.5 text-accent mb-3">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold text-xs text-foreground">
-                Postal Address
-              </h3>
-              <p className="mt-2 text-3xs text-text-secondary leading-relaxed">
-                Department of ECE, NITTTR Chennai,
-                <br />
-                Taramani, Chennai, Tamil Nadu - 600113
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center shadow-xs h-full">
-              <div className="rounded-full bg-accent/10 p-2.5 text-accent mb-3">
-                <Mail className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold text-xs text-foreground">
-                Email Contact
-              </h3>
-              <p className="mt-2 text-3xs text-text-secondary leading-relaxed font-mono">
-                orl@nitttrc.ac.in
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center shadow-xs h-full">
-              <div className="rounded-full bg-accent/10 p-2.5 text-accent mb-3">
-                <Phone className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold text-xs text-foreground">
-                Telephone Registry
-              </h3>
-              <p className="mt-2 text-3xs text-text-secondary leading-relaxed font-sans">
-                +91 44 2254 5400
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-10 text-center">
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-xs uppercase px-5 py-3 transition duration-300 shadow-md"
-            >
-              View Full Contact Details &rarr;
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

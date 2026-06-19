@@ -917,6 +917,7 @@ export function exportSiteBackup(): string {
     "research-projects",
     "research-equipment",
     "research-activities",
+    "research-discussions",
     "people-members",
     "people-internships",
     "collaborations-mous",
@@ -1006,6 +1007,7 @@ export function resetSiteToDefaults(): void {
     "research-equipment",
     "research-facilities",
     "research-activities",
+    "research-discussions",
     "people-members",
     "people-internships",
     "collaborations-mous",
@@ -1066,12 +1068,81 @@ const INITIAL_PUB_CAROUSEL_ITEMS: GenericEntity[] = [
   { id: "pci-6", groupId: "pcg-3", image: "/images/underwater_robot.png", title: "Subsea Fiber Interface", caption: "Subsea Fiber Interface", description: "Calibrating receiver diodes for multi-point high-speed telemetry.", altText: "Calibrating receiver diodes for multi-point high-speed telemetry", displayOrder: 2 }
 ];
 
+const INITIAL_RESEARCH_DISCUSSIONS: GenericEntity[] = [
+  {
+    id: "disc-1",
+    title: "Intern Students Discussion on Testing of an Audio Signal in Underwater test tank and Control of ARM in ROV",
+    date: "June-August 2024",
+    participants: "Intern students at ORL",
+    summary: "Active review sessions covering experimental setups for acoustic signal transmission, hydrophone calibration, and joint testing of robotic arms for subsea remotely operated vehicles.",
+    description: "Active review sessions covering experimental setups for acoustic signal transmission, hydrophone calibration, and joint testing of robotic arms for subsea remotely operated vehicles.",
+    thumbnail: "",
+    images: [],
+    documents: [],
+    featured: false,
+    displayOrder: 1
+  },
+  {
+    id: "disc-2",
+    title: "One Day Workshop on Design of ROV",
+    date: "28 September & 4 October 2019",
+    participants: "Dr. R. Satish (Guest Speaker), ORL Team & Scholars",
+    summary: "One Day workshop by Dr. R. Satish on Design of Remotely Operated Vehicles (ROV) held inside the laboratory workspace to outline structural, buoyancy, and end-cap layout calculations.",
+    description: "One Day workshop by Dr. R. Satish on Design of Remotely Operated Vehicles (ROV) held inside the laboratory workspace to outline structural, buoyancy, and end-cap layout calculations.",
+    thumbnail: "",
+    images: [],
+    documents: [],
+    featured: false,
+    displayOrder: 2
+  },
+  {
+    id: "disc-3",
+    title: "Technical Discussion of Development of ROV at Arobotics",
+    date: "22 October 2019",
+    participants: "Arobotics Engineers, Dr. S. Sakthivel Murugan, and Project Associates",
+    summary: "Collaborative systems engineering review regarding industrial fabrication of waterproof ROV chassis hulls and thruster power allocation tables.",
+    description: "Collaborative systems engineering review regarding industrial fabrication of waterproof ROV chassis hulls and thruster power allocation tables.",
+    thumbnail: "",
+    images: [],
+    documents: [],
+    featured: false,
+    displayOrder: 3
+  },
+  {
+    id: "disc-4",
+    title: "Discussion on Development of Underwater Sea-Battery",
+    date: "14 October 2019",
+    participants: "Mr. S. R. Elamaran & colleague (AMET University), Dr. S. Sakthivel Murugan",
+    summary: "Research alignment session detailing materials and stack configurations for sea-water activated galvanic batteries designed for long-duration low-power subsea transponders.",
+    description: "Research alignment session detailing materials and stack configurations for sea-water activated galvanic batteries designed for long-duration low-power subsea transponders.",
+    thumbnail: "",
+    images: [],
+    documents: [],
+    featured: false,
+    displayOrder: 4
+  },
+  {
+    id: "disc-5",
+    title: "Academic Research Collaborative Discussion Visit",
+    date: "17 March 2022",
+    participants: "Miss. A. Priya (Associate Professor, Crescent Institute), Scholars & Students",
+    summary: "Miss. A. Priya along with her research scholars and PG cohorts visited the lab and discussed ongoing research on magnetic induction-based underwater networks.",
+    description: "Miss. A. Priya along with her research scholars and PG cohorts visited the lab and discussed ongoing research on magnetic induction-based underwater networks.",
+    thumbnail: "",
+    images: [],
+    documents: [],
+    featured: false,
+    displayOrder: 5
+  }
+];
+
 // ----------------- DATA SEEDS REGISTRY EXPORTS -----------------
 export const DATA_SEEDS = {
   "research-projects": INITIAL_PROJECTS,
   "research-equipment": INITIAL_EQUIPMENT,
   "research-facilities": INITIAL_FACILITIES,
   "research-activities": INITIAL_FIELD_ACTIVITIES,
+  "research-discussions": INITIAL_RESEARCH_DISCUSSIONS,
   "people-members": INITIAL_PEOPLE,
   "people-internships": INITIAL_INTERNSHIPS,
   "collaborations-mous": INITIAL_MOUS,

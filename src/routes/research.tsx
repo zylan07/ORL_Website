@@ -555,7 +555,7 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
                     )}
                     {item.role && (
                       <div>
-                        <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block">Supervisor Role</span>
+                        <span className="text-5xs font-bold uppercase tracking-wider text-text-muted block">Role</span>
                         <span className="font-semibold text-foreground">{item.role}</span>
                       </div>
                     )}
@@ -1124,6 +1124,85 @@ function ResearchPage() {
               )}
             </div>
 
+            {/* Subsection: PhD Research */}
+            <div id="phd-projects-header" className="rounded-xl border border-border bg-card/40 overflow-hidden">
+              <button
+                onClick={() => toggleProjectSection("phd")}
+                className="w-full flex items-center justify-between p-4 bg-secondary/15 hover:bg-secondary/30 transition text-left cursor-pointer select-none border-b border-border/40"
+              >
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm font-bold text-foreground uppercase tracking-wider">PhD Research Registry</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-5xs font-mono font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/25">
+                    {filteredProjects.filter(p => p.type === "phd").length} Listed
+                  </span>
+                  {expandedProjects.phd ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
+                </div>
+              </button>
+              {expandedProjects.phd && (
+                <div className="p-4 md:p-6 space-y-6">
+                  {/* Vertical Timeline */}
+                  <div className="relative pl-6 md:pl-8 border-l border-border/80 space-y-6 ml-2 md:ml-4 py-2">
+                    {filteredProjects.filter((p) => p.type === "phd").map((proj) => (
+                      <div key={proj.id} className="relative group">
+                        {/* Timeline Bullet */}
+                        <span className={`absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border bg-card flex items-center justify-center transition duration-300 ${
+                          proj.status === "Coursework Completed" ? "border-amber-500 ring-4 ring-amber-500/10" :
+                          proj.status === "Thesis Submitted" ? "border-cyan-500 ring-4 ring-cyan-500/10" :
+                          "border-emerald-500 ring-4 ring-emerald-500/10"
+                        }`}>
+                          <span className={`h-2 w-2 rounded-full ${
+                            proj.status === "Coursework Completed" ? "bg-amber-500" :
+                            proj.status === "Thesis Submitted" ? "bg-cyan-500" :
+                            "bg-emerald-500"
+                          }`} />
+                        </span>
+
+                        <div
+                          className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
+                        >
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-foreground text-xs leading-relaxed">
+                              {proj.title || proj.researchArea}
+                            </h4>
+                            <p className="text-4xs text-text-muted mt-1">
+                              Scholar: <span className="font-semibold text-text-secondary">{proj.scholar}</span>
+                            </p>
+                            {proj.description && (
+                              <p className="text-4xs text-text-secondary leading-relaxed mt-2 italic border-l-2 border-emerald-500/30 pl-2">
+                                {proj.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {proj.publicationCount && (
+                              <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
+                                {proj.publicationCount} Publications
+                              </span>
+                            )}
+                            <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
+                              proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                              proj.status === "Thesis Submitted" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
+                              "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            }`}>
+                              {proj.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredProjects.filter(p => p.type === "phd").length === 0 && (
+                      <div className="text-center text-text-muted text-xs py-4">
+                        {PROJECTS_DATABASE.filter(p => p.type === "phd").length === 0 ? "No records available." : "No scholars match the active filters."}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Subsection: Student Projects */}
             <div id="student-projects-header" className="rounded-xl border border-border bg-card/40 overflow-hidden">
               <button
@@ -1201,7 +1280,7 @@ function ResearchPage() {
                             onClick={() => handleStudentSort("role")}
                           >
                             <div className="flex items-center gap-1.5">
-                              Supervisor Role
+                              Role
                               {studentSortField === "role" && (
                                 <span className="text-indigo-500">{studentSortOrder === "asc" ? "▲" : "▼"}</span>
                               )}
@@ -1244,84 +1323,6 @@ function ResearchPage() {
                         )}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Subsection: PhD Research */}
-            <div id="phd-projects-header" className="rounded-xl border border-border bg-card/40 overflow-hidden">
-              <button
-                onClick={() => toggleProjectSection("phd")}
-                className="w-full flex items-center justify-between p-4 bg-secondary/15 hover:bg-secondary/30 transition text-left cursor-pointer select-none border-b border-border/40"
-              >
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-emerald-500" />
-                  <span className="text-sm font-bold text-foreground uppercase tracking-wider">PhD Research Registry</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-5xs font-mono font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/25">
-                    {filteredProjects.filter(p => p.type === "phd").length} Listed
-                  </span>
-                  {expandedProjects.phd ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
-                </div>
-              </button>
-              {expandedProjects.phd && (
-                <div className="p-4 md:p-6 space-y-6">
-                  {/* Vertical Timeline */}
-                  <div className="relative pl-6 md:pl-8 border-l border-border/80 space-y-6 ml-2 md:ml-4 py-2">
-                    {filteredProjects.filter((p) => p.type === "phd").map((proj) => (
-                      <div key={proj.id} className="relative group">
-                        {/* Timeline Bullet */}
-                        <span className={`absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border bg-card flex items-center justify-center transition duration-300 ${
-                          proj.status === "Coursework Completed" ? "border-amber-500 ring-4 ring-amber-500/10" :
-                          proj.status === "Thesis Submitted" ? "border-cyan-500 ring-4 ring-cyan-500/10" :
-                          "border-emerald-500 ring-4 ring-emerald-500/10"
-                        }`}>
-                          <span className={`h-2 w-2 rounded-full ${
-                            proj.status === "Coursework Completed" ? "bg-amber-500" :
-                            proj.status === "Thesis Submitted" ? "bg-cyan-500" :
-                            "bg-emerald-500"
-                          }`} />
-                        </span>
-
-                        <div
-                          onClick={() => openDetail(proj, "project")}
-                          className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                        >
-                          <div className="space-y-1">
-                            <span className="text-5xs font-mono font-bold text-emerald-500 uppercase tracking-wider">
-                              {proj.scholar}
-                            </span>
-                            <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                              {proj.title || proj.researchArea}
-                            </h4>
-                            {proj.researchArea && proj.title !== proj.researchArea && (
-                              <p className="text-4xs text-text-secondary leading-snug">{proj.researchArea}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {proj.publicationCount && (
-                              <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
-                                {proj.publicationCount} Publications
-                              </span>
-                            )}
-                            <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
-                              proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                              proj.status === "Thesis Submitted" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
-                              "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                            }`}>
-                              {proj.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {filteredProjects.filter(p => p.type === "phd").length === 0 && (
-                      <div className="text-center text-text-muted text-xs py-4">
-                        {PROJECTS_DATABASE.filter(p => p.type === "phd").length === 0 ? "No records available." : "No scholars match the active filters."}
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

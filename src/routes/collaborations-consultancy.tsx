@@ -22,9 +22,10 @@ import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } fro
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
 import { PageHero } from "@/components/page-hero";
+import { parseDateSafe } from "@/lib/utils";
 
 const collabSearchSchema = z.object({
-  tab: z.enum(["mous", "services", "institutions", "activities"]).optional(),
+  tab: z.enum(["mous", "institutions", "activities"]).optional(),
 });
 
 export const Route = createFileRoute("/collaborations-consultancy")({
@@ -58,6 +59,8 @@ export interface MouRecord {
   documents?: string[];
   featured?: boolean;
   displayOrder?: number;
+  title?: string;
+  name?: string;
 }
 
 export interface TechnicalSupportService {
@@ -97,6 +100,8 @@ export interface ConsultancyActivity {
   documents?: string[];
   featured?: boolean;
   displayOrder?: number;
+  title?: string;
+  name?: string;
 }
 
 // ----------------- DATABASES -----------------
@@ -285,9 +290,17 @@ function CollaborationsPage() {
   const [selectedTheme, setSelectedTheme] = useState<string>("emerald");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const mouRecords = useDatasetRecords("collaborations-mous", DATA_SEEDS["collaborations-mous"]) as unknown as MouRecord[];
+  const rawMouRecords = useDatasetRecords("collaborations-mous", DATA_SEEDS["collaborations-mous"]) as unknown as MouRecord[];
+  const mouRecords = useMemo(() => {
+    return [...rawMouRecords].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
+  }, [rawMouRecords]);
+
   const consultancyInstitutions = useDatasetRecords("collaborations-institutions", DATA_SEEDS["collaborations-institutions"]) as unknown as PartnerInstitution[];
-  const consultancyActivities = useDatasetRecords("collaborations-activities", DATA_SEEDS["collaborations-activities"]) as unknown as ConsultancyActivity[];
+
+  const rawConsultancyActivities = useDatasetRecords("collaborations-activities", DATA_SEEDS["collaborations-activities"]) as unknown as ConsultancyActivity[];
+  const consultancyActivities = useMemo(() => {
+    return [...rawConsultancyActivities].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime());
+  }, [rawConsultancyActivities]);
 
   const openDetail = (item: any, theme: string) => {
     setSelectedItem(item);
@@ -316,7 +329,6 @@ function CollaborationsPage() {
     return [
       { label: "MoUs", count: mouRecords.length, theme: "emerald", sectionId: "mous", icon: Handshake },
       { label: "Partner Institutions", count: consultancyInstitutions.length, theme: "sky", sectionId: "institutions", icon: Building2 },
-      { label: "Technical Support Services", count: TECHNICAL_SUPPORT_SERVICES.length, theme: "teal", sectionId: "services", icon: Wrench },
       { label: "Consultancy Activities", count: consultancyActivities.length, theme: "amber", sectionId: "activities", icon: Activity }
     ];
   }, [mouRecords, consultancyInstitutions, consultancyActivities]);
@@ -334,7 +346,6 @@ function CollaborationsPage() {
 
   const navItems = [
     { label: "MoUs", id: "mous", icon: Handshake, count: mouRecords.length, theme: "emerald" as const },
-    { label: "Technical Support", id: "services", icon: Wrench, count: TECHNICAL_SUPPORT_SERVICES.length, theme: "teal" as const },
     { label: "Partner Institutions", id: "institutions", icon: Building2, count: filteredInstitutions.length, theme: "indigo" as const },
     { label: "Consultancy Activities", id: "activities", icon: Activity, count: consultancyActivities.length, theme: "cyan" as const }
   ];
@@ -379,7 +390,7 @@ function CollaborationsPage() {
           {mouRecords.length === 0 ? (
             <div className="text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
           ) : (
-            <div className="flex flex-col items-center gap-6 max-w-xl mx-auto py-4">
+            <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto py-4">
               {mouRecords.map((mou, index) => {
                 const year = mou.date ? (mou.date.match(/\b\d{4}\b/)?.[0] || mou.date) : "N/A";
                 return (
@@ -399,13 +410,13 @@ function CollaborationsPage() {
                     </div>
                     <div
                       onClick={() => openDetail(mou, "emerald")}
-                      className="w-full rounded-xl border border-border bg-card p-5 hover:border-emerald-500/35 hover:shadow-xs hover:bg-emerald-500/5 transition duration-300 cursor-pointer text-center group select-none relative"
+                      className="w-full rounded-xl border border-border bg-card p-6 md:p-8 hover:border-emerald-500/35 hover:shadow-xs hover:bg-emerald-500/5 transition duration-300 cursor-pointer text-center group select-none relative"
                     >
                       <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-5xs font-mono font-bold text-emerald-500 bg-background px-2 border border-emerald-500/20 rounded">
                         Active Accord
                       </span>
                       <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                        {mou.organization}
+                        {mou.organization || mou.title}
                       </h4>
                       <p className="text-[10px] text-text-secondary mt-1.5 max-w-md mx-auto leading-relaxed">
                         Scope: {mou.researchFocus}
@@ -421,32 +432,7 @@ function CollaborationsPage() {
           )}
         </section>
 
-        {/* 4. Technical Support Services (Teal Theme) */}
-        <section id="services" className="scroll-mt-24 space-y-6">
-          <div className="border-b border-border/40 pb-4 text-center">
-            <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Resource Sharing</span>
-            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Technical Support Services</h2>
-          </div>
 
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-            {TECHNICAL_SUPPORT_SERVICES.map((srv) => {
-              const IconComp = serviceIcons[srv.id] || Info;
-              return (
-                <div
-                  key={srv.id}
-                  className="p-5 rounded-xl border border-border bg-card/60 hover:scale-[1.02] hover:border-teal-500/25 transition duration-300 flex flex-col items-center justify-center text-center gap-3 select-none hover:shadow-xs"
-                >
-                  <div className="h-10 w-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
-                    <IconComp className="h-5 w-5" />
-                  </div>
-                  <h3 className="font-bold text-foreground text-xs leading-snug font-sans max-w-[150px]">
-                    {srv.title}
-                  </h3>
-                </div>
-              );
-            })}
-          </div>
-        </section>
 
         {/* 5. Partner Institutions Grid (Sky Theme) */}
         <section id="institutions" className="scroll-mt-24 space-y-6">
@@ -524,7 +510,7 @@ function CollaborationsPage() {
                   </div>
                   
                   <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-amber-500 transition-colors">
-                    {act.institution}
+                    {act.institution || act.title}
                   </h3>
 
                   <div className="space-y-2 pt-2 border-t border-border/40 text-xs">

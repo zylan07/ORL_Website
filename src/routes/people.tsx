@@ -542,7 +542,7 @@ export const INTERNSHIPS: Internship[] = [
   { id: "intern-58", name: "ARJUN E", institution: "Erode Sengunthar Engineering College, Perundurai", duration: "10/02/2026 to 10/03/2026", imageUrl: null }
 ];
 
-export const TECHNICAL_DISCUSSIONS: TechnicalDiscussion[] = [
+const STATIC_TECHNICAL_DISCUSSIONS: TechnicalDiscussion[] = [
   {
     id: "disc-1",
     title: "Intern Students Discussion on Testing of an Audio Signal in Underwater test tank and Control of ARM in ROV",
@@ -644,8 +644,8 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
 
   // Field validation to prevent empty labels/sections
   const showFacultyDetails = !!(item.department || item.institution || item.designation);
-  const showProjectDetails = !!((item.associatedProjects && item.associatedProjects.length > 0) || (item.projectRoles && item.projectRoles.length > 0));
-  const showScholarDetails = !!(item.mode || item.status || item.role || item.associatedProject);
+  const showProjectDetails = item.roleCategory !== "faculty" && !!((item.associatedProjects && item.associatedProjects.length > 0) || (item.projectRoles && item.projectRoles.length > 0));
+  const showScholarDetails = item.roleCategory !== "faculty" && item.roleCategory !== "phd" && !!(item.mode || item.status || item.role || item.associatedProject);
   const showPhDDetails = !!(item.researchArea || item.graduationDate);
   const showDiscussionDetails = !!(item.participants || item.summary);
 
@@ -691,7 +691,7 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
                 {item.designation}
               </p>
             )}
-            {item.status && (
+            {item.status && item.roleCategory !== "scholar" && (
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-5xs font-bold uppercase tracking-wider border ${
                 item.status === "Completed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
                 item.status === "Thesis Submitted" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
@@ -727,7 +727,7 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
           )}
 
           {/* Research Credentials (Faculty profile enhancements) */}
-          {(item.specialization || item.orcid || item.googleScholar || item.cvId || item.qualification || item.researchArea || item.researchInterests) && (
+          {(item.specialization || item.orcid || item.googleScholar || item.cvId || item.qualification || item.researchArea || item.researchInterests) && item.roleCategory !== "phd" && (
             <div className="space-y-2 pt-4 border-t border-border/40 font-sans">
               <h4 className={`text-4xs font-mono font-bold uppercase tracking-wider ${currentTheme.text}`}>Academic & Research Profile</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs mt-1">
@@ -818,7 +818,7 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
                     <span className="font-semibold text-foreground">{item.mode}</span>
                   </div>
                 )}
-                {item.role && (
+                {item.role && item.roleCategory !== "scholar" && (
                   <div>
                     <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Deployment Role</span>
                     <span className="font-semibold text-foreground">{item.role}</span>
@@ -1025,18 +1025,33 @@ function PeoplePage() {
 
   const rawInternships = useDatasetRecords("people-internships", STATIC_INTERNSHIPS) as any[];
   const INTERNSHIPS = useMemo(() => {
-    return rawInternships.filter(i => i.status !== "past-contributor");
+    return rawInternships.filter(i => i.status !== "past-contributor").map(i => ({ ...i, roleCategory: "intern" }));
   }, [rawInternships]);
 
   const INTERNSHIPS_PAST = useMemo(() => {
-    return rawInternships.filter(i => i.status === "past-contributor");
+    return rawInternships.filter(i => i.status === "past-contributor").map(i => ({ ...i, roleCategory: "intern" }));
   }, [rawInternships]);
+
+  const rawDiscussions = useDatasetRecords("research-discussions", STATIC_TECHNICAL_DISCUSSIONS) as any[];
+  const TECHNICAL_DISCUSSIONS = useMemo(() => {
+    return rawDiscussions.map(disc => ({
+      id: disc.id,
+      title: disc.title || disc.name || "",
+      date: disc.date || "",
+      participants: disc.participants || "",
+      summary: disc.summary || "",
+      imageUrl: disc.thumbnail || disc.imageUrl || null,
+      galleryImages: disc.galleryImages || [],
+      roleCategory: "discussion"
+    })) as TechnicalDiscussion[];
+  }, [rawDiscussions]);
 
   // Re-split members into separate list states with original types
   const TEAM_MEMBERS = useMemo(() => {
     return allMembers.filter(m => m.role === "faculty").map(m => ({
       id: m.id,
       role: "faculty",
+      roleCategory: "faculty",
       name: m.title || m.name || "",
       designation: m.designation || "",
       department: m.department || "",
@@ -1062,6 +1077,7 @@ function PeoplePage() {
     return allMembersPast.filter(m => m.role === "faculty").map(m => ({
       id: m.id,
       role: "faculty",
+      roleCategory: "faculty",
       name: m.title || m.name || "",
       designation: m.designation || "",
       department: m.department || "",
@@ -1086,6 +1102,7 @@ function PeoplePage() {
   const RESEARCH_SCHOLARS = useMemo(() => {
     return allMembers.filter(m => m.role === "scholar" || m.role === "scholars").map(m => ({
       id: m.id,
+      roleCategory: "scholar",
       name: m.title || m.name || "",
       mode: m.mode || "Full Time",
       status: m.status || "Active",
@@ -1099,6 +1116,7 @@ function PeoplePage() {
   const RESEARCH_SCHOLARS_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "scholar" || m.role === "scholars").map(m => ({
       id: m.id,
+      roleCategory: "scholar",
       name: m.title || m.name || "",
       mode: m.mode || "Full Time",
       status: m.status || "Active",
@@ -1112,6 +1130,7 @@ function PeoplePage() {
   const PROJECT_STAFF = useMemo(() => {
     return allMembers.filter(m => m.role === "staff").map(m => ({
       id: m.id,
+      roleCategory: "staff",
       name: m.title || m.name || "",
       role: m.role || m.designation || "",
       project: m.project || m.associatedProject || "",
@@ -1123,6 +1142,7 @@ function PeoplePage() {
   const PROJECT_STAFF_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "staff").map(m => ({
       id: m.id,
+      roleCategory: "staff",
       name: m.title || m.name || "",
       role: m.role || m.designation || "",
       project: m.project || m.associatedProject || "",
@@ -1134,6 +1154,7 @@ function PeoplePage() {
   const PHD_GRADUATES = useMemo(() => {
     return allMembers.filter(m => m.role === "phd").map(m => ({
       id: m.id,
+      roleCategory: "phd",
       name: m.title || m.name || "",
       researchArea: m.researchArea || "",
       graduationDate: m.graduationDate || "",
@@ -1146,6 +1167,7 @@ function PeoplePage() {
   const PHD_GRADUATES_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "phd").map(m => ({
       id: m.id,
+      roleCategory: "phd",
       name: m.title || m.name || "",
       researchArea: m.researchArea || "",
       graduationDate: m.graduationDate || "",
@@ -1158,6 +1180,7 @@ function PeoplePage() {
   const UG_STUDENTS = useMemo(() => {
     return allMembers.filter(m => m.role === "student").map(m => ({
       id: m.id,
+      roleCategory: "student",
       name: m.title || m.name || "",
       status: "Current Student" as const,
       imageUrl: m.thumbnail || m.imageUrl || null
@@ -1167,6 +1190,7 @@ function PeoplePage() {
   const UG_STUDENTS_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "student").map(m => ({
       id: m.id,
+      roleCategory: "student",
       name: m.title || m.name || "",
       status: "Current Student" as const,
       imageUrl: m.thumbnail || m.imageUrl || null
@@ -1176,6 +1200,7 @@ function PeoplePage() {
   const UG_ALUMNI = useMemo(() => {
     return allMembers.filter(m => m.role === "alumni" && !m.programme).map(m => ({
       id: m.id,
+      roleCategory: "alumni",
       name: m.title || m.name || "",
       imageUrl: m.thumbnail || m.imageUrl || null,
       link: m.link || ""
@@ -1185,6 +1210,7 @@ function PeoplePage() {
   const UG_ALUMNI_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "alumni" && !m.programme).map(m => ({
       id: m.id,
+      roleCategory: "alumni",
       name: m.title || m.name || "",
       imageUrl: m.thumbnail || m.imageUrl || null,
       link: m.link || ""
@@ -1194,6 +1220,7 @@ function PeoplePage() {
   const PG_ALUMNI = useMemo(() => {
     return allMembers.filter(m => m.role === "alumni" && m.programme).map(m => ({
       id: m.id,
+      roleCategory: "alumni",
       name: m.title || m.name || "",
       programme: m.programme || "",
       imageUrl: m.thumbnail || m.imageUrl || null,
@@ -1204,6 +1231,7 @@ function PeoplePage() {
   const PG_ALUMNI_PAST = useMemo(() => {
     return allMembersPast.filter(m => m.role === "alumni" && m.programme).map(m => ({
       id: m.id,
+      roleCategory: "alumni",
       name: m.title || m.name || "",
       programme: m.programme || "",
       imageUrl: m.thumbnail || m.imageUrl || null,
@@ -1422,7 +1450,7 @@ function PeoplePage() {
     return TECHNICAL_DISCUSSIONS.filter((disc) =>
       String(disc.title ?? "").toLowerCase().includes(discussionSearch.toLowerCase().trim())
     );
-  }, [discussionSearch]);
+  }, [TECHNICAL_DISCUSSIONS, discussionSearch]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300 page-people">
@@ -1643,12 +1671,11 @@ function PeoplePage() {
             {PROJECT_STAFF.map((staff) => (
               <div
                 key={staff.id}
-                onClick={() => openDetail(staff, "teal")}
-                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-center gap-4 group select-none"
+                className="p-5 rounded-2xl border border-border bg-card/60 shadow-xs flex items-center gap-4 select-none"
               >
                 <PersonAvatar imageUrl={staff.imageUrl} name={staff.name} themeColor="teal" />
                 <div className="space-y-1 min-w-0 flex-1">
-                  <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors truncate">
+                  <h3 className="font-bold text-foreground text-xs leading-snug truncate">
                     {staff.name}
                   </h3>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-teal-500/10 text-teal-500 border border-teal-500/25 uppercase font-mono tracking-wider">
@@ -1668,12 +1695,11 @@ function PeoplePage() {
                 {PROJECT_STAFF_PAST.map((staff) => (
                   <div
                     key={staff.id}
-                    onClick={() => openDetail(staff, "teal")}
-                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-center gap-4 group select-none"
+                    className="p-5 rounded-2xl border border-border bg-card/60 shadow-xs flex items-center gap-4 select-none"
                   >
                     <PersonAvatar imageUrl={staff.imageUrl} name={staff.name} themeColor="teal" />
                     <div className="space-y-1 min-w-0 flex-1">
-                      <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors truncate">
+                      <h3 className="font-bold text-foreground text-xs leading-snug truncate">
                         {staff.name}
                       </h3>
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-teal-500/10 text-teal-500 border border-teal-500/25 uppercase font-mono tracking-wider">
@@ -2043,140 +2069,188 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="orl-table-container max-h-[500px]">
-            <table className="orl-table">
-              <thead>
-                <tr>
-                  <th className="w-14 text-center">Sl No</th>
-                  <th
-                    className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                    onClick={() => handleInternSort("name")}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      Name
-                      {internSortField === "name" && (
-                        <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                    onClick={() => handleInternSort("institution")}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      Institution
-                      {internSortField === "institution" && (
-                        <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
-                    onClick={() => handleInternSort("duration")}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      Duration
-                      {internSortField === "duration" && (
-                        <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                      )}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {processedInternships.map((intern, idx) => (
-                  <tr
-                    key={intern.id}
-                    onClick={() => openDetail(intern, "cyan")}
-                    className="cursor-pointer"
-                  >
-                    <td className="text-center font-mono">{idx + 1}</td>
-                    <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
-                    <td className="text-text-secondary leading-normal">{intern.institution}</td>
-                    <td className="font-mono text-[11px]">{intern.duration}</td>
-                  </tr>
-                ))}
-                {processedInternships.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-text-muted">
-                      {INTERNSHIPS.length === 0 ? "No records available." : "No internship records found matching the active search."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {INTERNSHIPS_PAST.length > 0 && (
-            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
-              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
-                Past Contributors (Interns)
-              </h3>
-              <div className="orl-table-container max-h-[500px]">
-                <table className="orl-table">
-                  <thead>
-                    <tr>
-                      <th className="w-14 text-center">Sl No</th>
-                      <th
-                        className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                        onClick={() => handleInternSort("name")}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          Name
-                          {internSortField === "name" && (
-                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                        onClick={() => handleInternSort("institution")}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          Institution
-                          {internSortField === "institution" && (
-                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                          )}
-                        </div>
-                      </th>
-                      <th
-                        className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
-                        onClick={() => handleInternSort("duration")}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          Duration
-                          {internSortField === "duration" && (
-                            <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                          )}
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {processedInternshipsPast.map((intern, idx) => (
-                      <tr
-                        key={intern.id}
-                        onClick={() => openDetail(intern, "cyan")}
-                        className="cursor-pointer"
-                      >
-                        <td className="text-center font-mono">{idx + 1}</td>
-                        <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
-                        <td className="text-text-secondary leading-normal">{intern.institution}</td>
-                        <td className="font-mono text-[11px]">{intern.duration}</td>
-                      </tr>
-                    ))}
-                    {processedInternshipsPast.length === 0 && (
+                  {/* Certificate Check */}
+          {(() => {
+            const showCertificateColumn = processedInternships.some(i => i.cvId) || processedInternshipsPast.some(i => i.cvId);
+            return (
+              <>
+                <div className="orl-table-container max-h-[500px]">
+                  <table className="orl-table">
+                    <thead>
                       <tr>
-                        <td colSpan={4} className="p-8 text-center text-text-muted">
-                          No past internship records found matching the active search.
-                        </td>
+                        <th className="w-14 text-center">Sl No</th>
+                        <th
+                          className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                          onClick={() => handleInternSort("name")}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            Name
+                            {internSortField === "name" && (
+                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                          onClick={() => handleInternSort("institution")}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            Institution
+                            {internSortField === "institution" && (
+                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
+                          onClick={() => handleInternSort("duration")}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            Duration
+                            {internSortField === "duration" && (
+                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                            )}
+                          </div>
+                        </th>
+                        {showCertificateColumn && (
+                          <th className="text-right w-36">Certificate</th>
+                        )}
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                    </thead>
+                    <tbody className="divide-y divide-border/40">
+                      {processedInternships.map((intern, idx) => (
+                        <tr
+                          key={intern.id}
+                          onClick={() => openDetail(intern, "cyan")}
+                          className="cursor-pointer"
+                        >
+                          <td className="text-center font-mono">{idx + 1}</td>
+                          <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
+                          <td className="text-text-secondary leading-normal">{intern.institution}</td>
+                          <td className="font-mono text-[11px]">{intern.duration}</td>
+                          {showCertificateColumn && (
+                            <td className="text-right">
+                              {intern.cvId ? (
+                                <a
+                                  href={resolveAssetUrl(intern.cvId)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-cyan-500 font-bold hover:underline inline-flex items-center gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  View Certificate
+                                </a>
+                              ) : (
+                                <span className="text-text-muted">-</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                      {processedInternships.length === 0 && (
+                        <tr>
+                          <td colSpan={showCertificateColumn ? 5 : 4} className="p-8 text-center text-text-muted">
+                            {INTERNSHIPS.length === 0 ? "No records available." : "No internship records found matching the active search."}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {INTERNSHIPS_PAST.length > 0 && (
+                  <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+                    <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                      Past Contributors (Interns)
+                    </h3>
+                    <div className="orl-table-container max-h-[500px]">
+                      <table className="orl-table">
+                        <thead>
+                          <tr>
+                            <th className="w-14 text-center">Sl No</th>
+                            <th
+                              className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                              onClick={() => handleInternSort("name")}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                Name
+                                {internSortField === "name" && (
+                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                                )}
+                              </div>
+                            </th>
+                            <th
+                              className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                              onClick={() => handleInternSort("institution")}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                Institution
+                                {internSortField === "institution" && (
+                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                                )}
+                              </div>
+                            </th>
+                            <th
+                              className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
+                              onClick={() => handleInternSort("duration")}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                Duration
+                                {internSortField === "duration" && (
+                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
+                                )}
+                              </div>
+                            </th>
+                            {showCertificateColumn && (
+                              <th className="text-right w-36">Certificate</th>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/40">
+                          {processedInternshipsPast.map((intern, idx) => (
+                            <tr
+                              key={intern.id}
+                              onClick={() => openDetail(intern, "cyan")}
+                              className="cursor-pointer"
+                            >
+                              <td className="text-center font-mono">{idx + 1}</td>
+                              <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
+                              <td className="text-text-secondary leading-normal">{intern.institution}</td>
+                              <td className="font-mono text-[11px]">{intern.duration}</td>
+                              {showCertificateColumn && (
+                                <td className="text-right">
+                                  {intern.cvId ? (
+                                    <a
+                                      href={resolveAssetUrl(intern.cvId)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-cyan-500 font-bold hover:underline inline-flex items-center gap-1"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      View Certificate
+                                    </a>
+                                  ) : (
+                                    <span className="text-text-muted">-</span>
+                                  )}
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                          {processedInternshipsPast.length === 0 && (
+                            <tr>
+                              <td colSpan={showCertificateColumn ? 5 : 4} className="p-8 text-center text-text-muted">
+                                No past internship records found matching the active search.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </section>
 
         {/* 10. Technical Discussions (Amber Theme - Timeline Format) */}
