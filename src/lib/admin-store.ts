@@ -86,6 +86,13 @@ export interface SiteSettings {
   galleryHero?: PageHeroConfig;
   awardsHero?: PageHeroConfig;
   collaborationsHero?: PageHeroConfig;
+  institutionLogo?: string;
+  institutionLogoAlt?: string;
+  institutionLogoWidth?: string;
+  aboutLabTitle?: string;
+  aboutLabDesc?: string;
+  visionText?: string;
+  missionText?: string;
 }
 
 export interface PageHeroConfig {
@@ -101,14 +108,80 @@ export interface PageHeroConfig {
 // Checking browser context
 const isBrowser = typeof window !== "undefined";
 
+function getPayloadSizeKB(value: string): number {
+  try {
+    const bytes = new TextEncoder().encode(value).length;
+    return Number((bytes / 1024).toFixed(3));
+  } catch (e) {
+    return Number((value.length / 1024).toFixed(3));
+  }
+}
+
+function getTotalLocalStorageSizeKB(): number {
+  if (typeof window === "undefined" || !window.localStorage) return 0;
+  let totalBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) {
+      const val = localStorage.getItem(key) || "";
+      totalBytes += new TextEncoder().encode(key).length + new TextEncoder().encode(val).length;
+    }
+  }
+  return Number((totalBytes / 1024).toFixed(3));
+}
+
+function preSetItemDiagnostics(key: string, value: string): void {
+  const payloadSizeKB = getPayloadSizeKB(value);
+  const totalLocalStorageKB = getTotalLocalStorageSizeKB();
+  console.log("[LocalStorage Diagnostic - Before Write]", {
+    key,
+    payloadSizeKB,
+    totalLocalStorageKB,
+    timestamp: new Date().toISOString()
+  });
+}
+
+function postSetItemFailureDiagnostics(key: string, value: string, error: any): void {
+  const payloadSizeKB = getPayloadSizeKB(value);
+  const totalLocalStorageKB = getTotalLocalStorageSizeKB();
+  const errorName = error?.name || "UnknownError";
+  const errorMessage = error?.message || String(error);
+  const stack = error?.stack || "";
+  console.error("[LocalStorage Diagnostic - Write Failed]", {
+    key,
+    payloadSizeKB,
+    totalLocalStorageKB,
+    errorName,
+    errorMessage,
+    stack
+  });
+}
+
 export function trackDeletedId(key: string, id: string): void {
   if (!isBrowser) return;
+  const dbKey = `uwarl-db-deleted-${key}`;
   try {
-    const raw = localStorage.getItem(`uwarl-db-deleted-${key}`);
-    const deleted = raw ? JSON.parse(raw) : [];
+    const raw = localStorage.getItem(dbKey);
+    let deleted: string[] = [];
+    if (raw) {
+      try {
+        deleted = JSON.parse(raw);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${dbKey}`, err);
+        }
+        throw err;
+      }
+    }
     if (Array.isArray(deleted) && !deleted.includes(id)) {
       deleted.push(id);
-      localStorage.setItem(`uwarl-db-deleted-${key}`, JSON.stringify(deleted));
+      const serialized = JSON.stringify(deleted);
+      preSetItemDiagnostics(dbKey, serialized);
+      try {
+        localStorage.setItem(dbKey, serialized);
+      } catch (e) {
+        postSetItemFailureDiagnostics(dbKey, serialized, e);
+      }
     }
   } catch (e) {
     console.error(`Error saving deleted tracking for ${key}:`, e);
@@ -123,10 +196,20 @@ function getStoredData<T>(key: string, fallback: T[]): T[] {
     return datasetCaches.get(key) as T[];
   }
   if (!isBrowser) return fallback;
+  const dbKey = `uwarl-db-${key}`;
   try {
-    const raw = localStorage.getItem(`uwarl-db-${key}`);
+    const raw = localStorage.getItem(dbKey);
     if (raw) {
-      const parsed = JSON.parse(raw) as T[];
+      let parsed: T[];
+      try {
+        parsed = JSON.parse(raw) as T[];
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${dbKey}`, err);
+          alert(`Warning: Local storage data for '${dbKey}' is corrupted. Falling back to default data.`);
+        }
+        throw err;
+      }
       
       // Auto-merge logic: if the static seed has more items (e.g. newly added static seeds), merge them in
       if (Array.isArray(parsed) && Array.isArray(fallback) && fallback.length > parsed.length) {
@@ -136,7 +219,15 @@ function getStoredData<T>(key: string, fallback: T[]): T[] {
             merged.push(item);
           }
         });
-        localStorage.setItem(`uwarl-db-${key}`, JSON.stringify(merged));
+        
+        const serialized = JSON.stringify(merged);
+        preSetItemDiagnostics(dbKey, serialized);
+        try {
+          localStorage.setItem(dbKey, serialized);
+        } catch (e) {
+          postSetItemFailureDiagnostics(dbKey, serialized, e);
+        }
+        
         datasetCaches.set(key, merged);
         return merged as T[];
       }
@@ -144,7 +235,14 @@ function getStoredData<T>(key: string, fallback: T[]): T[] {
       datasetCaches.set(key, parsed);
       return parsed;
     }
-    localStorage.setItem(`uwarl-db-${key}`, JSON.stringify(fallback));
+    
+    const serializedFallback = JSON.stringify(fallback);
+    preSetItemDiagnostics(dbKey, serializedFallback);
+    try {
+      localStorage.setItem(dbKey, serializedFallback);
+    } catch (e) {
+      postSetItemFailureDiagnostics(dbKey, serializedFallback, e);
+    }
   } catch (e) {
     console.error(`Error reading ${key} from localStorage:`, e);
   }
@@ -155,8 +253,11 @@ function getStoredData<T>(key: string, fallback: T[]): T[] {
 function saveStoredData<T>(key: string, data: T[]): void {
   datasetCaches.set(key, data);
   if (!isBrowser) return;
+  const dbKey = `uwarl-db-${key}`;
+  const serialized = JSON.stringify(data);
+  preSetItemDiagnostics(dbKey, serialized);
   try {
-    localStorage.setItem(`uwarl-db-${key}`, JSON.stringify(data));
+    localStorage.setItem(dbKey, serialized);
     cleanupOrphanAssets();
     
     if (supabase) {
@@ -171,8 +272,8 @@ function saveStoredData<T>(key: string, data: T[]): void {
         }
       })();
     }
-  } catch (e) {
-    console.error(`Error saving ${key} to localStorage:`, e);
+  } catch (e: any) {
+    postSetItemFailureDiagnostics(dbKey, serialized, e);
   }
 }
 
@@ -725,7 +826,14 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     mediaUrl: "",
     mediaPosition: "background",
     overlayOpacity: 60
-  }
+  },
+  institutionLogo: "",
+  institutionLogoAlt: "Ocean Research Laboratory Logo",
+  institutionLogoWidth: "120",
+  aboutLabTitle: "Advancing Deep-Ocean Exploration",
+  aboutLabDesc: "The Ocean Research Laboratory (ORL) is a multidisciplinary research facility focused on underwater acoustics, ocean observation, subsea systems, marine instrumentation, and technical education.",
+  visionText: "To be recognized globally as an institutional center of excellence in ocean technologies and underwater acoustics. We pioneer sustainable engineering models, foster interdisciplinary marine studies, and empower technical educators.",
+  missionText: "Publish high-impact research in digital signal processing, coral diagnostics, and subsea automation.\n\nDeliver specialized technical courses for educators, scholars, and international delegations.\n\nPrototype subsea platforms (ORCA ROV), sensor arrays, and seawater green energy converters."
 };
 
 // ----------------- REACT STATE MANAGERS & TRIGGER HOOKS -----------------
@@ -776,13 +884,29 @@ let settingsCache: SiteSettings | null = null;
 export function getSettings(): SiteSettings {
   if (settingsCache) return settingsCache;
   if (!isBrowser) return DEFAULT_SETTINGS;
+  const key = "uwarl-db-settings";
   try {
-    const raw = localStorage.getItem("uwarl-db-settings");
+    const raw = localStorage.getItem(key);
     if (raw) {
-      settingsCache = JSON.parse(raw) as SiteSettings;
-      return settingsCache;
+      try {
+        settingsCache = JSON.parse(raw) as SiteSettings;
+        return settingsCache;
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${key}`, err);
+          alert(`Warning: Local storage data for '${key}' is corrupted. Falling back to default site settings.`);
+        }
+        throw err;
+      }
     }
-    localStorage.setItem("uwarl-db-settings", JSON.stringify(DEFAULT_SETTINGS));
+    
+    const serialized = JSON.stringify(DEFAULT_SETTINGS);
+    preSetItemDiagnostics(key, serialized);
+    try {
+      localStorage.setItem(key, serialized);
+    } catch (e) {
+      postSetItemFailureDiagnostics(key, serialized, e);
+    }
   } catch (e) {
     console.error("Error reading site settings:", e);
   }
@@ -793,8 +917,11 @@ export function getSettings(): SiteSettings {
 export function saveSettings(settings: SiteSettings): void {
   settingsCache = settings;
   if (!isBrowser) return;
+  const key = "uwarl-db-settings";
+  const serialized = JSON.stringify(settings);
+  preSetItemDiagnostics(key, serialized);
   try {
-    localStorage.setItem("uwarl-db-settings", JSON.stringify(settings));
+    localStorage.setItem(key, serialized);
     notifyStoreChange("settings");
     cleanupOrphanAssets();
 
@@ -810,8 +937,8 @@ export function saveSettings(settings: SiteSettings): void {
         }
       })();
     }
-  } catch (e) {
-    console.error("Error saving site settings:", e);
+  } catch (e: any) {
+    postSetItemFailureDiagnostics(key, serialized, e);
   }
 }
 
@@ -903,6 +1030,14 @@ const INITIAL_HOME_QUICK_ACCESS: GenericEntity[] = ([
     { label: "Collaborations", to: "/collaborations-consultancy", icon: "Globe", description: "Joint MoUs and consultancy programs", color: "emerald", displayOrder: 8 }
   ] as any[]).map((item, idx) => ({ id: `qa-${idx}`, title: item.label, ...item }));
 
+const INITIAL_HOME_FACTS: GenericEntity[] = [
+  { id: "fact-1", title: "Established", value: "2015", displayOrder: 1, active: true, description: "" },
+  { id: "fact-2", title: "Institution", value: "NITTTR Chennai", displayOrder: 2, active: true, description: "" },
+  { id: "fact-3", title: "Origin", value: "UWARL, SSN College", displayOrder: 3, active: true, description: "" },
+  { id: "fact-4", title: "Domains", value: "Acoustics & Subsea Systems", displayOrder: 5, active: true, description: "" },
+  { id: "fact-5", title: "Core Focus", value: "Research, Training & Consultancy", displayOrder: 6, active: true, description: "" }
+];
+
 // ----------------- GLOBAL BACKUP & RESTORE SYSTEMS -----------------
 import { resolveAssetUrl, registerAsset, getAssets, saveAssets, type UploadedAsset, type Attachment, cleanupOrphanAssets } from "@/lib/storage-service";
 
@@ -928,6 +1063,7 @@ export function exportSiteBackup(): string {
     "home-research-focus",
     "home-highlights",
     "home-quick-access",
+    "home-facts",
     "media-library",
     "publication-carousel-groups",
     "publication-carousel-items"
@@ -978,14 +1114,24 @@ export function importSiteBackup(jsonString: string): void {
     
     if (backup.datasets && typeof backup.datasets === "object") {
       Object.entries(backup.datasets).forEach(([key, data]) => {
+        let storageKey = "";
         if (key === "repo-records") {
-          localStorage.setItem("uwarl-repo-records-v3", JSON.stringify(data));
+          storageKey = "uwarl-repo-records-v3";
         } else if (key === "repo-carousels") {
-          localStorage.setItem("uwarl-repo-carousels-v1", JSON.stringify(data));
+          storageKey = "uwarl-repo-carousels-v1";
         } else {
-          localStorage.setItem(`uwarl-db-${key}`, JSON.stringify(data));
-          datasetCaches.delete(key);
-          notifyStoreChange(key);
+          storageKey = `uwarl-db-${key}`;
+        }
+        const serialized = JSON.stringify(data);
+        preSetItemDiagnostics(storageKey, serialized);
+        try {
+          localStorage.setItem(storageKey, serialized);
+          if (storageKey.startsWith("uwarl-db-")) {
+            datasetCaches.delete(key);
+            notifyStoreChange(key);
+          }
+        } catch (e) {
+          postSetItemFailureDiagnostics(storageKey, serialized, e);
         }
       });
     }
@@ -1154,6 +1300,7 @@ export const DATA_SEEDS = {
   "home-research-focus": INITIAL_HOME_RESEARCH_FOCUS,
   "home-highlights": INITIAL_HOME_HIGHLIGHTS,
   "home-quick-access": INITIAL_HOME_QUICK_ACCESS,
+  "home-facts": INITIAL_HOME_FACTS,
   "publication-carousel-groups": INITIAL_PUB_CAROUSEL_GROUPS,
   "publication-carousel-items": INITIAL_PUB_CAROUSEL_ITEMS
 };
@@ -1184,7 +1331,14 @@ if (isBrowser) {
         saveStoredData("gallery-records", gallery);
       }
       
-      localStorage.setItem("uwarl-gallery-migration-v1", "true");
+      const migrationKey = "uwarl-gallery-migration-v1";
+      const migrationVal = "true";
+      preSetItemDiagnostics(migrationKey, migrationVal);
+      try {
+        localStorage.setItem(migrationKey, migrationVal);
+      } catch (e) {
+        postSetItemFailureDiagnostics(migrationKey, migrationVal, e);
+      }
     }
   } catch (err) {
     console.error("Gallery migration error:", err);

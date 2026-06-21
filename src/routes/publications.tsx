@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Paperclip,
   ExternalLink,
+  Download,
+  FileText,
 } from "lucide-react";
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { StickySectionNav } from "@/components/sticky-section-nav";
@@ -413,13 +415,59 @@ function PublicationsPage() {
               className="w-full rounded border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-all"
             />
           </label>
-          <button
-            onClick={() => setSortDesc((s) => !s)}
-            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToExcel(
+                    filteredPublications,
+                    [
+                      { label: "Year", key: "date" },
+                      { label: "Subtype", key: "subtype" },
+                      { label: "Title of Paper", key: "title" },
+                      { label: "Authors", key: "authors" },
+                      { label: "Journal/Publisher/Venue", key: "organization" },
+                      { label: "DOI Reference", key: "doi" }
+                    ],
+                    "orl_publications"
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </button>
+            <button
+              onClick={() => {
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToPdf(
+                    "Publications List",
+                    filteredPublications,
+                    [
+                      { label: "Year", key: "date" },
+                      { label: "Subtype", key: "subtype" },
+                      { label: "Title of Paper", key: "title" },
+                      { label: "Authors", key: "authors" },
+                      { label: "Journal/Publisher/Venue", key: "organization" },
+                      { label: "DOI Reference", key: "doi" }
+                    ],
+                    "orl_publications",
+                    q
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <FileText className="h-3.5 w-3.5" /> Export PDF
+            </button>
+            <button
+              onClick={() => setSortDesc((s) => !s)}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
+            </button>
+          </div>
         </div>
 
         {/* Sections */}

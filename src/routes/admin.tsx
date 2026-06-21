@@ -601,11 +601,32 @@ function Admin() {
   const [activeSubTabPub, setActiveSubTabPub] = useState<"catalog" | "groups" | "items">("catalog");
   const [selectedPubGroup, setSelectedPubGroup] = useState<string>("pcg-1");
 
+  const [forensicMetrics, setForensicMetrics] = useState<any>(null);
+  const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
+  const [simulationResults, setSimulationResults] = useState<any>(null);
+
+  const refreshForensicMetrics = async () => {
+    if (typeof window !== "undefined" && (window as any).getForensicStorageMetrics) {
+      const m = await (window as any).getForensicStorageMetrics();
+      setForensicMetrics(m);
+      return m;
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    refreshForensicMetrics();
+  }, []);
+
   // Load all repository academic records reactive hooks
   const repoRecords = useRecords();
 
   // Load datasets lists from reactive hooks
   const focusCards = useDatasetRecords("home-research-focus", DATA_SEEDS["home-research-focus"]);
+  const homeFacts = useDatasetRecords("home-facts", DATA_SEEDS["home-facts"]);
+  const sortedHomeFacts = useMemo(() => {
+    return [...homeFacts].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [homeFacts]);
   const metrics = useDatasetRecords("home-highlights", DATA_SEEDS["home-highlights"]);
   const quickAccess = useDatasetRecords("home-quick-access", DATA_SEEDS["home-quick-access"]);
   const rawEquipment = useDatasetRecords("research-equipment", DATA_SEEDS["research-equipment"]);
@@ -916,8 +937,93 @@ function Admin() {
             <div>
               <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Home Page Content Manager</h1>
               <p className="text-xs text-text-secondary mt-1">
-                Customize titles, background images, dynamic snap cards, quick accesses, and counters on the home screen.
+                Customize branding, about sections, facts, titles, background images, quick accesses, and counters on the home screen.
               </p>
+            </div>
+
+            {/* Institution Logo Branding Card */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Institution Logo branding</h3>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-1">
+                  <AssetUploadInput
+                    label="Institution Logo"
+                    value={settings.institutionLogo || ""}
+                    type="image"
+                    onChange={(val) => saveSettings({ ...settings, institutionLogo: val })}
+                    category="branding"
+                  />
+                </div>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Logo Alt Text</span>
+                  <input
+                    type="text"
+                    value={settings.institutionLogoAlt || ""}
+                    onChange={(e) => saveSettings({ ...settings, institutionLogoAlt: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                    placeholder="e.g. NITTTR Chennai Logo"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Logo Width (pixels)</span>
+                  <input
+                    type="text"
+                    value={settings.institutionLogoWidth || ""}
+                    onChange={(e) => saveSettings({ ...settings, institutionLogoWidth: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                    placeholder="e.g. 120"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* About Laboratory, Vision & Mission Settings Card */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">About Laboratory, Vision & Mission</h3>
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">About Section Title</span>
+                    <input
+                      type="text"
+                      value={settings.aboutLabTitle || ""}
+                      onChange={(e) => saveSettings({ ...settings, aboutLabTitle: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                      placeholder="e.g. Advancing Deep-Ocean Exploration"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">About Section Description</span>
+                    <ResizingTextarea
+                      value={settings.aboutLabDesc || ""}
+                      onChange={(val) => saveSettings({ ...settings, aboutLabDesc: val })}
+                      maxLength={500}
+                      placeholder="About description..."
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Vision Statement</span>
+                    <ResizingTextarea
+                      value={settings.visionText || ""}
+                      onChange={(val) => saveSettings({ ...settings, visionText: val })}
+                      maxLength={500}
+                      placeholder="Laboratory vision..."
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Mission Statement</span>
+                    <ResizingTextarea
+                      value={settings.missionText || ""}
+                      onChange={(val) => saveSettings({ ...settings, missionText: val })}
+                      maxLength={1000}
+                      placeholder="Laboratory mission (newlines supported)..."
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
 
             {/* Hero Section Card */}
@@ -1130,6 +1236,76 @@ function Admin() {
               </div>
             </div>
 
+            {/* Key Laboratory Facts Editor */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Key Laboratory Facts</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "home-facts", isNew: true, data: { title: "", value: "", displayOrder: homeFacts.length + 1, active: true } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Fact
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Fact Title</th>
+                      <th className="px-4 py-2">Value</th>
+                      <th className="px-4 py-2 text-center w-24">Status</th>
+                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {sortedHomeFacts.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold">{item.title}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-teal-500">{item.value}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-4xs font-bold uppercase ${item.active ? 'bg-teal-500/10 text-teal-500' : 'bg-secondary text-text-muted'}`}>
+                            {item.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <OrderControls
+                            index={idx}
+                            total={sortedHomeFacts.length}
+                            onMoveUp={() => handleMoveItem("home-facts", sortedHomeFacts, idx, "up")}
+                            onMoveDown={() => handleMoveItem("home-facts", sortedHomeFacts, idx, "down")}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "home-facts", isNew: false, index: idx, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this fact?")) {
+                                  const filtered = homeFacts.filter(f => f.id !== item.id);
+                                  saveDatasetRecords("home-facts", filtered);
+                                  toast.success("Fact removed successfully.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Statistic Counters */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
@@ -1208,74 +1384,6 @@ function Admin() {
                                   const filtered = (settings.homepageStats || []).filter((_, i) => i !== idx);
                                   saveSettings({ ...settings, homepageStats: filtered });
                                   toast.success("Counter removed successfully.");
-                                }
-                              }}
-                              className="p-1 rounded text-text-muted hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Laboratory Highlights */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Laboratory Highlights</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "home-highlights", isNew: true, data: { title: "", tag: "", description: "", link: "facilities", specs: [], image: "" } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Highlight
-                </button>
-              </div>
-
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Image</th>
-                      <th className="px-4 py-2">Title</th>
-                      <th className="px-4 py-2">Tag</th>
-                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {metrics.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-2 w-14">
-                          <img src={resolveAssetUrl(item.image || item.thumbnail)} className="h-8 w-12 rounded object-cover border" />
-                        </td>
-                        <td className="px-4 py-3 font-semibold">{item.title}</td>
-                        <td className="px-4 py-3 text-text-muted font-semibold">{item.tag}</td>
-                        <td className="px-4 py-3 text-center">
-                          <OrderControls
-                            index={idx}
-                            total={metrics.length}
-                            onMoveUp={() => handleMoveItem("home-highlights", metrics, idx, "up")}
-                            onMoveDown={() => handleMoveItem("home-highlights", metrics, idx, "down")}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => setEditingItem({ key: "home-highlights", isNew: false, index: idx, data: item })}
-                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this highlight?")) {
-                                  const filtered = metrics.filter((_, i) => i !== idx);
-                                  saveDatasetRecords("home-highlights", filtered);
-                                  toast.success("Highlight removed successfully.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -1528,7 +1636,7 @@ function Admin() {
                       <th className="px-4 py-2">Project Title</th>
                       <th className="px-4 py-2">Funding Agency</th>
                       <th className="px-4 py-2 font-mono">Amount</th>
-                      <th className="px-4 py-2">Supervisor Role</th>
+                      <th className="px-4 py-2">Role</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
@@ -2254,101 +2362,6 @@ function Admin() {
                               <button
                                 onClick={() => {
                                   if (confirm("Remove this PhD graduate?")) {
-                                    const itemToDelete = members[absoluteIndex];
-                                    if (itemToDelete) trackDeletedId("people-members", itemToDelete.id);
-                                    const filtered = members.filter((_, i) => i !== absoluteIndex);
-                                    saveDatasetRecords("people-members", filtered);
-                                    toast.success("Profile removed.");
-                                  }
-                                }}
-                                className="p-1 rounded text-text-muted hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* UG Students List Manager */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Undergraduate Students</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "ug-students", isNew: true, data: { name: "", role: "student", academicStatus: "Current Student", imageUrl: "", status: "active" } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add UG Student
-                </button>
-              </div>
-
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Photo</th>
-                      <th className="px-4 py-2">Student Name</th>
-                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {members.filter(m => m.role === "student").map((item, idx, arr) => {
-                      const absoluteIndex = members.findIndex(m => m.id === item.id);
-                      return (
-                        <tr key={item.id} className="hover:bg-secondary/10">
-                          <td className="px-4 py-2 w-14">
-                            <img src={resolveAssetUrl(item.imageUrl || item.thumbnail)} className="h-8 w-8 rounded-full object-cover border" />
-                          </td>
-                          <td className="px-4 py-3 font-semibold flex items-center gap-1.5">
-                            {item.name || item.title}
-                            <span className={`inline-flex items-center px-1.5 py-0.25 rounded text-[8px] font-bold uppercase tracking-wider border ${
-                              item.status === "past-contributor"
-                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                            }`}>
-                              {item.status === "past-contributor" ? "Past" : "Active"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <OrderControls
-                              index={idx}
-                              total={arr.length}
-                              onMoveUp={() => handleMoveMember(item.id, "up", arr)}
-                              onMoveDown={() => handleMoveMember(item.id, "down", arr)}
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center gap-1.5 justify-end">
-                              {item.status === "past-contributor" ? (
-                                <button
-                                  onClick={() => toggleMemberStatus(item.id, "active")}
-                                  className="px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition cursor-pointer whitespace-nowrap"
-                                >
-                                  Restore Active
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => toggleMemberStatus(item.id, "past-contributor")}
-                                  className="px-2 py-1 rounded-md text-[10px] font-bold border border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition cursor-pointer whitespace-nowrap"
-                                >
-                                  Move to Past
-                                </button>
-                              )}
-                              <button
-                                onClick={() => setEditingItem({ key: "ug-students", isNew: false, index: absoluteIndex, data: item })}
-                                className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm("Remove this student?")) {
                                     const itemToDelete = members[absoluteIndex];
                                     if (itemToDelete) trackDeletedId("people-members", itemToDelete.id);
                                     const filtered = members.filter((_, i) => i !== absoluteIndex);
@@ -4220,145 +4233,7 @@ function Admin() {
                 </div>
               </div>
 
-              {/* Map Location card */}
-              <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-                <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Maps & Coordinates Settings</h3>
-                <div className="space-y-3">
-                  <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">Google Maps Embed iframe URL</span>
-                    <input
-                      type="text"
-                      value={settings.googleMapsEmbedUrl || ""}
-                      onChange={(e) => saveSettings({ ...settings, googleMapsEmbedUrl: e.target.value })}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                    />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">Open in Google Maps Direct URL</span>
-                    <input
-                      type="text"
-                      value={settings.googleMapsUrl || ""}
-                      onChange={(e) => saveSettings({ ...settings, googleMapsUrl: e.target.value })}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                    />
-                  </label>
-                  <div className="grid gap-3 grid-cols-2">
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Latitude</span>
-                      <input
-                        type="text"
-                        value={settings.latitude || ""}
-                        onChange={(e) => saveSettings({ ...settings, latitude: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                      />
-                    </label>
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Longitude</span>
-                      <input
-                        type="text"
-                        value={settings.longitude || ""}
-                        onChange={(e) => saveSettings({ ...settings, longitude: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
 
-              {/* Key Contacts Coordinator Lists */}
-              <div className="p-5 rounded-xl border border-border bg-card space-y-4 lg:col-span-2">
-                <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                  <h3 className="font-extrabold text-xs text-foreground uppercase">Laboratory Coordinators & Key Contacts</h3>
-                  <button
-                    onClick={() => setEditingItem({ key: "keyContacts", isNew: true, data: { name: "", designation: "", email: "", phone: "", imageUrl: "" } })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Add Key Contact
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                      <tr>
-                        <th className="px-4 py-2">Photo</th>
-                        <th className="px-4 py-2">Coordinator Name / Designation</th>
-                        <th className="px-4 py-2">Email</th>
-                        <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                        <th className="px-4 py-2 w-20 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(settings.keyContacts || []).map((item, idx) => (
-                        <tr key={idx} className="hover:bg-secondary/10">
-                          <td className="px-4 py-2 w-14">
-                            <img src={resolveAssetUrl(item.imageUrl)} className="h-8 w-8 rounded-full object-cover border" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="font-bold block">{item.name}</span>
-                            <span className="text-4xs text-text-muted">{item.designation}</span>
-                          </td>
-                          <td className="px-4 py-3 font-mono text-text-secondary">{item.email || "—"}</td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex gap-1 justify-center">
-                              <button
-                                type="button"
-                                disabled={idx === 0}
-                                onClick={() => {
-                                  const list = [...(settings.keyContacts || [])];
-                                  const temp = list[idx];
-                                  list[idx] = list[idx - 1];
-                                  list[idx - 1] = temp;
-                                  saveSettings({ ...settings, keyContacts: list.map((item, index) => ({ ...item, displayOrder: index + 1 })) });
-                                }}
-                                className="p-1 rounded bg-secondary/60 disabled:opacity-30 border border-border/50"
-                              >
-                                <ChevronUp className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={idx === (settings.keyContacts || []).length - 1}
-                                onClick={() => {
-                                  const list = [...(settings.keyContacts || [])];
-                                  const temp = list[idx];
-                                  list[idx] = list[idx + 1];
-                                  list[idx + 1] = temp;
-                                  saveSettings({ ...settings, keyContacts: list.map((item, index) => ({ ...item, displayOrder: index + 1 })) });
-                                }}
-                                className="p-1 rounded bg-secondary/60 disabled:opacity-30 border border-border/50"
-                              >
-                                <ChevronDown className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex gap-1.5 justify-end">
-                              <button
-                                onClick={() => setEditingItem({ key: "keyContacts", isNew: false, index: idx, data: item })}
-                                className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm("Remove this coordinator card?")) {
-                                    const filtered = (settings.keyContacts || []).filter((_, i) => i !== idx);
-                                    saveSettings({ ...settings, keyContacts: filtered });
-                                    toast.success("Coordinator card removed successfully.");
-                                  }
-                                }}
-                                className="p-1 rounded text-text-muted hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -4457,6 +4332,154 @@ function Admin() {
               </div>
             </div>
 
+            {/* Forensic Browser Storage Card */}
+            <div className="p-6 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Forensic Browser Storage Audit</h3>
+                <button
+                  onClick={() => refreshForensicMetrics()}
+                  className="px-2 py-1 bg-secondary text-foreground rounded text-[10px] uppercase font-bold hover:bg-secondary/80 transition"
+                >
+                  Refresh metrics
+                </button>
+              </div>
+              
+              {forensicMetrics && (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-xs font-mono">
+                  <div className="p-3 bg-secondary/10 rounded-lg border border-border/40">
+                    <span className="text-[10px] text-text-muted uppercase block">localStorage</span>
+                    <span className="font-bold text-foreground">{forensicMetrics.localStorageSize} KB</span>
+                  </div>
+                  <div className="p-3 bg-secondary/10 rounded-lg border border-border/40">
+                    <span className="text-[10px] text-text-muted uppercase block">sessionStorage</span>
+                    <span className="font-bold text-foreground">{forensicMetrics.sessionStorageSize} KB</span>
+                  </div>
+                  <div className="p-3 bg-secondary/10 rounded-lg border border-border/40">
+                    <span className="text-[10px] text-text-muted uppercase block">IndexedDB</span>
+                    <span className="font-bold text-foreground">{forensicMetrics.indexedDbSize} KB</span>
+                    {forensicMetrics.indexedDbNames?.length > 0 && (
+                      <span className="text-[9px] text-text-muted block truncate" title={forensicMetrics.indexedDbNames.join(', ')}>
+                        ({forensicMetrics.indexedDbNames.length} DBs)
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3 bg-secondary/10 rounded-lg border border-border/40">
+                    <span className="text-[10px] text-text-muted uppercase block">Cache Storage</span>
+                    <span className="font-bold text-foreground">{forensicMetrics.cacheStorageSize} KB</span>
+                    {forensicMetrics.cacheNames?.length > 0 && (
+                      <span className="text-[9px] text-text-muted block truncate" title={forensicMetrics.cacheNames.join(', ')}>
+                        ({forensicMetrics.cacheNames.length} caches)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {forensicMetrics && (
+                <div className="p-4 bg-secondary/20 rounded-lg border border-border/60 text-xs space-y-2">
+                  <span className="font-bold text-foreground block uppercase font-mono tracking-wider">Browser Storage Estimate (navigator.storage.estimate)</span>
+                  <div className="grid grid-cols-3 gap-2 font-mono">
+                    <div>
+                      <span className="text-[9px] text-text-muted uppercase block">Quota</span>
+                      <span className="font-bold text-foreground">{(forensicMetrics.quota / (1024 * 1024 * 1024)).toFixed(2)} GB</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-text-muted uppercase block">Usage</span>
+                      <span className="font-bold text-foreground">{(forensicMetrics.usage / 1024).toFixed(3)} KB</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-text-muted uppercase block">Percentage</span>
+                      <span className="font-bold text-foreground">{forensicMetrics.percentageUsed}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 bg-secondary/20 rounded-lg border border-border/60 text-xs space-y-3">
+                <div>
+                  <span className="font-bold text-foreground block uppercase font-mono tracking-wider">QuotaExceededError Simulation</span>
+                  <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
+                    This runs an automated simulation that temporarily fills localStorage to the browser's 5MB limit, triggers a write event that raises a QuotaExceededError, captures forensic metrics at the exact moment of failure, and cleans up the temporary storage.
+                  </p>
+                </div>
+                
+                <button
+                  id="btn-run-simulation"
+                  disabled={simulationRunning}
+                  onClick={async () => {
+                    setSimulationRunning(true);
+                    setSimulationResults(null);
+                    try {
+                      if (typeof window !== "undefined" && (window as any).__runQuotaExceededSimulation) {
+                        const res = await (window as any).__runQuotaExceededSimulation();
+                        setSimulationResults(res);
+                        refreshForensicMetrics();
+                        toast.success("QuotaExceededError simulation finished successfully!");
+                      } else {
+                        toast.error("Simulation script not loaded on window.");
+                      }
+                    } catch (err: any) {
+                      toast.error(`Simulation failed: ${err.message || err}`);
+                    } finally {
+                      setSimulationRunning(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-500 text-teal-950 text-3xs font-bold uppercase tracking-wider transition cursor-pointer select-none disabled:opacity-50"
+                >
+                  {simulationRunning ? "Running Simulation..." : "Run Quota Simulation"}
+                </button>
+
+                <button
+                  id="btn-run-normal-upload"
+                  disabled={simulationRunning}
+                  onClick={async () => {
+                    setSimulationRunning(true);
+                    try {
+                      const dummyContent = new Uint8Array(150 * 1024);
+                      const dummyFile = new File([dummyContent], `normal_upload_${Date.now()}.png`, { type: "image/png" });
+                      const assetId = await registerAsset(dummyFile, "image", "Simulation", "Simulated normal upload");
+                      await refreshForensicMetrics();
+                      toast.success(`Normal upload simulated successfully! Asset ID: ${assetId}`);
+                    } catch (err: any) {
+                      toast.error(`Normal upload simulation failed: ${err.message || err}`);
+                    } finally {
+                      setSimulationRunning(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 border border-teal-500/30 text-3xs font-bold uppercase tracking-wider transition cursor-pointer select-none disabled:opacity-50 ml-2"
+                >
+                  Simulate Normal Upload
+                </button>
+
+                {simulationResults && (
+                  <div className="mt-4 p-4 rounded-lg bg-black/35 border border-border/80 text-3xs font-mono space-y-3">
+                    <span className="font-bold text-teal-400 block uppercase font-sans tracking-widest text-[9px]">Simulation Audit Output</span>
+                    
+                    <div className="space-y-1">
+                      <span className="font-bold text-foreground block">1. Baseline Storage (Before Simulation)</span>
+                      <pre className="text-text-secondary overflow-x-auto p-2 bg-secondary/30 rounded border border-border/40">
+                        {JSON.stringify(simulationResults.before, null, 2)}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="font-bold text-foreground block text-amber-400">2. Storage at Moment of QuotaExceededError Failure</span>
+                      <pre className="text-amber-400 overflow-x-auto p-2 bg-amber-500/5 rounded border border-amber-500/20 text-wrap break-all">
+                        {JSON.stringify(simulationResults.failure, null, 2)}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="font-bold text-foreground block">3. Restored Storage (After Cleanup)</span>
+                      <pre className="text-text-secondary overflow-x-auto p-2 bg-secondary/30 rounded border border-border/40">
+                        {JSON.stringify(simulationResults.after, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* General Site Footer Settings card */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Global Metadata & Footer Settings</h3>
@@ -4520,6 +4543,41 @@ function Admin() {
               {/* Modal Content Scroll */}
               <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-4">
                 
+                {/* 0. EDITOR: KEY LABORATORY FACTS */}
+                {editingItem.key === "home-facts" && (
+                  <div className="space-y-4">
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Fact Title</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.title || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                        placeholder="e.g. Established"
+                      />
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-bold text-text-muted uppercase">Fact Value</span>
+                      <input
+                        type="text"
+                        value={editingItem.data.value || ""}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, value: e.target.value } })}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                        placeholder="e.g. 2015"
+                      />
+                    </label>
+                    <label className="inline-flex items-center gap-2 cursor-pointer mt-2 text-xs font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={!!editingItem.data.active}
+                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, active: e.target.checked } })}
+                        className="rounded border-border text-teal-500 focus:ring-teal-500"
+                      />
+                      <span>Active (Show on Home Page)</span>
+                    </label>
+                  </div>
+                )}
+
                 {/* 1. EDITOR: RESEARCH FOCUS CARD */}
                 {editingItem.key === "home-research-focus" && (
                   <div className="space-y-4">
@@ -4709,55 +4767,6 @@ function Admin() {
                   </div>
                 )}
 
-                {/* 4. EDITOR: KEY CONTACTS */}
-                {editingItem.key === "keyContacts" && (
-                  <div className="space-y-4">
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Coordinator Full Name</span>
-                      <input
-                        type="text"
-                        value={editingItem.data.name || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, name: e.target.value } })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                      />
-                    </label>
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Designation / Role</span>
-                      <input
-                        type="text"
-                        value={editingItem.data.designation || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, designation: e.target.value } })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                      />
-                    </label>
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Direct Email</span>
-                      <input
-                        type="email"
-                        value={editingItem.data.email || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, email: e.target.value } })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                      />
-                    </label>
-                    <label className="block space-y-1">
-                      <span className="text-[10px] font-bold text-text-muted uppercase">Office Phone Extension</span>
-                      <input
-                        type="text"
-                        value={editingItem.data.phone || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, phone: e.target.value } })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
-                      />
-                    </label>
-
-                    <AssetUploadInput
-                      label="Coordinator profile Picture"
-                      value={editingItem.data.imageUrl || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, imageUrl: val } })}
-                      category="contacts"
-                    />
-                  </div>
-                )}
 
                 {/* 5. EDITOR: FUNDED PROJECT RECORD */}
                 {editingItem.key === "research-projects" && (
@@ -5769,40 +5778,6 @@ function Admin() {
                   </div>
                 )}
 
-                {/* 10b. EDITOR: UG STUDENTS */}
-                {editingItem.key === "ug-students" && (
-                  <div className="space-y-4 font-sans text-xs">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Student Name</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.name || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, name: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Classification Status</span>
-                        <select
-                          value={editingItem.data.status || "active"}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, status: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
-                        >
-                          <option value="active">Active</option>
-                          <option value="past-contributor">Past Contributor</option>
-                        </select>
-                      </label>
-                    </div>
-                    <AssetUploadInput
-                      label="Student Photograph"
-                      value={editingItem.data.imageUrl || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, imageUrl: val } })}
-                      category="students"
-                    />
-                  </div>
-                )}
 
                 {/* 10c. EDITOR: UG ALUMNI */}
                 {editingItem.key === "ug-alumni" && (
@@ -7577,12 +7552,13 @@ function Admin() {
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={() => {
                     const { key, isNew, index, data } = editingItem;
 
                     // 1. Save general settings hooks keys
-                    if (key === "homepageStats" || key === "keyContacts") {
+                    if (key === "homepageStats") {
                       const list = [...(settings[key] || [])];
                       if (isNew) {
                         list.push({ ...data, displayOrder: list.length + 1 });
@@ -7596,6 +7572,7 @@ function Admin() {
                     // 2. Save dynamic JSON datasets
                     else if (
                       key === "home-research-focus" ||
+                      key === "home-facts" ||
                       key === "home-highlights" ||
                       key === "home-quick-access" ||
                       key === "research-projects" ||
@@ -7640,7 +7617,6 @@ function Admin() {
                       key === "scholars" ||
                       key === "staff" ||
                       key === "phd-graduates" ||
-                      key === "ug-students" ||
                       key === "ug-alumni" ||
                       key === "pg-alumni"
                     ) {
@@ -7650,7 +7626,6 @@ function Admin() {
                         scholars: "scholar",
                         staff: "staff",
                         "phd-graduates": "phd",
-                        "ug-students": "student",
                         "ug-alumni": "alumni",
                         "pg-alumni": "alumni"
                       };

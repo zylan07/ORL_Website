@@ -701,7 +701,7 @@ function ResearchPage() {
 
   // Accordion Expand States
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({
-    external: true,
+    external: false,
     internal: false,
     student: false,
     phd: false,
@@ -1043,23 +1043,31 @@ function ResearchPage() {
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-5xs font-mono font-bold uppercase text-text-secondary bg-secondary px-2 py-0.5 rounded border border-border/25">
-                            {proj.fundingAgency?.split("(")[0].trim() || proj.fundingAgency}
-                          </span>
-                          <span className={`text-5xs font-bold uppercase tracking-wide border px-2 py-0.5 rounded-sm ${
-                            proj.status === "Ongoing" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                          }`}>
-                            {proj.status}
-                          </span>
+                          {proj.fundingAgency && (
+                            <span className="text-5xs font-mono font-bold uppercase text-text-secondary bg-secondary px-2 py-0.5 rounded border border-border/25">
+                              {proj.fundingAgency?.split("(")[0].trim() || proj.fundingAgency}
+                            </span>
+                          )}
+                          {proj.status && (
+                            <span className={`text-5xs font-bold uppercase tracking-wide border px-2 py-0.5 rounded-sm ${
+                              proj.status === "Ongoing" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                            }`}>
+                              {proj.status}
+                            </span>
+                          )}
                         </div>
-                        <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
-                          {proj.title}
-                        </h4>
+                        {proj.title && (
+                          <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
+                            {proj.title}
+                          </h4>
+                        )}
                       </div>
-                      <div className="mt-4 border-t border-border/20 pt-3 flex items-center justify-between text-5xs font-mono text-text-muted">
-                        <span>Grant: <strong className="text-foreground">{proj.amount}</strong></span>
-                        {proj.duration && <span>Period: <strong className="text-foreground">{proj.duration}</strong></span>}
-                      </div>
+                      {(proj.amount || proj.duration) && (
+                        <div className="mt-4 border-t border-border/20 pt-3 flex items-center justify-between text-5xs font-mono text-text-muted">
+                          {proj.amount ? <span>Grant: <strong className="text-foreground">{proj.amount}</strong></span> : <span />}
+                          {proj.duration ? <span>Period: <strong className="text-foreground">{proj.duration}</strong></span> : <span />}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {filteredProjects.filter(p => p.type === "external").length === 0 && (
@@ -1101,18 +1109,24 @@ function ResearchPage() {
                           <span className="text-5xs font-mono font-bold uppercase text-text-secondary bg-secondary px-2 py-0.5 rounded border border-border/25">
                             SSN Funding
                           </span>
-                          <span className="text-5xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-sm">
-                            {proj.status}
-                          </span>
+                          {proj.status && (
+                            <span className="text-5xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-sm">
+                              {proj.status}
+                            </span>
+                          )}
                         </div>
-                        <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
-                          {proj.title}
-                        </h4>
+                        {proj.title && (
+                          <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
+                            {proj.title}
+                          </h4>
+                        )}
                       </div>
-                      <div className="mt-4 border-t border-border/20 pt-3 flex items-center justify-between text-5xs font-mono text-text-muted">
-                        <span>Grant: <strong className="text-foreground">{proj.amount}</strong></span>
-                        {proj.duration && <span>Period: <strong className="text-foreground">{proj.duration}</strong></span>}
-                      </div>
+                      {(proj.amount || proj.duration) && (
+                        <div className="mt-4 border-t border-border/20 pt-3 flex items-center justify-between text-5xs font-mono text-text-muted">
+                          {proj.amount ? <span>Grant: <strong className="text-foreground">{proj.amount}</strong></span> : <span />}
+                          {proj.duration ? <span>Period: <strong className="text-foreground">{proj.duration}</strong></span> : <span />}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {filteredProjects.filter(p => p.type === "internal").length === 0 && (
@@ -1136,7 +1150,18 @@ function ResearchPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-5xs font-mono font-bold bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/25">
-                    {filteredProjects.filter(p => p.type === "phd").length} Listed
+                    {(() => {
+                      const seen = new Set<string>();
+                      return filteredProjects
+                        .filter((p) => p.type === "phd")
+                        .filter((p) => {
+                          if (!p.scholar) return true;
+                          const name = p.scholar.trim().toLowerCase();
+                          if (seen.has(name)) return false;
+                          seen.add(name);
+                          return true;
+                        }).length;
+                    })()} Listed
                   </span>
                   {expandedProjects.phd ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
                 </div>
@@ -1145,54 +1170,67 @@ function ResearchPage() {
                 <div className="p-4 md:p-6 space-y-6">
                   {/* Vertical Timeline */}
                   <div className="relative pl-6 md:pl-8 border-l border-border/80 space-y-6 ml-2 md:ml-4 py-2">
-                    {filteredProjects.filter((p) => p.type === "phd").map((proj) => (
-                      <div key={proj.id} className="relative group">
-                        {/* Timeline Bullet */}
-                        <span className={`absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border bg-card flex items-center justify-center transition duration-300 ${
-                          proj.status === "Coursework Completed" ? "border-amber-500 ring-4 ring-amber-500/10" :
-                          proj.status === "Thesis Submitted" ? "border-cyan-500 ring-4 ring-cyan-500/10" :
-                          "border-emerald-500 ring-4 ring-emerald-500/10"
-                        }`}>
-                          <span className={`h-2 w-2 rounded-full ${
-                            proj.status === "Coursework Completed" ? "bg-amber-500" :
-                            proj.status === "Thesis Submitted" ? "bg-cyan-500" :
-                            "bg-emerald-500"
-                          }`} />
-                        </span>
+                    {(() => {
+                      const seen = new Set<string>();
+                      const list = filteredProjects
+                        .filter((p) => p.type === "phd")
+                        .filter((p) => {
+                          if (!p.scholar) return true;
+                          const name = p.scholar.trim().toLowerCase();
+                          if (seen.has(name)) return false;
+                          seen.add(name);
+                          return true;
+                        });
+                      return list.map((proj) => (
+                        <div key={proj.id} className="relative group">
+                          {/* Timeline Bullet */}
+                          <span className={`absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border bg-card flex items-center justify-center transition duration-300 ${
+                            proj.status === "Coursework Completed" ? "border-amber-500 ring-4 ring-amber-500/10" :
+                            proj.status === "Thesis Submitted" || proj.status === "Completed" ? "border-cyan-500 ring-4 ring-cyan-500/10" :
+                            "border-emerald-500 ring-4 ring-emerald-500/10"
+                          }`}>
+                            <span className={`h-2 w-2 rounded-full ${
+                              proj.status === "Coursework Completed" ? "bg-amber-500" :
+                              proj.status === "Thesis Submitted" || proj.status === "Completed" ? "bg-cyan-500" :
+                              "bg-emerald-500"
+                            }`} />
+                          </span>
 
-                        <div
-                          className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
-                        >
-                          <div className="space-y-1">
-                            <h4 className="font-bold text-foreground text-xs leading-relaxed">
-                              {proj.title || proj.researchArea}
-                            </h4>
-                            <p className="text-4xs text-text-muted mt-1">
-                              Scholar: <span className="font-semibold text-text-secondary">{proj.scholar}</span>
-                            </p>
-                            {proj.description && (
-                              <p className="text-4xs text-text-secondary leading-relaxed mt-2 italic border-l-2 border-emerald-500/30 pl-2">
-                                {proj.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {proj.publicationCount && (
-                              <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
-                                {proj.publicationCount} Publications
-                              </span>
-                            )}
-                            <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
-                              proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                              proj.status === "Thesis Submitted" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
-                              "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                            }`}>
-                              {proj.status}
-                            </span>
+                          <div
+                            className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
+                          >
+                            <div className="space-y-1">
+                              {(proj.title || proj.researchArea) && (
+                                <h4 className="font-bold text-foreground text-xs leading-relaxed">
+                                  {proj.title || proj.researchArea}
+                                </h4>
+                              )}
+                              {proj.scholar && (
+                                <p className="text-4xs text-text-muted mt-1">
+                                  Scholar: <span className="font-semibold text-text-secondary">{proj.scholar}</span>
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {(proj.publicationCount !== undefined && proj.publicationCount !== null) && (
+                                <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
+                                  {proj.publicationCount} Publications
+                                </span>
+                              )}
+                              {proj.status && (
+                                <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
+                                  proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                  proj.status === "Thesis Submitted" || proj.status === "Completed" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
+                                  "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                }`}>
+                                  {proj.status}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                     {filteredProjects.filter(p => p.type === "phd").length === 0 && (
                       <div className="text-center text-text-muted text-xs py-4">
                         {PROJECTS_DATABASE.filter(p => p.type === "phd").length === 0 ? "No records available." : "No scholars match the active filters."}

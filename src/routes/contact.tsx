@@ -139,13 +139,13 @@ function ContactPage() {
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
+            </div> {/* Close Contact Details Stack */}
+          </div> {/* Close Grid container */}
         </section>
 
-        {/* Section 3 – Location Section (Google Maps Embed) */}
+        {/* Section 3 – Lab Location */}
         <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-border/40 pb-4">
             <div>
               <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Mapping</span>
               <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Lab Location</h2>
@@ -153,7 +153,7 @@ function ContactPage() {
             
             {/* Open in Google Maps link */}
             <a
-              href={settings.googleMapsUrl || "https://maps.google.com/?q=NITTTR+Chennai"}
+              href="https://maps.google.com/?q=NITTTR+Chennai"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-500/25 bg-teal-500/5 hover:bg-teal-500/10 text-teal-500 text-4xs font-bold uppercase tracking-wider transition cursor-pointer select-none"
@@ -161,12 +161,12 @@ function ContactPage() {
               <Map className="h-3.5 w-3.5" /> Open in Google Maps
             </a>
           </div>
-
+ 
           {/* Container designed to prevent layout shifts */}
           <div className="relative aspect-video rounded-2xl overflow-hidden border border-border bg-muted group shadow-xs">
             <iframe
               title="NITTTR Chennai Location Map"
-              src={settings.googleMapsEmbedUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.8967468114467!2d80.24716497479017!3d12.97841101473636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525d614ffdfdd9%3A0xe5a363cb05697d!2sNITTTR%20Chennai!5e0!3m2!1sen!2sin!4v1718000000000!5m2!1sen!2sin"}
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.8967468114467!2d80.24716497479017!3d12.97841101473636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525d614ffdfdd9%3A0xe5a363cb05697d!2sNITTTR%20Chennai!5e0!3m2!1sen!2sin!4v1718000000000!5m2!1sen!2sin"
               className="w-full h-full border-0 transition duration-300 dark:brightness-[0.75] dark:contrast-[1.2] dark:invert-[0.9] dark:hue-rotate-[180deg]"
               allowFullScreen={false}
               loading="lazy"
@@ -175,58 +175,7 @@ function ContactPage() {
           </div>
         </section>
 
-        {/* Section 4 – Key Contacts */}
-        <section className="space-y-6">
-          <div className="border-b border-border/40 pb-4">
-            <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Personnel</span>
-            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Key Contacts</h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {(settings.keyContacts || KEY_CONTACTS).map((contact, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl border border-border bg-card flex flex-col justify-between hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none relative overflow-hidden"
-              >
-                <div className="space-y-3">
-                  {/* Optional Image container: hide if not available */}
-                  {contact.imageUrl && (
-                    <div className="aspect-square w-full rounded-lg bg-muted overflow-hidden border border-border">
-                      <img src={resolveAssetUrl(contact.imageUrl)} alt={contact.name} className="h-full w-full object-cover" />
-                    </div>
-                  )}
-                  <div className="space-y-1 font-sans">
-                    <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors">
-                      {contact.name}
-                    </h3>
-                    <p className="text-[10px] text-text-secondary leading-normal font-medium">
-                      {contact.designation}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-border/40 mt-4 text-xs space-y-1.5 font-sans">
-                  {contact.email && (
-                    <div className="flex items-center gap-1.5 text-text-muted">
-                      <Mail className="h-3.5 w-3.5 text-teal-500 shrink-0" />
-                      <a href={`mailto:${contact.email}`} className="hover:underline break-all leading-none text-4xs font-mono">
-                        {contact.email}
-                      </a>
-                    </div>
-                  )}
-                  {contact.phone && (
-                    <div className="flex items-center gap-1.5 text-text-muted">
-                      <Phone className="h-3.5 w-3.5 text-teal-500 shrink-0" />
-                      <span className="leading-none text-4xs font-mono">{contact.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 5 – Collaboration & Research CTA */}
+        {/* Section 4 – Collaboration & Research CTA */}
         <section className="font-sans">
           <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-teal-950/20 via-background to-background p-6 md:p-8 space-y-5">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_bottom_right,rgba(20,184,166,0.08),rgba(255,255,255,0))]" />
@@ -258,6 +207,7 @@ function ContactPage() {
             </div>
           </div>
         </section>
+
       </div>
     </div>
   );

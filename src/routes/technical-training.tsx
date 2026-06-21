@@ -14,6 +14,8 @@ import {
   Award,
   BookOpen,
   GraduationCap,
+  Download,
+  FileText,
 } from "lucide-react";
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { parseDateSafe } from "@/lib/utils";
@@ -328,13 +330,83 @@ function TechnicalTrainingPage() {
               className="w-full rounded border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-all"
             />
           </label>
-          <button
-            onClick={() => setSortDesc((s) => !s)}
-            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const exportData = filteredTraining.map(r => ({
+                  ...r,
+                  type: r.type === "host" ? "Host Programme" :
+                        r.type === "itec" ? "ITEC Programme" :
+                        r.type === "itp" ? "ITP Programme" :
+                        r.type === "pdp" ? "PDP Resource Person" :
+                        r.type === "coord" ? "PDP Coordinator" :
+                        r.type === "pg" ? "PG Course (M.Tech)" : r.type,
+                  date: formatDate(r.date)
+                }));
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToExcel(
+                    exportData,
+                    [
+                      { label: "Date/Period", key: "date" },
+                      { label: "Type", key: "type" },
+                      { label: "Title", key: "title" },
+                      { label: "Code", key: "code" },
+                      { label: "Host/Institution", key: "organization" },
+                      { label: "Duration/Semester", key: "duration" },
+                      { label: "Role", key: "role" },
+                      { label: "Mode/Students", key: "mode" }
+                    ],
+                    "orl_technical_training"
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </button>
+            <button
+              onClick={() => {
+                const exportData = filteredTraining.map(r => ({
+                  ...r,
+                  type: r.type === "host" ? "Host Programme" :
+                        r.type === "itec" ? "ITEC Programme" :
+                        r.type === "itp" ? "ITP Programme" :
+                        r.type === "pdp" ? "PDP Resource Person" :
+                        r.type === "coord" ? "PDP Coordinator" :
+                        r.type === "pg" ? "PG Course (M.Tech)" : r.type,
+                  date: formatDate(r.date)
+                }));
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToPdf(
+                    "Technical Training & PG Courses",
+                    exportData,
+                    [
+                      { label: "Date/Period", key: "date" },
+                      { label: "Type", key: "type" },
+                      { label: "Title", key: "title" },
+                      { label: "Code", key: "code" },
+                      { label: "Host/Institution", key: "organization" },
+                      { label: "Duration/Semester", key: "duration" },
+                      { label: "Role", key: "role" },
+                      { label: "Mode/Students", key: "mode" }
+                    ],
+                    "orl_technical_training",
+                    q
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <FileText className="h-3.5 w-3.5" /> Export PDF
+            </button>
+            <button
+              onClick={() => setSortDesc((s) => !s)}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
+            </button>
+          </div>
         </div>
 
         {/* Sections */}

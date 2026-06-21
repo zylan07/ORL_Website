@@ -375,55 +375,95 @@ function CollaborationsPage() {
 
       {/* Sticky Section Navigation */}
       <StickySectionNav items={navItems} />
-
       {/* Main Content Area */}
       <div className="mx-auto max-w-4xl px-6 mt-12 space-y-16">
+        
+        {/* 1. Collaboration Opportunities CTA Section */}
+        <section className="pt-4 font-sans">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-indigo-950/20 via-background to-background p-6 md:p-8 space-y-5">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_bottom_right,rgba(16,185,129,0.08),rgba(255,255,255,0))]" />
+            <div className="relative z-10 space-y-4">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/25 uppercase font-mono tracking-wider">
+                Consortium Invitation
+              </span>
+              <h3 className="text-lg font-black text-foreground">
+                Collaboration Opportunities
+              </h3>
+              <div className="space-y-3.5 text-xs leading-relaxed text-text-secondary font-medium">
+                <p>
+                  "We extend our help to Research Institute by providing technical support, the utilization of lab facilities, underwater equipment hiring, technical and manpower support for data collection and data processing."
+                </p>
+                <p className="border-t border-border/40 pt-3.5">
+                  "We as a team are looking forward and willing to collaborate with research institute/organization/college/individual who shares equal interest and wishes to achieve high goals in Underwater related fields"
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {/* 3. MoU Timeline (Emerald Theme) */}
+        {/* 2. MoU Timeline (Emerald Theme - Passport Grid) */}
         <section id="mous" className="scroll-mt-24 space-y-8">
           <div className="border-b border-border/40 pb-4 text-center">
             <span className="text-5xs font-mono font-bold uppercase tracking-wider text-emerald-500">Scientific Accords</span>
             <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Memorandums of Understanding (MoU)</h2>
           </div>
 
-          {/* Centered Vertical Timeline */}
           {mouRecords.length === 0 ? (
             <div className="text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
           ) : (
-            <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto py-4">
-              {mouRecords.map((mou, index) => {
+            <div className="grid gap-6 sm:grid-cols-2">
+              {mouRecords.map((mou) => {
                 const year = mou.date ? (mou.date.match(/\b\d{4}\b/)?.[0] || mou.date) : "N/A";
+                const imgUrl = mou.thumbnail || (mou.images && mou.images.length > 0 ? mou.images[0] : null);
                 return (
-                  <div key={mou.id} className="w-full flex flex-col items-center">
-                    {index > 0 && (
-                      <div className="flex flex-col items-center my-2 select-none">
-                        <div className="w-0.5 h-8 bg-emerald-500/30" />
-                        <span className="text-emerald-500 font-bold text-xs">↓</span>
-                        <div className="w-0.5 h-8 bg-emerald-500/30" />
+                  <div
+                    key={mou.id}
+                    onClick={() => openDetail(mou, "emerald")}
+                    className="group relative rounded-2xl border border-border bg-card/60 p-5 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col justify-between cursor-pointer hover:border-emerald-500/35"
+                  >
+                    <div>
+                      {/* Image Container */}
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
+                        {imgUrl ? (
+                          <img
+                            src={resolveAssetUrl(imgUrl)}
+                            alt={mou.organization || mou.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 text-emerald-500 border border-emerald-500/10">
+                            <Handshake className="h-10 w-10 opacity-70 mb-1" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Academic MoU</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <div className="flex flex-col items-center gap-2 select-none">
-                      <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/25 ring-4 ring-emerald-500/5">
-                        {year}
-                      </span>
-                      <span className="text-emerald-500 font-bold text-xs">↓</span>
+
+                      {/* Text Content */}
+                      <div className="space-y-2 font-sans">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/25 uppercase font-mono tracking-wider">
+                            MoU Accord
+                          </span>
+                          <span className="text-5xs text-text-muted font-mono flex items-center gap-1">
+                            <Calendar className="h-3 w-3" /> {year}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-emerald-500 transition-colors">
+                          {mou.organization || mou.title}
+                        </h3>
+                        {mou.researchFocus && (
+                          <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-3">
+                            <strong className="text-text-muted block text-5xs uppercase tracking-wider font-semibold font-mono">Scope of Focus:</strong>
+                            {mou.researchFocus}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div
-                      onClick={() => openDetail(mou, "emerald")}
-                      className="w-full rounded-xl border border-border bg-card p-6 md:p-8 hover:border-emerald-500/35 hover:shadow-xs hover:bg-emerald-500/5 transition duration-300 cursor-pointer text-center group select-none relative"
-                    >
-                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-5xs font-mono font-bold text-emerald-500 bg-background px-2 border border-emerald-500/20 rounded">
-                        Active Accord
-                      </span>
-                      <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                        {mou.organization || mou.title}
-                      </h4>
-                      <p className="text-[10px] text-text-secondary mt-1.5 max-w-md mx-auto leading-relaxed">
-                        Scope: {mou.researchFocus}
-                      </p>
-                      <span className="inline-block mt-3 text-5xs font-bold uppercase tracking-wider text-emerald-500 hover:underline">
-                        View Scope & Notes
-                      </span>
+
+                    <div className="pt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-emerald-500 mt-4 border-t border-border/20">
+                      <span>View Scope & Notes</span>
+                      <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 );
@@ -432,9 +472,7 @@ function CollaborationsPage() {
           )}
         </section>
 
-
-
-        {/* 5. Partner Institutions Grid (Sky Theme) */}
+        {/* 3. Partner Institutions Grid (Sky Theme - Larger Logos) */}
         <section id="institutions" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
@@ -455,22 +493,34 @@ function CollaborationsPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
             {filteredInstitutions.map((inst) => (
               <div
                 key={inst.id}
                 onClick={() => openDetail(inst, "sky")}
-                className="p-4 rounded-xl border border-border bg-card/60 hover:border-sky-500/25 hover:shadow-xs transition duration-300 cursor-pointer flex items-center gap-3 group select-none"
+                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-sky-500/35 hover:shadow-md hover:translate-y-[-4px] transition duration-300 cursor-pointer flex flex-col items-center text-center justify-between aspect-square group select-none"
               >
-                {/* Institution Icon Placeholder */}
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-sky-500/10 to-sky-600/20 border border-sky-500/20 flex items-center justify-center text-sky-500 shrink-0 font-bold font-mono text-xs select-none">
-                  {(inst.name || inst.title || "").charAt(0)}
+                {/* Logo Container */}
+                <div className="w-24 h-24 flex items-center justify-center bg-secondary/20 rounded-xl p-3 border border-border/40 overflow-hidden shrink-0 shadow-inner">
+                  {inst.thumbnail ? (
+                    <img
+                      src={resolveAssetUrl(inst.thumbnail)}
+                      alt={inst.name || inst.title}
+                      className="max-w-full max-h-full object-contain filter dark:brightness-95 group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-sky-500 select-none">
+                      <Building2 className="h-8 w-8 opacity-70 mb-1" />
+                      <span className="text-[11px] font-black font-mono">{(inst.name || inst.title || "").charAt(0)}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-0.5 min-w-0 flex-1">
-                  <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-sky-500 transition-colors truncate">
+                <div className="space-y-1 min-w-0 mt-3 flex-1 flex flex-col justify-center">
+                  <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-sky-500 transition-colors line-clamp-2">
                     {inst.name || inst.title}
                   </h3>
-                  <p className="text-[10px] text-text-secondary leading-none">{inst.location}</p>
+                  <p className="text-5xs text-text-muted font-sans font-medium uppercase tracking-wider line-clamp-1">{inst.location}</p>
                 </div>
               </div>
             ))}
@@ -482,80 +532,81 @@ function CollaborationsPage() {
           </div>
         </section>
 
-        {/* 6. Consultancy Activities Timeline (Amber Theme - Primary Highlight Section) */}
+        {/* 4. Consultancy Activities Timeline (Amber Theme - Image-First Grid) */}
         <section id="activities" className="scroll-mt-24 space-y-6">
           <div className="border-b border-border/40 pb-4">
             <span className="text-5xs font-mono font-bold uppercase tracking-wider text-amber-500">Consultancy Operations</span>
             <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Recent Consultancy Activities</h2>
           </div>
 
-          <div className="grid gap-6 grid-cols-1">
-            {consultancyActivities.map((act) => (
-              <div
-                key={act.id}
-                onClick={() => openDetail(act, "amber")}
-                className="p-6 rounded-2xl border border-border bg-card hover:border-amber-500/35 hover:shadow-md transition duration-300 flex flex-col md:flex-row gap-5 justify-between items-start cursor-pointer select-none group"
-              >
-                <div className="space-y-3 flex-1 font-sans">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/25 uppercase font-mono tracking-wider">
-                      Consultancy support
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded bg-secondary text-text-secondary text-5xs font-mono font-bold border border-border/40">
-                      Date: {act.date}
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-500 text-5xs font-bold border border-amber-500/20">
-                      Data Collection
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-amber-500 transition-colors">
-                    {act.institution || act.title}
-                  </h3>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {consultancyActivities.map((act) => {
+              const imgUrl = act.thumbnail || (act.images && act.images.length > 0 ? act.images[0] : null);
+              return (
+                <div
+                  key={act.id}
+                  onClick={() => openDetail(act, "amber")}
+                  className="group relative rounded-2xl border border-border bg-card/60 p-5 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col justify-between cursor-pointer hover:border-amber-500/35"
+                >
+                  <div>
+                    {/* Image Container */}
+                    <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
+                      {imgUrl ? (
+                        <img
+                          src={resolveAssetUrl(imgUrl)}
+                          alt={act.institution || act.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-500 border border-amber-500/10">
+                          <Activity className="h-10 w-10 opacity-70 mb-1" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Consultancy</span>
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="space-y-2 pt-2 border-t border-border/40 text-xs">
-                    <div>
-                      <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Cohort Participants</span>
-                      <p className="text-foreground font-semibold mt-0.5">{act.participants}</p>
+                    {/* Content */}
+                    <div className="space-y-3 font-sans">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/25 uppercase font-mono tracking-wider">
+                          Technical Consultancy
+                        </span>
+                        <span className="text-5xs text-text-muted font-mono flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> {act.date}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-amber-500 transition-colors">
+                        {act.institution || act.title}
+                      </h3>
+                      
+                      <div className="space-y-2 pt-2 border-t border-border/40 text-xs">
+                        {act.participants && (
+                          <div>
+                            <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Cohort Participants</span>
+                            <p className="text-foreground font-semibold mt-0.5 leading-snug">{act.participants}</p>
+                          </div>
+                        )}
+                        {act.purpose && (
+                          <div>
+                            <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Purpose</span>
+                            <p className="text-text-secondary font-medium leading-relaxed mt-0.5 line-clamp-3">{act.purpose}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Purpose</span>
-                      <p className="text-text-secondary font-medium leading-relaxed mt-0.5">{act.purpose}</p>
-                    </div>
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-amber-500 mt-4 border-t border-border/20">
+                    <span>View Consultancy Details</span>
+                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
-
-                <div className="flex items-center gap-1.5 px-3 py-1.5 text-4xs font-black uppercase tracking-wider rounded border border-amber-500/20 bg-amber-500/5 group-hover:bg-amber-500/10 text-amber-500 transition cursor-pointer self-end md:self-center">
-                  View details <ChevronRight className="h-3 w-3" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {consultancyActivities.length === 0 && (
-              <div className="text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
+              <div className="col-span-2 text-center text-text-muted text-xs py-8 font-sans">No records available.</div>
             )}
-          </div>
-        </section>
-
-        {/* 7. Collaboration Opportunities CTA Section */}
-        <section className="pt-4 font-sans">
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-indigo-950/20 via-background to-background p-6 md:p-8 space-y-5">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_bottom_right,rgba(16,185,129,0.08),rgba(255,255,255,0))]" />
-            <div className="relative z-10 space-y-4">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/25 uppercase font-mono tracking-wider">
-                Consortium Invitation
-              </span>
-              <h3 className="text-lg font-black text-foreground">
-                Collaboration Opportunities
-              </h3>
-              <div className="space-y-3.5 text-xs leading-relaxed text-text-secondary font-medium">
-                <p>
-                  "We extend our help to Research Institute by providing technical support, the utilization of lab facilities, underwater equipment hiring, technical and manpower support for data collection and data processing."
-                </p>
-                <p className="border-t border-border/40 pt-3.5">
-                  "We as a team are looking forward and willing to collaborate with research institute/organization/college/individual who shares equal interest and wishes to achieve high goals in Underwater related fields"
-                </p>
-              </div>
-            </div>
           </div>
         </section>
       </div>

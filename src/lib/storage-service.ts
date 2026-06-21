@@ -80,11 +80,80 @@ export interface PageText {
 
 const ASSETS_KEY = "uwarl-db-assets-v1";
 
+function getPayloadSizeKB(value: string): number {
+  try {
+    const bytes = new TextEncoder().encode(value).length;
+    return Number((bytes / 1024).toFixed(3));
+  } catch (e) {
+    return Number((value.length / 1024).toFixed(3));
+  }
+}
+
+function getTotalLocalStorageSizeKB(): number {
+  if (typeof window === "undefined" || !window.localStorage) return 0;
+  let totalBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) {
+      const val = localStorage.getItem(key) || "";
+      totalBytes += new TextEncoder().encode(key).length + new TextEncoder().encode(val).length;
+    }
+  }
+  return Number((totalBytes / 1024).toFixed(3));
+}
+
+export function isQuotaExceededError(error: any): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.code === 22 ||
+      error.code === 1014 ||
+      error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+  );
+}
+
+function preSetItemDiagnostics(key: string, value: string): void {
+  const payloadSizeKB = getPayloadSizeKB(value);
+  const totalLocalStorageKB = getTotalLocalStorageSizeKB();
+  console.log("[LocalStorage Diagnostic - Before Write]", {
+    key,
+    payloadSizeKB,
+    totalLocalStorageKB,
+    timestamp: new Date().toISOString()
+  });
+}
+
+function postSetItemFailureDiagnostics(key: string, value: string, error: any): void {
+  const payloadSizeKB = getPayloadSizeKB(value);
+  const totalLocalStorageKB = getTotalLocalStorageSizeKB();
+  const errorName = error?.name || "UnknownError";
+  const errorMessage = error?.message || String(error);
+  const stack = error?.stack || "";
+  console.error("[LocalStorage Diagnostic - Write Failed]", {
+    key,
+    payloadSizeKB,
+    totalLocalStorageKB,
+    errorName,
+    errorMessage,
+    stack
+  });
+}
+
 export function getAssets(): Record<string, UploadedAsset> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(ASSETS_KEY);
-    if (raw) return JSON.parse(raw) as Record<string, UploadedAsset>;
+    if (raw) {
+      try {
+        return JSON.parse(raw) as Record<string, UploadedAsset>;
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${ASSETS_KEY}`, err);
+          alert(`Warning: Local storage data for '${ASSETS_KEY}' is corrupted. Falling back to empty state.`);
+        }
+        throw err;
+      }
+    }
   } catch (e) {
     console.error("Error reading assets from localStorage:", e);
   }
@@ -93,11 +162,19 @@ export function getAssets(): Record<string, UploadedAsset> {
 
 export function saveAssets(assets: Record<string, UploadedAsset>): void {
   if (typeof window === "undefined") return;
+  const serialized = JSON.stringify(assets);
+  preSetItemDiagnostics(ASSETS_KEY, serialized);
   try {
-    localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+    localStorage.setItem(ASSETS_KEY, serialized);
   } catch (e) {
-    console.error("Error saving assets to localStorage:", e);
-    alert("Local storage limit reached. Please remove some files to save space.");
+    postSetItemFailureDiagnostics(ASSETS_KEY, serialized, e);
+    if (isQuotaExceededError(e)) {
+      getForensicStorageMetrics().then((metrics) => {
+        console.error("QUOTA_EXCEEDED_AT_FAILURE:", JSON.stringify(metrics));
+      });
+      alert("Local storage limit reached. Please remove some files to save space.");
+    }
+    throw e; // re-throw to allow test code / simulation to catch
   }
 }
 
@@ -107,7 +184,17 @@ export function getSupabaseAssetsCache(): Record<string, { url: string }> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(SUPABASE_ASSETS_CACHE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${SUPABASE_ASSETS_CACHE_KEY}`, err);
+          alert(`Warning: Local storage data for '${SUPABASE_ASSETS_CACHE_KEY}' is corrupted. Falling back to empty state.`);
+        }
+        throw err;
+      }
+    }
   } catch (e) {
     console.error("Error reading Supabase assets cache:", e);
   }
@@ -116,10 +203,12 @@ export function getSupabaseAssetsCache(): Record<string, { url: string }> {
 
 export function saveSupabaseAssetsCache(cache: Record<string, { url: string }>) {
   if (typeof window === "undefined") return;
+  const serialized = JSON.stringify(cache);
+  preSetItemDiagnostics(SUPABASE_ASSETS_CACHE_KEY, serialized);
   try {
-    localStorage.setItem(SUPABASE_ASSETS_CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(SUPABASE_ASSETS_CACHE_KEY, serialized);
   } catch (e) {
-    console.error("Error saving Supabase assets cache:", e);
+    postSetItemFailureDiagnostics(SUPABASE_ASSETS_CACHE_KEY, serialized, e);
   }
 }
 
@@ -155,7 +244,13 @@ export function cleanupOrphanAssets(): void {
     }
 
     if (changed) {
-      localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+      const serialized = JSON.stringify(assets);
+      preSetItemDiagnostics(ASSETS_KEY, serialized);
+      try {
+        localStorage.setItem(ASSETS_KEY, serialized);
+      } catch (e) {
+        postSetItemFailureDiagnostics(ASSETS_KEY, serialized, e);
+      }
     }
   } catch (e) {
     console.error("Error cleaning up orphan assets:", e);
@@ -167,6 +262,33 @@ export const AVATAR_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w
 export const IMAGE_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'><defs><linearGradient id='g5' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%230f172a'/><stop offset='100%' stop-color='%231e293b'/></linearGradient></defs><rect width='100%' height='100%' fill='url(%23g5)'/><g transform='translate(400, 270)' text-anchor='middle'><circle cx='0' cy='0' r='40' fill='%23ffffff' fill-opacity='0.03' stroke='%23475569' stroke-width='2'/><path d='M-10-10 h20 v20 h-20 z' stroke='%23475569' stroke-width='2' fill='none'/><text x='0' y='70' font-family='Inter, sans-serif' font-size='16' fill='%2364748b'>Asset Preview Unavailable</text></g></svg>";
 
 if (typeof window !== "undefined") {
+  // Purge legacy Base64 asset strings from localStorage to prevent quota errors
+  setTimeout(() => {
+    try {
+      const assets = getAssets();
+      let changed = false;
+      for (const key of Object.keys(assets)) {
+        const asset = assets[key];
+        if (asset.url && asset.url.startsWith("data:")) {
+          asset.url = asset.supabaseUrl || "";
+          changed = true;
+        }
+      }
+      if (changed) {
+        const serialized = JSON.stringify(assets);
+        preSetItemDiagnostics(ASSETS_KEY, serialized);
+        try {
+          localStorage.setItem(ASSETS_KEY, serialized);
+          console.log("Purged legacy base64 data from local asset registry.");
+        } catch (e) {
+          postSetItemFailureDiagnostics(ASSETS_KEY, serialized, e);
+        }
+      }
+    } catch (e) {
+      console.error("Error purging legacy base64 assets:", e);
+    }
+  }, 100);
+
   window.addEventListener(
     "error",
     (e) => {
@@ -358,25 +480,38 @@ export async function registerAsset(
   }
 
   const id = `asset_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  let url = "";
+  let uploadBlob: Blob = file;
+  let mimeType = file.type;
+
+  // Compress image if needed, but do not save base64 to localStorage
   if (type === "image") {
-    url = await compressImage(file);
-  } else if (type === "video" || file.size > 2 * 1024 * 1024) {
-    // Avoid saving massive base64 strings to localStorage to prevent QuotaExceededError
-    url = "";
-  } else {
-    url = await readFileAsBase64(file, type);
+    try {
+      const compressedBase64 = await compressImage(file);
+      const parts = compressedBase64.split(";base64,");
+      mimeType = parts[0].split(":")[1];
+      const raw = window.atob(parts[1]);
+      const rawLength = raw.length;
+      const uInt8Array = new Uint8Array(rawLength);
+      for (let i = 0; i < rawLength; ++i) {
+        uInt8Array[i] = raw.charCodeAt(i);
+      }
+      uploadBlob = new Blob([uInt8Array], { type: mimeType });
+    } catch (e) {
+      console.warn("Image compression failed, using original file", e);
+      uploadBlob = file;
+      mimeType = file.type;
+    }
   }
 
   // Register session object URL for immediate local preview
   if (typeof window !== "undefined") {
-    const objectUrl = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(uploadBlob);
     objectUrls.set(id, objectUrl);
   }
 
   const asset: UploadedAsset = {
     id,
-    url,
+    url: "", // Never store base64 data blobs in localStorage
     type,
     fileName: file.name,
     uploadedAt: new Date().toISOString(),
@@ -396,29 +531,9 @@ export async function registerAsset(
         const fileExt = file.name.split(".").pop() || (type === "image" ? "jpg" : "pdf");
         const filePath = `${id}.${fileExt}`;
 
-        let blob: Blob;
-        let mimeType: string;
-
-        if (type === "image") {
-          // Convert base64 back to Blob
-          const parts = url.split(";base64,");
-          mimeType = parts[0].split(":")[1];
-          const raw = window.atob(parts[1]);
-          const rawLength = raw.length;
-          const uInt8Array = new Uint8Array(rawLength);
-          for (let i = 0; i < rawLength; ++i) {
-            uInt8Array[i] = raw.charCodeAt(i);
-          }
-          blob = new Blob([uInt8Array], { type: mimeType });
-        } else {
-          // Direct file upload for videos & documents (highly optimized, no atob call)
-          blob = file;
-          mimeType = file.type;
-        }
-
         const { error: uploadErr } = await supabase.storage
           .from(bucket)
-          .upload(filePath, blob, {
+          .upload(filePath, uploadBlob, {
             contentType: mimeType,
             upsert: true
           });
@@ -448,7 +563,7 @@ export async function registerAsset(
 
         if (dbErr) throw dbErr;
 
-        // Store the Supabase URL in local asset registry, but KEEP local Base64 intact for safety (Correction 2)
+        // Store the Supabase URL in local asset registry
         const currentAssets = getAssets();
         if (currentAssets[id]) {
           currentAssets[id].supabaseUrl = publicUrl;
@@ -548,7 +663,17 @@ export function getRecords(): RepoRecord[] {
   if (isBrowser) {
     try {
       const raw = localStorage.getItem(RECORDS_KEY);
-      if (raw) records = JSON.parse(raw) as RepoRecord[];
+      if (raw) {
+        try {
+          records = JSON.parse(raw) as RepoRecord[];
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${RECORDS_KEY}`, err);
+            alert(`Warning: Local storage data for '${RECORDS_KEY}' is corrupted. Falling back to spreadsheet defaults.`);
+          }
+          throw err;
+        }
+      }
     } catch (e) {
       console.error("Error reading records from localStorage:", e);
     }
@@ -578,8 +703,10 @@ export function getRecords(): RepoRecord[] {
 
 export function saveRecords(records: RepoRecord[]): void {
   if (isBrowser) {
+    const serialized = JSON.stringify(records);
+    preSetItemDiagnostics(RECORDS_KEY, serialized);
     try {
-      localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+      localStorage.setItem(RECORDS_KEY, serialized);
       cleanupOrphanAssets();
 
       if (supabase) {
@@ -598,11 +725,13 @@ export function saveRecords(records: RepoRecord[]): void {
           }
         })();
       }
-    } catch (e) {
-      console.error("Error saving records to localStorage:", e);
-      alert(
-        "Local storage limit reached. Please delete some records or attachments to free up space.",
-      );
+    } catch (e: any) {
+      postSetItemFailureDiagnostics(RECORDS_KEY, serialized, e);
+      if (isQuotaExceededError(e)) {
+        alert(
+          "Local storage limit reached. Please delete some records or attachments to free up space.",
+        );
+      }
     }
   }
 }
@@ -612,13 +741,21 @@ export function getCarouselConfig(): CarouselConfig {
     try {
       const raw = localStorage.getItem(CAROUSEL_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as CarouselConfig;
-        // Merge missing categories to prevent undefined errors if categories grow
-        const merged = { ...DEFAULT_CAROUSEL_CONFIG };
-        for (const type of Object.keys(parsed) as RecordType[]) {
-          merged[type] = parsed[type] || [];
+        try {
+          const parsed = JSON.parse(raw) as CarouselConfig;
+          // Merge missing categories to prevent undefined errors if categories grow
+          const merged = { ...DEFAULT_CAROUSEL_CONFIG };
+          for (const type of Object.keys(parsed) as RecordType[]) {
+            merged[type] = parsed[type] || [];
+          }
+          return merged;
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${CAROUSEL_KEY}`, err);
+            alert(`Warning: Local storage data for '${CAROUSEL_KEY}' is corrupted. Falling back to default config.`);
+          }
+          throw err;
         }
-        return merged;
       }
     } catch (e) {
       console.error("Error reading carousel config from localStorage:", e);
@@ -629,8 +766,10 @@ export function getCarouselConfig(): CarouselConfig {
 
 export function saveCarouselConfig(config: CarouselConfig): void {
   if (isBrowser) {
+    const serialized = JSON.stringify(config);
+    preSetItemDiagnostics(CAROUSEL_KEY, serialized);
     try {
-      localStorage.setItem(CAROUSEL_KEY, JSON.stringify(config));
+      localStorage.setItem(CAROUSEL_KEY, serialized);
       cleanupOrphanAssets();
 
       if (supabase) {
@@ -645,11 +784,13 @@ export function saveCarouselConfig(config: CarouselConfig): void {
           }
         })();
       }
-    } catch (e) {
-      console.error("Error saving carousel config to localStorage:", e);
-      alert(
-        "Local storage limit reached. Please reduce the number of images or delete older items to free up space.",
-      );
+    } catch (e: any) {
+      postSetItemFailureDiagnostics(CAROUSEL_KEY, serialized, e);
+      if (isQuotaExceededError(e)) {
+        alert(
+          "Local storage limit reached. Please reduce the number of images or delete older items to free up space.",
+        );
+      }
     }
   }
 }
@@ -658,7 +799,17 @@ export function getPageTexts(): Record<string, PageText> {
   if (isBrowser) {
     try {
       const raw = localStorage.getItem(PAGE_TEXT_KEY);
-      if (raw) return JSON.parse(raw) as Record<string, PageText>;
+      if (raw) {
+        try {
+          return JSON.parse(raw) as Record<string, PageText>;
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${PAGE_TEXT_KEY}`, err);
+            alert(`Warning: Local storage data for '${PAGE_TEXT_KEY}' is corrupted. Falling back to empty state.`);
+          }
+          throw err;
+        }
+      }
     } catch (e) {
       console.error("Error reading page text overrides from localStorage:", e);
     }
@@ -668,8 +819,10 @@ export function getPageTexts(): Record<string, PageText> {
 
 export function savePageTexts(pageTextMap: Record<string, PageText>): void {
   if (isBrowser) {
+    const serialized = JSON.stringify(pageTextMap);
+    preSetItemDiagnostics(PAGE_TEXT_KEY, serialized);
     try {
-      localStorage.setItem(PAGE_TEXT_KEY, JSON.stringify(pageTextMap));
+      localStorage.setItem(PAGE_TEXT_KEY, serialized);
 
       if (supabase) {
         (async () => {
@@ -683,8 +836,384 @@ export function savePageTexts(pageTextMap: Record<string, PageText>): void {
           }
         })();
       }
-    } catch (e) {
-      console.error("Error saving page text overrides to localStorage:", e);
+    } catch (e: any) {
+      postSetItemFailureDiagnostics(PAGE_TEXT_KEY, serialized, e);
     }
   }
 }
+
+// Startup Console-Only Diagnostics Audit
+export function runStartupDiagnostics(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const assets = getAssets();
+    const records = getRecords();
+    const assetIds = new Set(Object.keys(assets));
+    const referencedIds = new Set<string>();
+    
+    // Gather all serialized local storage values to find references
+    let allDataStr = "";
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("uwarl-") && key !== ASSETS_KEY && key !== "uwarl-supabase-assets-cache") {
+        allDataStr += localStorage.getItem(key) || "";
+      }
+    }
+
+    assetIds.forEach(id => {
+      if (allDataStr.includes(id)) {
+        referencedIds.add(id);
+      }
+    });
+
+    const orphanCount = Array.from(assetIds).filter(id => !referencedIds.has(id)).length;
+    const potentialRefs = allDataStr.match(/asset_[a-zA-Z0-9_]+/g) || [];
+    const uniqueRefs = new Set(potentialRefs);
+    const staleCount = Array.from(uniqueRefs).filter(ref => !assetIds.has(ref)).length;
+    const missingUrlsCount = Array.from(referencedIds).filter(id => {
+      const asset = assets[id];
+      return !asset || (!asset.url && !asset.supabaseUrl);
+    }).length;
+
+    console.log("=== STARTUP LOCALSTORAGE & ASSETS DIAGNOSTICS ===");
+    console.log(`- Total Assets Registered: ${assetIds.size}`);
+    console.log(`- Total Referenced Assets: ${referencedIds.size}`);
+    console.log(`- Orphan Asset Count (unreferenced): ${orphanCount}`);
+    console.log(`- Stale Asset Reference Count (referenced but missing from registry): ${staleCount}`);
+    console.log(`- Missing Asset Reference URL Count (referenced but blank URL): ${missingUrlsCount}`);
+    console.log("==================================================");
+  } catch (e) {
+    console.error("Error running startup diagnostics:", e);
+  }
+}
+
+if (typeof window !== "undefined") {
+  setTimeout(() => {
+    runStartupDiagnostics();
+  }, 500);
+
+  // Controlled test framework attached to window
+  (window as any).__runQuotaAuditTest = async (testType: "A" | "B" | "C" | "D" | "E") => {
+    console.log(`[TEST RUNNER] Running Test ${testType}...`);
+    
+    if (testType === "A") {
+      // Force QuotaExceededError
+      try {
+        const error = new DOMException("The quota has been exceeded.", "QuotaExceededError");
+        throw error;
+      } catch (err) {
+        console.log("[TEST A] Catching forced QuotaExceededError...");
+        if (isQuotaExceededError(err)) {
+          alert("Local storage limit reached. Please remove some files to save space.");
+        } else {
+          console.error("Test A Failed: isQuotaExceededError returned false for QuotaExceededError");
+        }
+      }
+    } 
+    else if (testType === "B") {
+      // Force TypeError
+      try {
+        throw new TypeError("Cannot read properties of undefined (reading 'stringify')");
+      } catch (err) {
+        console.log("[TEST B] Catching forced TypeError...");
+        if (isQuotaExceededError(err)) {
+          alert("Error: incorrect classification of TypeError as QuotaExceededError!");
+        } else {
+          console.log("[TEST B SUCCESS] TypeError was correctly ignored (no quota popup).");
+        }
+      }
+    } 
+    else if (testType === "C") {
+      // Force Supabase sync failure simulation
+      console.log("[TEST C] Forcing Supabase sync failure simulation...");
+      try {
+        const error = new Error("Supabase API connection timeout");
+        throw error;
+      } catch (err: any) {
+        console.warn("Background sync failed (simulated).", err.message);
+        if (isQuotaExceededError(err)) {
+          alert("Error: incorrect classification of Supabase sync failure as QuotaExceededError!");
+        } else {
+          console.log("[TEST C SUCCESS] Supabase sync failure was logged but did not trigger quota popup.");
+        }
+      }
+    } 
+    else if (testType === "D") {
+      // Force JSON corruption
+      console.log("[TEST D] Forcing JSON corruption check...");
+      const corruptedKey = "uwarl-db-corrupted-test-key";
+      localStorage.setItem(corruptedKey, "{invalid-json-here}");
+      try {
+        const raw = localStorage.getItem(corruptedKey);
+        if (raw) {
+          try {
+            JSON.parse(raw);
+          } catch (err) {
+            if (err instanceof SyntaxError) {
+              console.error(`[LocalStorage Corruption] Corrupted JSON detected for key: ${corruptedKey}`, err);
+              alert(`Warning: Local storage data for '${corruptedKey}' is corrupted. Falling back to default.`);
+            }
+            throw err;
+          }
+        }
+      } catch (err) {
+        console.log("[TEST D] Caught parsing error: ", err);
+      } finally {
+        localStorage.removeItem(corruptedKey);
+      }
+    } 
+    else if (testType === "E") {
+      // Force unknown exception
+      try {
+        throw new Error("Unknown system filesystem failure");
+      } catch (err) {
+        console.log("[TEST E] Catching forced unknown exception...");
+        if (isQuotaExceededError(err)) {
+          alert("Error: incorrect classification of unknown exception as QuotaExceededError!");
+        } else {
+          console.log("[TEST E SUCCESS] Unknown error was logged but did not trigger quota popup.");
+        }
+      }
+    }
+  };
+}
+
+// ----------------- FORENSIC STORAGE VERIFICATION METRICS -----------------
+
+export interface ForensicMetrics {
+  localStorageSize: number;
+  sessionStorageSize: number;
+  indexedDbSize: number;
+  cacheStorageSize: number;
+  quota: number;
+  usage: number;
+  percentageUsed: number;
+  indexedDbNames: string[];
+  cacheNames: string[];
+}
+
+export async function getForensicStorageMetrics(): Promise<ForensicMetrics> {
+  if (typeof window === "undefined") {
+    return {
+      localStorageSize: 0,
+      sessionStorageSize: 0,
+      indexedDbSize: 0,
+      cacheStorageSize: 0,
+      quota: 0,
+      usage: 0,
+      percentageUsed: 0,
+      indexedDbNames: [],
+      cacheNames: []
+    };
+  }
+
+  // 1. localStorage size (in KB)
+  let lsBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i) || "";
+    const v = localStorage.getItem(k) || "";
+    lsBytes += (k.length + v.length) * 2; // UTF-16 standard
+  }
+  const localStorageSize = Number((lsBytes / 1024).toFixed(3));
+
+  // 2. sessionStorage size (in KB)
+  let ssBytes = 0;
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const k = sessionStorage.key(i) || "";
+    const v = sessionStorage.getItem(k) || "";
+    ssBytes += (k.length + v.length) * 2;
+  }
+  const sessionStorageSize = Number((ssBytes / 1024).toFixed(3));
+
+  // 3. navigator.storage.estimate
+  let quota = 0;
+  let usage = 0;
+  let percentageUsed = 0;
+  if (navigator.storage && navigator.storage.estimate) {
+    const est = await navigator.storage.estimate();
+    quota = est.quota || 0;
+    usage = est.usage || 0;
+    percentageUsed = quota ? Number(((usage / quota) * 100).toFixed(4)) : 0;
+  }
+
+  // 4. Cache Storage size (in KB)
+  let cacheBytes = 0;
+  let cacheNames: string[] = [];
+  try {
+    if (window.caches) {
+      cacheNames = await caches.keys();
+      for (const name of cacheNames) {
+        const cache = await caches.open(name);
+        const keys = await cache.keys();
+        for (const req of keys) {
+          const res = await cache.match(req);
+          if (res) {
+            try {
+              const blob = await res.clone().blob();
+              cacheBytes += blob.size;
+            } catch (err) {}
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Cache storage size audit error:", e);
+  }
+  const cacheStorageSize = Number((cacheBytes / 1024).toFixed(3));
+
+  // 5. IndexedDB size (in KB)
+  let idbBytes = 0;
+  let indexedDbNames: string[] = [];
+  try {
+    if (window.indexedDB && indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      indexedDbNames = dbs.map(d => d.name || "").filter(Boolean);
+      for (const dbInfo of dbs) {
+        const dbName = dbInfo.name;
+        if (!dbName) continue;
+        await new Promise<void>((resolveDb) => {
+          const req = indexedDB.open(dbName);
+          req.onsuccess = async (e: any) => {
+            const db = e.target.result;
+            let dbStoreBytes = 0;
+            const storeNames = Array.from(db.objectStoreNames) as string[];
+            if (storeNames.length > 0) {
+              try {
+                const transaction = db.transaction(storeNames, 'readonly');
+                const promises = storeNames.map((storeName) => {
+                  return new Promise<void>((resStore) => {
+                    try {
+                      const store = transaction.objectStore(storeName);
+                      const getReq = store.getAll();
+                      getReq.onsuccess = (ev: any) => {
+                        const allRecords = ev.target.result;
+                        try {
+                          const recordStr = JSON.stringify(allRecords);
+                          dbStoreBytes += new TextEncoder().encode(recordStr).length;
+                        } catch (err) {}
+                        resStore();
+                      };
+                      getReq.onerror = () => resStore();
+                    } catch (err) {
+                      resStore();
+                    }
+                  });
+                });
+                await Promise.all(promises);
+              } catch (txErr) {}
+            }
+            idbBytes += dbStoreBytes;
+            db.close();
+            resolveDb();
+          };
+          req.onerror = () => resolveDb();
+        });
+      }
+    }
+  } catch (e) {
+    console.error("IndexedDB size audit error:", e);
+  }
+  const indexedDbSize = Number((idbBytes / 1024).toFixed(3));
+
+  return {
+    localStorageSize,
+    sessionStorageSize,
+    indexedDbSize,
+    cacheStorageSize,
+    quota,
+    usage,
+    percentageUsed,
+    indexedDbNames,
+    cacheNames
+  };
+}
+
+if (typeof window !== "undefined") {
+  (window as any).getForensicStorageMetrics = getForensicStorageMetrics;
+  
+  // Run on startup
+  setTimeout(async () => {
+    try {
+      const metrics = await getForensicStorageMetrics();
+      console.log("FORENSIC_METRICS_LOG_BASE:", JSON.stringify(metrics));
+      
+      const keysInfo = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || "";
+        const v = localStorage.getItem(k) || "";
+        const bytes = (k.length + v.length) * 2;
+        keysInfo.push({ key: k, sizeKB: Number((bytes / 1024).toFixed(3)) });
+      }
+      console.log("FORENSIC_LOCALSTORAGE_KEYS:", JSON.stringify(keysInfo));
+    } catch (e) {
+      console.error("Error logging forensic baseline:", e);
+    }
+  }, 1000);
+
+  (window as any).__runQuotaExceededSimulation = async () => {
+    console.log("[SIMULATION] Starting QuotaExceededError simulation...");
+    
+    // 1. Record metrics BEFORE simulation
+    const beforeMetrics = await getForensicStorageMetrics();
+    console.log("SIMULATION_METRICS_BEFORE:", JSON.stringify(beforeMetrics));
+
+    // 2. Fill localStorage to maximum capacity
+    const fillerKey = "uwarl-db-quota-filler-temp";
+    console.log("[SIMULATION] Filling localStorage...");
+    try {
+      const chunk = "B".repeat(250 * 1024); // ~500KB in bytes (250K characters, UTF-16 = 500KB)
+      let fillStr = "";
+      for (let i = 0; i < 30; i++) {
+        fillStr += chunk;
+        try {
+          localStorage.setItem(fillerKey, fillStr);
+        } catch (err) {
+          if (isQuotaExceededError(err)) {
+            console.log(`[SIMULATION] Hit localStorage limit successfully at iteration ${i} with size ~${(fillStr.length * 2 / 1024).toFixed(3)} KB`);
+            break;
+          }
+          throw err;
+        }
+      }
+    } catch (err) {
+      console.error("[SIMULATION] Error while filling localStorage:", err);
+    }
+
+    // 3. Now try to register a new asset (which will attempt to write to localStorage via saveAssets and fail)
+    console.log("[SIMULATION] Simulating image registerAsset write under full storage...");
+    let caughtError: any = null;
+    try {
+      const currentAssets = getAssets();
+      currentAssets["asset_simulated_fail"] = {
+        id: "asset_simulated_fail",
+        url: "",
+        type: "image",
+        fileName: "simulated_image.jpg",
+        uploadedAt: new Date().toISOString(),
+        altText: "Simulated fail",
+        category: "Simulation"
+      };
+      saveAssets(currentAssets);
+    } catch (err) {
+      caughtError = err;
+      console.log("[SIMULATION] Caught expected error during saveAssets:", err);
+    }
+
+    const failureMetrics = await getForensicStorageMetrics();
+    console.log("QUOTA_EXCEEDED_AT_FAILURE:", JSON.stringify(failureMetrics));
+
+    // 4. Cleanup filler key
+    localStorage.removeItem(fillerKey);
+    console.log("[SIMULATION] Cleaned up filler key. Total size restored.");
+    const afterMetrics = await getForensicStorageMetrics();
+    console.log("SIMULATION_METRICS_AFTER:", JSON.stringify(afterMetrics));
+    
+    return {
+      before: beforeMetrics,
+      failure: failureMetrics,
+      after: afterMetrics
+    };
+  };
+}
+
+

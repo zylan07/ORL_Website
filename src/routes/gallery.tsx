@@ -92,6 +92,39 @@ function ElegantPlaceholder({ category, title }: PlaceholderProps) {
   );
 }
 
+// Helper to strip automatic section name prefixes from descriptions
+export function cleanDescription(description: string | undefined, sectionName: string, sectionId?: string): string {
+  if (!description) return "";
+  let cleaned = description.trim();
+  
+  // Clean section name prefix (e.g. "Imported Gallery - description")
+  const secNamePrefix = `${sectionName.toLowerCase()} -`;
+  if (cleaned.toLowerCase().startsWith(secNamePrefix)) {
+    cleaned = cleaned.substring(secNamePrefix.length).trim();
+  }
+  
+  // Clean section id prefix (e.g. "imported-gallery - description" or "research - description")
+  if (sectionId) {
+    const secIdPrefix = `${sectionId.toLowerCase()} -`;
+    if (cleaned.toLowerCase().startsWith(secIdPrefix)) {
+      cleaned = cleaned.substring(secIdPrefix.length).trim();
+    }
+    
+    // Also handle replacing hyphens with spaces for sectionId (e.g. "imported gallery - ")
+    const secIdSpacePrefix = `${sectionId.toLowerCase().replace(/-/g, " ")} -`;
+    if (cleaned.toLowerCase().startsWith(secIdSpacePrefix)) {
+      cleaned = cleaned.substring(secIdSpacePrefix.length).trim();
+    }
+  }
+  
+  // Capitalize first letter of cleaned description if it was modified
+  if (cleaned !== description && cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+  
+  return cleaned;
+}
+
 // ----------------- MEDIA LIGHTBOX MODAL -----------------
 
 interface MediaModalProps {
@@ -250,7 +283,7 @@ function MediaModal({ item, onClose }: MediaModalProps) {
           {item.description && (
             <div>
               <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Description</span>
-              <p className="text-text-secondary leading-relaxed font-normal mt-0.5">{item.description}</p>
+              <p className="text-text-secondary leading-relaxed font-normal mt-0.5">{cleanDescription(item.description, sectionName, item.sectionId)}</p>
             </div>
           )}
 
@@ -549,7 +582,7 @@ function GalleryPage() {
                       </h3>
                       {rec.description && (
                         <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                          {rec.description}
+                          {cleanDescription(rec.description, sec.name, sec.id)}
                         </p>
                       )}
                     </div>

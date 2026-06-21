@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Paperclip,
   ExternalLink,
+  Download,
+  FileText,
 } from "lucide-react";
 import {
   searchRecords,
@@ -812,13 +814,67 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
             className="w-full rounded border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-all"
           />
         </label>
-        <button
-          onClick={() => setSortDesc((s) => !s)}
-          className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors"
-        >
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
-        </button>
+        <div className="flex items-center gap-2">
+          {type === "award" && (
+            <>
+              <button
+                onClick={() => {
+                  const exportData = results.map(r => ({
+                    ...r,
+                    date: formatDate(r.date)
+                  }));
+                  import("@/lib/export-helper").then(mod => {
+                    mod.exportToExcel(
+                      exportData,
+                      [
+                        { label: "Year", key: "date" },
+                        { label: "Award/Recognition", key: "title" },
+                        { label: "Awarded By", key: "organization" },
+                        { label: "Recipient", key: "recipient" }
+                      ],
+                      "orl_awards"
+                    );
+                  });
+                }}
+                className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <Download className="h-3.5 w-3.5" /> Export Excel
+              </button>
+              <button
+                onClick={() => {
+                  const exportData = results.map(r => ({
+                    ...r,
+                    date: formatDate(r.date)
+                  }));
+                  import("@/lib/export-helper").then(mod => {
+                    mod.exportToPdf(
+                      "Awards & Recognitions",
+                      exportData,
+                      [
+                        { label: "Year", key: "date" },
+                        { label: "Award/Recognition", key: "title" },
+                        { label: "Awarded By", key: "organization" },
+                        { label: "Recipient", key: "recipient" }
+                      ],
+                      "orl_awards",
+                      q
+                    );
+                  });
+                }}
+                className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <FileText className="h-3.5 w-3.5" /> Export PDF
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setSortDesc((s) => !s)}
+            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
+          </button>
+        </div>
       </div>
 
       {/* Academic Table Layout */}

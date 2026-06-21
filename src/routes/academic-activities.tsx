@@ -11,6 +11,8 @@ import {
   MessagesSquare,
   Presentation,
   ClipboardList,
+  Download,
+  FileText,
 } from "lucide-react";
 import { useRecords, formatDate, type RepoRecord } from "@/lib/repository-data";
 import { parseDateSafe } from "@/lib/utils";
@@ -310,13 +312,75 @@ function AcademicActivitiesPage() {
               className="w-full rounded border border-input bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-all"
             />
           </label>
-          <button
-            onClick={() => setSortDesc((s) => !s)}
-            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const exportData = filteredActivities.map(r => ({
+                  ...r,
+                  type: r.type === "dc" ? "Doctoral Committee" :
+                        r.type === "talk" ? "Invited Talk" :
+                        r.type === "workshop" ? "Workshop" :
+                        r.type === "bos" ? "Board of Studies" : r.type,
+                  date: formatDate(r.date)
+                }));
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToExcel(
+                    exportData,
+                    [
+                      { label: "Period/Year", key: "date" },
+                      { label: "Type", key: "type" },
+                      { label: "Title / Detail", key: "title" },
+                      { label: "Institution / Host / Venue", key: "organization" },
+                      { label: "Place", key: "place" },
+                      { label: "Summary", key: "summary" }
+                    ],
+                    "orl_academic_activities"
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </button>
+            <button
+              onClick={() => {
+                const exportData = filteredActivities.map(r => ({
+                  ...r,
+                  type: r.type === "dc" ? "Doctoral Committee" :
+                        r.type === "talk" ? "Invited Talk" :
+                        r.type === "workshop" ? "Workshop" :
+                        r.type === "bos" ? "Board of Studies" : r.type,
+                  date: formatDate(r.date)
+                }));
+                import("@/lib/export-helper").then(mod => {
+                  mod.exportToPdf(
+                    "Academic Activities",
+                    exportData,
+                    [
+                      { label: "Period/Year", key: "date" },
+                      { label: "Type", key: "type" },
+                      { label: "Title / Detail", key: "title" },
+                      { label: "Institution / Host / Venue", key: "organization" },
+                      { label: "Place", key: "place" },
+                      { label: "Summary", key: "summary" }
+                    ],
+                    "orl_academic_activities",
+                    q
+                  );
+                });
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+            >
+              <FileText className="h-3.5 w-3.5" /> Export PDF
+            </button>
+            <button
+              onClick={() => setSortDesc((s) => !s)}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              Sort by Date ({sortDesc ? "Newest first" : "Oldest first"})
+            </button>
+          </div>
         </div>
 
         {/* Sections */}

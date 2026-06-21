@@ -977,6 +977,116 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
   );
 }
 
+// ----------------- PASSPORT LAYOUT CARD -----------------
+
+interface PassportPersonCardProps {
+  name: string;
+  role?: string;
+  institution?: string;
+  description?: string;
+  imageUrl: string | null;
+  link?: string;
+  linkText?: string;
+  themeColor: string;
+}
+
+function PassportPersonCard({
+  name,
+  role,
+  institution,
+  description,
+  imageUrl,
+  link,
+  linkText = "Profile",
+  themeColor,
+}: PassportPersonCardProps) {
+  const themeTextColors: Record<string, string> = {
+    indigo: "text-indigo-400 group-hover:text-indigo-300",
+    sky: "text-sky-400 group-hover:text-sky-300",
+    teal: "text-teal-400 group-hover:text-teal-300",
+    emerald: "text-emerald-400 group-hover:text-emerald-300",
+    blue: "text-blue-400 group-hover:text-blue-300",
+    cyan: "text-cyan-400 group-hover:text-cyan-300",
+    amber: "text-amber-400 group-hover:text-amber-300",
+  };
+
+  const themeBorderColors: Record<string, string> = {
+    indigo: "hover:border-indigo-500/35",
+    sky: "hover:border-sky-500/35",
+    teal: "hover:border-teal-500/35",
+    emerald: "hover:border-emerald-500/35",
+    blue: "hover:border-blue-500/35",
+    cyan: "hover:border-cyan-500/35",
+    amber: "hover:border-amber-500/35",
+  };
+
+  const textTheme = themeTextColors[themeColor] || "text-cyan-400 group-hover:text-cyan-300";
+  const borderTheme = themeBorderColors[themeColor] || "hover:border-cyan-500/35";
+
+  return (
+    <div className={`group relative rounded-2xl border border-border bg-card/60 p-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col items-center text-center ${borderTheme}`}>
+      {/* Photo Container */}
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
+        {imageUrl ? (
+          <img
+            src={resolveAssetUrl(imageUrl)}
+            alt={name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-secondary to-muted text-text-muted text-base font-black tracking-widest uppercase">
+            {name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)}
+          </div>
+        )}
+      </div>
+
+      {/* Profile Details */}
+      <div className="w-full flex-1 flex flex-col justify-between space-y-2">
+        <div className="space-y-1">
+          <h4 className="font-bold text-foreground text-xs leading-tight transition-colors">
+            {name}
+          </h4>
+
+          {role && (
+            <span className={`inline-block text-[10px] font-semibold ${textTheme}`}>
+              {role}
+            </span>
+          )}
+
+          {institution && (
+            <p className="text-5xs text-text-muted font-sans font-medium uppercase tracking-wider line-clamp-1">
+              {institution}
+            </p>
+          )}
+
+          {description && (
+            <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-2 mt-1">
+              {description}
+            </p>
+          )}
+        </div>
+
+        {link && (
+          <div className="pt-2 flex justify-center">
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1 text-[10px] font-bold ${textTheme} hover:underline`}
+            >
+              {linkText} <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Save module-level static exports to avoid Temporal Dead Zone (TDZ) reference errors during shadowing
 const STATIC_TEAM_MEMBERS = TEAM_MEMBERS;
 const STATIC_RESEARCH_SCHOLARS = RESEARCH_SCHOLARS;
@@ -1025,11 +1135,19 @@ function PeoplePage() {
 
   const rawInternships = useDatasetRecords("people-internships", STATIC_INTERNSHIPS) as any[];
   const INTERNSHIPS = useMemo(() => {
-    return rawInternships.filter(i => i.status !== "past-contributor").map(i => ({ ...i, roleCategory: "intern" }));
+    return rawInternships.filter(i => i.status !== "past-contributor").map(i => ({
+      ...i,
+      roleCategory: "intern",
+      imageUrl: i.imageUrl || i.thumbnail || null
+    }));
   }, [rawInternships]);
 
   const INTERNSHIPS_PAST = useMemo(() => {
-    return rawInternships.filter(i => i.status === "past-contributor").map(i => ({ ...i, roleCategory: "intern" }));
+    return rawInternships.filter(i => i.status === "past-contributor").map(i => ({
+      ...i,
+      roleCategory: "intern",
+      imageUrl: i.imageUrl || i.thumbnail || null
+    }));
   }, [rawInternships]);
 
   const rawDiscussions = useDatasetRecords("research-discussions", STATIC_TECHNICAL_DISCUSSIONS) as any[];
@@ -1040,7 +1158,7 @@ function PeoplePage() {
       date: disc.date || "",
       participants: disc.participants || "",
       summary: disc.summary || "",
-      imageUrl: disc.thumbnail || disc.imageUrl || null,
+      imageUrl: disc.imageUrl || disc.thumbnail || null,
       galleryImages: disc.galleryImages || [],
       roleCategory: "discussion"
     })) as TechnicalDiscussion[];
@@ -1058,7 +1176,7 @@ function PeoplePage() {
       institution: m.institution || "",
       projectRoles: m.projectRoles || [],
       associatedProjects: m.associatedProjects || [],
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || "",
       bio: m.bio || "",
       qualification: m.qualification || "",
@@ -1084,7 +1202,7 @@ function PeoplePage() {
       institution: m.institution || "",
       projectRoles: m.projectRoles || [],
       associatedProjects: m.associatedProjects || [],
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || "",
       bio: m.bio || "",
       qualification: m.qualification || "",
@@ -1108,7 +1226,7 @@ function PeoplePage() {
       status: m.status || "Active",
       role: m.role_in_project || m.designation || m.role || "",
       associatedProject: m.associatedProject || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as ResearchScholar[];
   }, [allMembers]);
@@ -1122,7 +1240,7 @@ function PeoplePage() {
       status: m.status || "Active",
       role: m.role_in_project || m.designation || m.role || "",
       associatedProject: m.associatedProject || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as ResearchScholar[];
   }, [allMembersPast]);
@@ -1134,7 +1252,7 @@ function PeoplePage() {
       name: m.title || m.name || "",
       role: m.role || m.designation || "",
       project: m.project || m.associatedProject || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as ProjectStaff[];
   }, [allMembers]);
@@ -1146,7 +1264,7 @@ function PeoplePage() {
       name: m.title || m.name || "",
       role: m.role || m.designation || "",
       project: m.project || m.associatedProject || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as ProjectStaff[];
   }, [allMembersPast]);
@@ -1159,7 +1277,7 @@ function PeoplePage() {
       researchArea: m.researchArea || "",
       graduationDate: m.graduationDate || "",
       status: "Completed" as const,
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as PhDGraduate[];
   }, [allMembers]);
@@ -1172,7 +1290,7 @@ function PeoplePage() {
       researchArea: m.researchArea || "",
       graduationDate: m.graduationDate || "",
       status: "Completed" as const,
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as PhDGraduate[];
   }, [allMembersPast]);
@@ -1183,7 +1301,7 @@ function PeoplePage() {
       roleCategory: "student",
       name: m.title || m.name || "",
       status: "Current Student" as const,
-      imageUrl: m.thumbnail || m.imageUrl || null
+      imageUrl: m.imageUrl || m.thumbnail || null
     })) as UGStudent[];
   }, [allMembers]);
 
@@ -1193,7 +1311,7 @@ function PeoplePage() {
       roleCategory: "student",
       name: m.title || m.name || "",
       status: "Current Student" as const,
-      imageUrl: m.thumbnail || m.imageUrl || null
+      imageUrl: m.imageUrl || m.thumbnail || null
     })) as UGStudent[];
   }, [allMembersPast]);
 
@@ -1202,7 +1320,7 @@ function PeoplePage() {
       id: m.id,
       roleCategory: "alumni",
       name: m.title || m.name || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as UGAlumnus[];
   }, [allMembers]);
@@ -1212,7 +1330,7 @@ function PeoplePage() {
       id: m.id,
       roleCategory: "alumni",
       name: m.title || m.name || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as UGAlumnus[];
   }, [allMembersPast]);
@@ -1223,7 +1341,7 @@ function PeoplePage() {
       roleCategory: "alumni",
       name: m.title || m.name || "",
       programme: m.programme || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as PGAlumnus[];
   }, [allMembers]);
@@ -1234,12 +1352,12 @@ function PeoplePage() {
       roleCategory: "alumni",
       name: m.title || m.name || "",
       programme: m.programme || "",
-      imageUrl: m.thumbnail || m.imageUrl || null,
+      imageUrl: m.imageUrl || m.thumbnail || null,
       link: m.link || ""
     })) as PGAlumnus[];
   }, [allMembersPast]);
 
-  // Stats derived dynamically
+  // Stats derived dynamically (UG students removed)
   const stats = useMemo(() => {
     return [
       { label: "Team Members", count: TEAM_MEMBERS.length + TEAM_MEMBERS_PAST.length, icon: GraduationCap, theme: "indigo", id: "faculty" },
@@ -1267,16 +1385,16 @@ function PeoplePage() {
     }
   };
 
+  // Nav Items (UG students removed)
   const navItems = useMemo(() => [
     { label: "Faculty", id: "faculty", count: TEAM_MEMBERS.length + TEAM_MEMBERS_PAST.length, theme: "indigo" as const },
     { label: "Research Scholars", id: "scholars", count: RESEARCH_SCHOLARS.length + RESEARCH_SCHOLARS_PAST.length, theme: "sky" as const },
     { label: "Project Staff", id: "staff", count: PROJECT_STAFF.length + PROJECT_STAFF_PAST.length, theme: "teal" as const },
     { label: "PhD Graduates", id: "phd", count: PHD_GRADUATES.length + PHD_GRADUATES_PAST.length, theme: "emerald" as const },
-    { label: "Current Students", id: "ug-students", count: UG_STUDENTS.length + UG_STUDENTS_PAST.length, theme: "blue" as const },
     { label: "UG Alumni", id: "ug-alumni", count: UG_ALUMNI.length + UG_ALUMNI_PAST.length, theme: "blue" as const },
     { label: "PG Alumni", id: "pg-alumni", count: PG_ALUMNI.length + PG_ALUMNI_PAST.length, theme: "indigo" as const },
     { label: "Internships", id: "interns", count: INTERNSHIPS.length + INTERNSHIPS_PAST.length, theme: "cyan" as const }
-  ], [TEAM_MEMBERS, TEAM_MEMBERS_PAST, RESEARCH_SCHOLARS, RESEARCH_SCHOLARS_PAST, PROJECT_STAFF, PROJECT_STAFF_PAST, PHD_GRADUATES, PHD_GRADUATES_PAST, UG_STUDENTS, UG_STUDENTS_PAST, UG_ALUMNI, UG_ALUMNI_PAST, PG_ALUMNI, PG_ALUMNI_PAST, INTERNSHIPS, INTERNSHIPS_PAST]);
+  ], [TEAM_MEMBERS, TEAM_MEMBERS_PAST, RESEARCH_SCHOLARS, RESEARCH_SCHOLARS_PAST, PROJECT_STAFF, PROJECT_STAFF_PAST, PHD_GRADUATES, PHD_GRADUATES_PAST, UG_ALUMNI, UG_ALUMNI_PAST, PG_ALUMNI, PG_ALUMNI_PAST, INTERNSHIPS, INTERNSHIPS_PAST]);
 
   // Search & Filter States
   const [facultySearch, setFacultySearch] = useState("");
@@ -1586,30 +1704,22 @@ function PeoplePage() {
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             {filteredScholars.map((scholar) => (
-              <div
+              <PassportPersonCard
                 key={scholar.id}
-                onClick={() => openDetail(scholar, "sky")}
-                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-sky-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none text-center"
-              >
-                <div className="flex flex-col items-center space-y-3">
-                  <PersonAvatar imageUrl={scholar.imageUrl} name={scholar.name} themeColor="sky" />
-                  <div>
-                    <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-sky-500 transition-colors truncate max-w-full">
-                      {scholar.name}
-                    </h3>
-                    <span className="text-[10px] text-text-muted mt-1 block font-semibold">{scholar.mode}</span>
-                  </div>
-                </div>
-                <div className="mt-4 border-t border-border/20 pt-2 flex items-center justify-center">
-                  <span className={`px-2 py-0.5 rounded text-5xs font-bold border uppercase tracking-wider ${
-                    scholar.status === "Thesis Submitted"
-                      ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
-                      : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                  }`}>
-                    {scholar.status}
-                  </span>
-                </div>
-              </div>
+                name={scholar.name}
+                role={`${scholar.mode} Scholar`}
+                institution="Ocean Research Laboratory"
+                description={
+                  scholar.role 
+                    ? `Role: ${scholar.role}${scholar.associatedProject ? ` | Project: ${scholar.associatedProject}` : ""}` 
+                    : scholar.associatedProject 
+                      ? `Project: ${scholar.associatedProject}` 
+                      : ""
+                }
+                imageUrl={scholar.imageUrl}
+                link={scholar.link}
+                themeColor="sky"
+              />
             ))}
             {filteredScholars.length === 0 && (
               <div className="col-span-4 text-center text-text-muted text-xs py-6">
@@ -1625,30 +1735,22 @@ function PeoplePage() {
               </h3>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
                 {filteredScholarsPast.map((scholar) => (
-                  <div
+                  <PassportPersonCard
                     key={scholar.id}
-                    onClick={() => openDetail(scholar, "sky")}
-                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-sky-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none text-center"
-                  >
-                    <div className="flex flex-col items-center space-y-3">
-                      <PersonAvatar imageUrl={scholar.imageUrl} name={scholar.name} themeColor="sky" />
-                      <div>
-                        <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-sky-500 transition-colors truncate max-w-full">
-                          {scholar.name}
-                        </h3>
-                        <span className="text-[10px] text-text-muted mt-1 block font-semibold">{scholar.mode}</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 border-t border-border/20 pt-2 flex items-center justify-center">
-                      <span className={`px-2 py-0.5 rounded text-5xs font-bold border uppercase tracking-wider ${
-                        scholar.status === "Thesis Submitted"
-                          ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
-                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                      }`}>
-                        {scholar.status}
-                      </span>
-                    </div>
-                  </div>
+                    name={scholar.name}
+                    role={`${scholar.mode} Scholar`}
+                    institution="Ocean Research Laboratory"
+                    description={
+                      scholar.role 
+                        ? `Role: ${scholar.role}${scholar.associatedProject ? ` | Project: ${scholar.associatedProject}` : ""}` 
+                        : scholar.associatedProject 
+                          ? `Project: ${scholar.associatedProject}` 
+                          : ""
+                    }
+                    imageUrl={scholar.imageUrl}
+                    link={scholar.link}
+                    themeColor="sky"
+                  />
                 ))}
                 {filteredScholarsPast.length === 0 && (
                   <div className="col-span-4 text-center text-text-muted text-xs py-6">
@@ -1667,23 +1769,24 @@ function PeoplePage() {
             <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Project Staff</h2>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             {PROJECT_STAFF.map((staff) => (
-              <div
+              <PassportPersonCard
                 key={staff.id}
-                className="p-5 rounded-2xl border border-border bg-card/60 shadow-xs flex items-center gap-4 select-none"
-              >
-                <PersonAvatar imageUrl={staff.imageUrl} name={staff.name} themeColor="teal" />
-                <div className="space-y-1 min-w-0 flex-1">
-                  <h3 className="font-bold text-foreground text-xs leading-snug truncate">
-                    {staff.name}
-                  </h3>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-teal-500/10 text-teal-500 border border-teal-500/25 uppercase font-mono tracking-wider">
-                    {staff.role}
-                  </span>
-                </div>
-              </div>
+                name={staff.name}
+                role={staff.role}
+                institution="Ocean Research Laboratory"
+                description={staff.project ? `Project: ${staff.project}` : ""}
+                imageUrl={staff.imageUrl}
+                link={staff.link}
+                themeColor="teal"
+              />
             ))}
+            {PROJECT_STAFF.length === 0 && (
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                No active project staff found.
+              </div>
+            )}
           </div>
 
           {PROJECT_STAFF_PAST.length > 0 && (
@@ -1691,23 +1794,24 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (Project Staff)
               </h3>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
                 {PROJECT_STAFF_PAST.map((staff) => (
-                  <div
+                  <PassportPersonCard
                     key={staff.id}
-                    className="p-5 rounded-2xl border border-border bg-card/60 shadow-xs flex items-center gap-4 select-none"
-                  >
-                    <PersonAvatar imageUrl={staff.imageUrl} name={staff.name} themeColor="teal" />
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <h3 className="font-bold text-foreground text-xs leading-snug truncate">
-                        {staff.name}
-                      </h3>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-teal-500/10 text-teal-500 border border-teal-500/25 uppercase font-mono tracking-wider">
-                        {staff.role}
-                      </span>
-                    </div>
-                  </div>
+                    name={staff.name}
+                    role={staff.role}
+                    institution="Ocean Research Laboratory"
+                    description={staff.project ? `Project: ${staff.project}` : ""}
+                    imageUrl={staff.imageUrl}
+                    link={staff.link}
+                    themeColor="teal"
+                  />
                 ))}
+                {PROJECT_STAFF_PAST.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past project staff found.
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1720,38 +1824,30 @@ function PeoplePage() {
             <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Graduated Doctoral Scholars</h2>
           </div>
 
-          {/* Timeline Layout */}
-          <div className="relative pl-6 md:pl-8 border-l border-border/85 space-y-6 ml-2 md:ml-4 py-2">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             {PHD_GRADUATES.map((grad) => (
-              <div key={grad.id} className="relative group">
-                {/* Timeline Node */}
-                <span className="absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border border-emerald-500 bg-background flex items-center justify-center ring-4 ring-emerald-500/10 transition duration-300 shrink-0">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-
-                <div
-                  onClick={() => openDetail(grad, "emerald")}
-                  className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
-                >
-                  <div className="space-y-1">
-                    <span className="text-5xs font-mono font-bold text-emerald-500 uppercase tracking-wider">
-                      {grad.name}
-                    </span>
-                    <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                      {grad.researchArea}
-                    </h4>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2.5 py-0.5 rounded">
-                      Graduated: {grad.graduationDate.split(":")[1]?.trim() || grad.graduationDate}
-                    </span>
-                    <span className="rounded px-2.5 py-0.5 text-5xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                      {grad.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <PassportPersonCard
+                key={grad.id}
+                name={grad.name}
+                role="Doctoral Graduate"
+                institution="Ocean Research Laboratory"
+                description={
+                  grad.researchArea 
+                    ? `Domain: ${grad.researchArea}${grad.graduationDate ? ` (${grad.graduationDate})` : ""}` 
+                    : grad.graduationDate 
+                      ? `Graduated: ${grad.graduationDate}` 
+                      : ""
+                }
+                imageUrl={grad.imageUrl}
+                link={grad.link}
+                themeColor="emerald"
+              />
             ))}
+            {PHD_GRADUATES.length === 0 && (
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                No doctoral graduates found.
+              </div>
+            )}
           </div>
 
           {PHD_GRADUATES_PAST.length > 0 && (
@@ -1759,98 +1855,36 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (PhD Graduates)
               </h3>
-              <div className="relative pl-6 md:pl-8 border-l border-border/85 space-y-6 ml-2 md:ml-4 py-2">
-                {PHD_GRADUATES_PAST.map((grad) => (
-                  <div key={grad.id} className="relative group">
-                    {/* Timeline Node */}
-                    <span className="absolute -left-[31px] md:-left-[39px] top-1.5 h-4.5 w-4.5 rounded-full border border-emerald-500 bg-background flex items-center justify-center ring-4 ring-emerald-500/10 transition duration-300 shrink-0">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    </span>
-
-                    <div
-                      onClick={() => openDetail(grad, "emerald")}
-                      className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
-                    >
-                      <div className="space-y-1">
-                        <span className="text-5xs font-mono font-bold text-emerald-500 uppercase tracking-wider">
-                          {grad.name}
-                        </span>
-                        <h4 className="font-bold text-foreground text-xs leading-relaxed group-hover:text-emerald-500 transition-colors">
-                          {grad.researchArea}
-                        </h4>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2.5 py-0.5 rounded">
-                          Graduated: {grad.graduationDate.split(":")[1]?.trim() || grad.graduationDate}
-                        </span>
-                        <span className="rounded px-2.5 py-0.5 text-5xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                          {grad.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* 6. Undergraduate Students (Blue Theme) */}
-        <section id="ug-students" className="scroll-mt-24 space-y-6">
-          <div className="border-b border-border/40 pb-4">
-            <span className="text-5xs font-mono font-bold uppercase tracking-wider text-blue-500">Current UG Members</span>
-            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Undergraduate Students</h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {UG_STUDENTS.map((student) => (
-              <div
-                key={student.id}
-                onClick={() => openDetail(student, "blue")}
-                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-blue-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col items-center gap-3 text-center group select-none"
-              >
-                <PersonAvatar imageUrl={student.imageUrl} name={student.name} themeColor="blue" />
-                <div>
-                  <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-blue-500 transition-colors">
-                    {student.name}
-                  </h3>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold border border-blue-500/20 bg-blue-500/5 text-blue-500 mt-1 uppercase font-mono tracking-wider">
-                    {student.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {UG_STUDENTS_PAST.length > 0 && (
-            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
-              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
-                Past Contributors (Undergraduate Students)
-              </h3>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                {UG_STUDENTS_PAST.map((student) => (
-                  <div
-                    key={student.id}
-                    onClick={() => openDetail(student, "blue")}
-                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-blue-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col items-center gap-3 text-center group select-none"
-                  >
-                    <PersonAvatar imageUrl={student.imageUrl} name={student.name} themeColor="blue" />
-                    <div>
-                      <h3 className="font-bold text-foreground text-xs leading-tight group-hover:text-blue-500 transition-colors">
-                        {student.name}
-                      </h3>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold border border-blue-500/20 bg-blue-500/5 text-blue-500 mt-1 uppercase font-mono tracking-wider">
-                        {student.status}
-                      </span>
-                    </div>
-                  </div>
+                {PHD_GRADUATES_PAST.map((grad) => (
+                  <PassportPersonCard
+                    key={grad.id}
+                    name={grad.name}
+                    role="Doctoral Graduate"
+                    institution="Ocean Research Laboratory"
+                    description={
+                      grad.researchArea 
+                        ? `Domain: ${grad.researchArea}${grad.graduationDate ? ` (${grad.graduationDate})` : ""}` 
+                        : grad.graduationDate 
+                          ? `Graduated: ${grad.graduationDate}` 
+                          : ""
+                    }
+                    imageUrl={grad.imageUrl}
+                    link={grad.link}
+                    themeColor="emerald"
+                  />
                 ))}
+                {PHD_GRADUATES_PAST.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past doctoral graduates found.
+                  </div>
+                )}
               </div>
             </div>
           )}
         </section>
 
-        {/* 7. Graduated Project Students (UG) (Blue Theme) */}
+        {/* 6. Graduated Project Students (UG) (Blue Theme) */}
         <section id="ug-alumni" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
@@ -1871,83 +1905,55 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="orl-table-container max-h-[350px]">
-            <table className="orl-table">
-              <thead>
-                <tr>
-                  <th className="w-16 text-center">Sl No</th>
-                  <th>Student Name</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {filteredUgAlumni.map((al, idx) => (
-                  <tr
-                    key={al.id}
-                    onClick={() => openDetail(al, "blue")}
-                    className="cursor-pointer"
-                  >
-                    <td className="text-center font-mono">{idx + 1}</td>
-                    <td className="font-semibold text-foreground leading-snug">{al.name}</td>
-                    <td className="text-right text-5xs font-mono font-bold text-blue-500">
-                      View Profile
-                    </td>
-                  </tr>
-                ))}
-                {filteredUgAlumni.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-text-muted">
-                      {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match the active search."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+            {filteredUgAlumni.map((al) => (
+              <PassportPersonCard
+                key={al.id}
+                name={al.name}
+                role="UG Alumnus"
+                institution="SSN College of Engineering"
+                description="Graduated Project Student"
+                imageUrl={al.imageUrl}
+                link={al.link}
+                themeColor="blue"
+              />
+            ))}
+            {filteredUgAlumni.length === 0 && (
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match search filter."}
+              </div>
+            )}
           </div>
 
           {UG_ALUMNI_PAST.length > 0 && (
-            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (UG Alumni)
               </h3>
-              <div className="orl-table-container max-h-[350px]">
-                <table className="orl-table">
-                  <thead>
-                    <tr>
-                      <th className="w-16 text-center">Sl No</th>
-                      <th>Student Name</th>
-                      <th className="text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {filteredUgAlumniPast.map((al, idx) => (
-                      <tr
-                        key={al.id}
-                        onClick={() => openDetail(al, "blue")}
-                        className="cursor-pointer"
-                      >
-                        <td className="text-center font-mono">{idx + 1}</td>
-                        <td className="font-semibold text-foreground leading-snug">{al.name}</td>
-                        <td className="text-right text-5xs font-mono font-bold text-blue-500">
-                          View Profile
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredUgAlumniPast.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="p-8 text-center text-text-muted">
-                          No past UG project students match the search text.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                {filteredUgAlumniPast.map((al) => (
+                  <PassportPersonCard
+                    key={al.id}
+                    name={al.name}
+                    role="UG Alumnus"
+                    institution="SSN College of Engineering"
+                    description="Graduated Project Student"
+                    imageUrl={al.imageUrl}
+                    link={al.link}
+                    themeColor="blue"
+                  />
+                ))}
+                {filteredUgAlumniPast.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past UG project students match search filter.
+                  </div>
+                )}
               </div>
             </div>
           )}
         </section>
 
-        {/* 8. Graduated Project Students (PG) (Blue Theme) */}
+        {/* 7. Graduated Project Students (PG) (Blue Theme) */}
         <section id="pg-alumni" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
@@ -1968,87 +1974,55 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="orl-table-container max-h-[350px]">
-            <table className="orl-table">
-              <thead>
-                <tr>
-                  <th className="w-16 text-center">Sl No</th>
-                  <th>Name</th>
-                  <th>Programme</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {filteredPgAlumni.map((al, idx) => (
-                  <tr
-                    key={al.id}
-                    onClick={() => openDetail(al, "blue")}
-                    className="cursor-pointer"
-                  >
-                    <td className="text-center font-mono">{idx + 1}</td>
-                    <td className="font-semibold text-foreground leading-snug">{al.name}</td>
-                    <td className="text-text-secondary">{al.programme}</td>
-                    <td className="text-right text-5xs font-mono font-bold text-blue-500">
-                      View Profile
-                    </td>
-                  </tr>
-                ))}
-                {filteredPgAlumni.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="p-8 text-center text-text-muted">
-                      {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match the active search."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+            {filteredPgAlumni.map((al) => (
+              <PassportPersonCard
+                key={al.id}
+                name={al.name}
+                role={al.programme || "PG Alumnus"}
+                institution="SSN College of Engineering"
+                description="Graduated Project Student"
+                imageUrl={al.imageUrl}
+                link={al.link}
+                themeColor="blue"
+              />
+            ))}
+            {filteredPgAlumni.length === 0 && (
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match search filter."}
+              </div>
+            )}
           </div>
 
           {PG_ALUMNI_PAST.length > 0 && (
-            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20">
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (PG Alumni)
               </h3>
-              <div className="orl-table-container max-h-[350px]">
-                <table className="orl-table">
-                  <thead>
-                    <tr>
-                      <th className="w-16 text-center">Sl No</th>
-                      <th>Name</th>
-                      <th>Programme</th>
-                      <th className="text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {filteredPgAlumniPast.map((al, idx) => (
-                      <tr
-                        key={al.id}
-                        onClick={() => openDetail(al, "blue")}
-                        className="cursor-pointer"
-                      >
-                        <td className="text-center font-mono">{idx + 1}</td>
-                        <td className="font-semibold text-foreground leading-snug">{al.name}</td>
-                        <td className="text-text-secondary">{al.programme}</td>
-                        <td className="text-right text-5xs font-mono font-bold text-blue-500">
-                          View Profile
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredPgAlumniPast.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="p-8 text-center text-text-muted">
-                          No past PG project students match the search text.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                {filteredPgAlumniPast.map((al) => (
+                  <PassportPersonCard
+                    key={al.id}
+                    name={al.name}
+                    role={al.programme || "PG Alumnus"}
+                    institution="SSN College of Engineering"
+                    description="Graduated Project Student"
+                    imageUrl={al.imageUrl}
+                    link={al.link}
+                    themeColor="blue"
+                  />
+                ))}
+                {filteredPgAlumniPast.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past PG project students match search filter.
+                  </div>
+                )}
               </div>
             </div>
           )}
         </section>
 
-        {/* 9. Internship Section (Cyan Theme - Table Only) */}
+        {/* 9. Internship Section (Cyan Theme - Passport Grid) */}
         <section id="interns" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
@@ -2056,204 +2030,102 @@ function PeoplePage() {
               <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Internship Section</h2>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Search intern name, college, topic..."
-                value={internSearch}
-                onChange={(e) => setInternSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-card/50 outline-none w-52 focus:border-cyan-500/50 transition font-sans animate-fade-in"
-              />
+            {/* Search and Filters */}
+            <div className="flex gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  placeholder="Search interns..."
+                  value={internSearch}
+                  onChange={(e) => setInternSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-card/50 outline-none w-44 focus:border-cyan-500/50 transition font-sans"
+                />
+              </div>
+              <select
+                value={internSortField || "None"}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "None") {
+                    setInternSortField(null);
+                  } else {
+                    setInternSortField(val as any);
+                  }
+                }}
+                className="text-xs bg-card/50 border border-border rounded-lg px-2.5 py-1.5 outline-none focus:border-cyan-500/50 cursor-pointer text-foreground"
+              >
+                <option value="None">Sort By</option>
+                <option value="name">Name</option>
+                <option value="institution">Institution</option>
+                <option value="topic">Topic</option>
+                <option value="duration">Duration</option>
+              </select>
             </div>
           </div>
 
-                  {/* Certificate Check */}
-          {(() => {
-            const showCertificateColumn = processedInternships.some(i => i.cvId) || processedInternshipsPast.some(i => i.cvId);
-            return (
-              <>
-                <div className="orl-table-container max-h-[500px]">
-                  <table className="orl-table">
-                    <thead>
-                      <tr>
-                        <th className="w-14 text-center">Sl No</th>
-                        <th
-                          className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                          onClick={() => handleInternSort("name")}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            Name
-                            {internSortField === "name" && (
-                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                          onClick={() => handleInternSort("institution")}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            Institution
-                            {internSortField === "institution" && (
-                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
-                          onClick={() => handleInternSort("duration")}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            Duration
-                            {internSortField === "duration" && (
-                              <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                            )}
-                          </div>
-                        </th>
-                        {showCertificateColumn && (
-                          <th className="text-right w-36">Certificate</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/40">
-                      {processedInternships.map((intern, idx) => (
-                        <tr
-                          key={intern.id}
-                          onClick={() => openDetail(intern, "cyan")}
-                          className="cursor-pointer"
-                        >
-                          <td className="text-center font-mono">{idx + 1}</td>
-                          <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
-                          <td className="text-text-secondary leading-normal">{intern.institution}</td>
-                          <td className="font-mono text-[11px]">{intern.duration}</td>
-                          {showCertificateColumn && (
-                            <td className="text-right">
-                              {intern.cvId ? (
-                                <a
-                                  href={resolveAssetUrl(intern.cvId)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-cyan-500 font-bold hover:underline inline-flex items-center gap-1"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  View Certificate
-                                </a>
-                              ) : (
-                                <span className="text-text-muted">-</span>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                      {processedInternships.length === 0 && (
-                        <tr>
-                          <td colSpan={showCertificateColumn ? 5 : 4} className="p-8 text-center text-text-muted">
-                            {INTERNSHIPS.length === 0 ? "No records available." : "No internship records found matching the active search."}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+            {processedInternships.map((intern) => (
+              <PassportPersonCard
+                key={intern.id}
+                name={intern.name}
+                role="Intern"
+                institution={intern.institution}
+                description={
+                  intern.topic 
+                    ? `Topic: ${intern.topic}${intern.duration ? ` | Duration: ${intern.duration}` : ""}` 
+                    : intern.duration 
+                      ? `Duration: ${intern.duration}` 
+                      : ""
+                }
+                imageUrl={intern.imageUrl}
+                link={intern.cvId ? resolveAssetUrl(intern.cvId) : undefined}
+                linkText="Certificate"
+                themeColor="cyan"
+              />
+            ))}
+            {processedInternships.length === 0 && (
+              <div className="col-span-4 text-center text-text-muted text-xs py-6 font-sans">
+                {INTERNSHIPS.length === 0 ? "No records available." : "No active interns found matching search filters."}
+              </div>
+            )}
+          </div>
 
-                {INTERNSHIPS_PAST.length > 0 && (
-                  <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
-                    <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
-                      Past Contributors (Interns)
-                    </h3>
-                    <div className="orl-table-container max-h-[500px]">
-                      <table className="orl-table">
-                        <thead>
-                          <tr>
-                            <th className="w-14 text-center">Sl No</th>
-                            <th
-                              className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                              onClick={() => handleInternSort("name")}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                Name
-                                {internSortField === "name" && (
-                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                                )}
-                              </div>
-                            </th>
-                            <th
-                              className="cursor-pointer hover:bg-secondary/80 transition-colors"
-                              onClick={() => handleInternSort("institution")}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                Institution
-                                {internSortField === "institution" && (
-                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                                )}
-                              </div>
-                            </th>
-                            <th
-                              className="w-44 cursor-pointer hover:bg-secondary/80 transition-colors"
-                              onClick={() => handleInternSort("duration")}
-                            >
-                              <div className="flex items-center gap-1.5">
-                                Duration
-                                {internSortField === "duration" && (
-                                  <span className="text-cyan-500">{internSortOrder === "asc" ? "▲" : "▼"}</span>
-                                )}
-                              </div>
-                            </th>
-                            {showCertificateColumn && (
-                              <th className="text-right w-36">Certificate</th>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/40">
-                          {processedInternshipsPast.map((intern, idx) => (
-                            <tr
-                              key={intern.id}
-                              onClick={() => openDetail(intern, "cyan")}
-                              className="cursor-pointer"
-                            >
-                              <td className="text-center font-mono">{idx + 1}</td>
-                              <td className="font-semibold text-foreground leading-snug">{intern.name}</td>
-                              <td className="text-text-secondary leading-normal">{intern.institution}</td>
-                              <td className="font-mono text-[11px]">{intern.duration}</td>
-                              {showCertificateColumn && (
-                                <td className="text-right">
-                                  {intern.cvId ? (
-                                    <a
-                                      href={resolveAssetUrl(intern.cvId)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-cyan-500 font-bold hover:underline inline-flex items-center gap-1"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      View Certificate
-                                    </a>
-                                  ) : (
-                                    <span className="text-text-muted">-</span>
-                                  )}
-                                </td>
-                              )}
-                            </tr>
-                          ))}
-                          {processedInternshipsPast.length === 0 && (
-                            <tr>
-                              <td colSpan={showCertificateColumn ? 5 : 4} className="p-8 text-center text-text-muted">
-                                No past internship records found matching the active search.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+          {INTERNSHIPS_PAST.length > 0 && (
+            <div className="mt-8 space-y-4 pt-6 border-t border-border/20 font-sans">
+              <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
+                Past Contributors (Interns)
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                {processedInternshipsPast.map((intern) => (
+                  <PassportPersonCard
+                    key={intern.id}
+                    name={intern.name}
+                    role="Intern"
+                    institution={intern.institution}
+                    description={
+                      intern.topic 
+                        ? `Topic: ${intern.topic}${intern.duration ? ` | Duration: ${intern.duration}` : ""}` 
+                        : intern.duration 
+                          ? `Duration: ${intern.duration}` 
+                          : ""
+                    }
+                    imageUrl={intern.imageUrl}
+                    link={intern.cvId ? resolveAssetUrl(intern.cvId) : undefined}
+                    linkText="Certificate"
+                    themeColor="cyan"
+                  />
+                ))}
+                {processedInternshipsPast.length === 0 && (
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
+                    No past interns found matching search filters.
                   </div>
                 )}
-              </>
-            );
-          })()}
+              </div>
+            </div>
+          )}
         </section>
 
-        {/* 10. Technical Discussions (Amber Theme - Timeline Format) */}
+        {/* 10. Technical Discussions (Amber Theme - Image-First Grid) */}
         <section id="discussions" className="scroll-mt-24 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/40 pb-4">
             <div>
@@ -2274,37 +2146,58 @@ function PeoplePage() {
             </div>
           </div>
 
-          {/* Timeline Stack */}
-          <div className="space-y-4">
+          {/* Grid Stack */}
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
             {filteredDiscussions.map((disc) => (
               <div
                 key={disc.id}
                 onClick={() => openDetail(disc, "amber")}
-                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-amber-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex flex-col sm:flex-row gap-4 justify-between items-start group select-none"
+                className="group relative rounded-2xl border border-border bg-card/60 p-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col justify-between cursor-pointer hover:border-amber-500/35"
               >
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/25 uppercase font-mono tracking-wider">
-                      Technical Meeting
-                    </span>
-                    <span className="text-5xs text-text-muted font-mono flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {disc.date.split("on")[1]?.trim() || disc.date}
-                    </span>
+                <div>
+                  {/* Image Container */}
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
+                    {disc.imageUrl ? (
+                      <img
+                        src={resolveAssetUrl(disc.imageUrl)}
+                        alt={disc.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-500 border border-amber-500/10">
+                        <BookOpen className="h-8 w-8 opacity-70 mb-1" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Discussion</span>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-amber-500 transition-colors">
-                    {disc.title}
-                  </h3>
-                  {disc.summary && (
-                    <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-2">{disc.summary}</p>
-                  )}
+
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/25 uppercase font-mono tracking-wider">
+                        Technical Meeting
+                      </span>
+                      <span className="text-5xs text-text-muted font-mono flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {disc.date.split("on")[1]?.trim() || disc.date}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-amber-500 transition-colors line-clamp-2">
+                      {disc.title}
+                    </h3>
+                    {disc.summary && (
+                      <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-3">{disc.summary}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-5xs font-bold uppercase tracking-wider text-amber-500 shrink-0 self-end sm:self-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  View Details <ChevronRight className="h-3.5 w-3.5" />
+
+                <div className="pt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-amber-500 mt-4 border-t border-border/20">
+                  <span>View Details</span>
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             ))}
             {filteredDiscussions.length === 0 && (
-              <div className="text-center text-text-muted text-xs py-8">
+              <div className="col-span-3 text-center text-text-muted text-xs py-8">
                 {TECHNICAL_DISCUSSIONS.length === 0 ? "No records available." : "No technical discussions found."}
               </div>
             )}

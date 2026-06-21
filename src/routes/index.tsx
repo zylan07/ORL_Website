@@ -1196,7 +1196,7 @@ function Home() {
 
   // Dynamic homepage sections
   const dynamicResearchAreas = useDatasetRecords("home-research-focus", RESEARCH_AREAS);
-  const dynamicHighlights = useDatasetRecords("home-highlights", FACILITIES_HIGHLIGHTS);
+  const dynamicFacts = useDatasetRecords("home-facts", []);
   const dynamicQuickAccess = useDatasetRecords("home-quick-access", QUICK_ACCESS_SECTIONS);
 
   // Sort by displayOrder
@@ -1204,9 +1204,18 @@ function Home() {
     return [...dynamicResearchAreas].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
   }, [dynamicResearchAreas]);
 
-  const sortedHighlights = useMemo(() => {
-    return [...dynamicHighlights].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-  }, [dynamicHighlights]);
+  const sortedFacts = useMemo(() => {
+    const factsList = dynamicFacts.length > 0 ? dynamicFacts : [
+      { id: "fact-1", title: "Established", value: "2015", displayOrder: 1, active: true },
+      { id: "fact-2", title: "Institution", value: "NITTTR Chennai", displayOrder: 2, active: true },
+      { id: "fact-3", title: "Origin", value: "UWARL, SSN College", displayOrder: 3, active: true },
+      { id: "fact-4", title: "Domains", value: "Acoustics & Subsea Systems", displayOrder: 5, active: true },
+      { id: "fact-5", title: "Core Focus", value: "Research, Training & Consultancy", displayOrder: 6, active: true }
+    ];
+    return factsList
+      .filter((f) => f.active === true)
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [dynamicFacts]);
 
   const sortedQuickAccess = useMemo(() => {
     return [...dynamicQuickAccess].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
@@ -1216,10 +1225,6 @@ function Home() {
     return [...(settings.homepageStats || [])].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
   }, [settings.homepageStats]);
 
-  const peopleStats = useMemo(() => {
-    return [...(settings.peopleStats || [])].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-  }, [settings.peopleStats]);
-
   return (
     <div className="bg-background text-foreground min-h-screen transition-colors duration-300">
       {/* 1. HERO SECTION */}
@@ -1227,6 +1232,16 @@ function Home() {
         className="relative overflow-hidden border-b border-border bg-[#020712] text-white py-24 md:py-32 px-6"
         style={heroBg ? { backgroundImage: `linear-gradient(to bottom, rgba(2, 7, 18, 0.75), rgba(10, 25, 47, 0.95)), url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
       >
+        {settings.institutionLogo && (
+          <div className="absolute top-6 left-6 z-20 pointer-events-auto">
+            <img
+              src={resolveAssetUrl(settings.institutionLogo)}
+              alt={settings.institutionLogoAlt || "Institution Logo"}
+              style={{ width: settings.institutionLogoWidth ? `${settings.institutionLogoWidth}px` : "120px" }}
+              className="max-h-16 object-contain"
+            />
+          </div>
+        )}
         {heroVid && (
           <>
             <video 
@@ -1306,29 +1321,31 @@ function Home() {
               </span>
             </div>
             <h2 className="text-3xl font-bold text-foreground tracking-tight mb-5">
-              Advancing Deep-Ocean Exploration
+              {settings.aboutLabTitle || "Advancing Deep-Ocean Exploration"}
             </h2>
             <div className="space-y-4 text-sm md:text-base text-text-secondary leading-relaxed">
-              <p>
-                The Ocean Research Laboratory (ORL) is a multidisciplinary research facility focused on underwater acoustics, ocean observation, subsea systems, marine instrumentation, and technical education.
+              <p className="whitespace-pre-line">
+                {settings.aboutLabDesc || "The Ocean Research Laboratory (ORL) is a multidisciplinary research facility focused on underwater acoustics, ocean observation, subsea systems, marine instrumentation, and technical education."}
               </p>
-              <ul className="space-y-2.5 text-xs md:text-sm text-text-secondary pl-1">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-accent text-sm mt-0.5">•</span>
-                  <span>Supports capacity building, educators' training, and defense consultancies.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-accent text-sm mt-0.5">•</span>
-                  <span>Fosters post-graduate academic research and mechanical deployment trials.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-accent text-sm mt-0.5">•</span>
-                  <span>Established in 2015 and currently operating in the ECE Department at NITTTR Chennai.</span>
-                </li>
-              </ul>
+              {!settings.aboutLabDesc && (
+                <ul className="space-y-2.5 text-xs md:text-sm text-text-secondary pl-1 mt-4">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-accent text-sm mt-0.5">•</span>
+                    <span>Supports capacity building, educators' training, and defense consultancies.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-accent text-sm mt-0.5">•</span>
+                    <span>Fosters post-graduate academic research and mechanical deployment trials.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-accent text-sm mt-0.5">•</span>
+                    <span>Established in 2015 and currently operating in the ECE Department at NITTTR Chennai.</span>
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
-
+ 
           <div className="lg:col-span-5 flex">
             <div className="w-full rounded-2xl border border-border bg-card p-6 relative overflow-hidden shadow-sm flex flex-col justify-between">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-2xl pointer-events-none"></div>
@@ -1340,26 +1357,12 @@ function Home() {
                   </h3>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-start border-b border-border/40 pb-2 text-xs">
-                    <span className="text-text-muted font-semibold">Established</span>
-                    <span className="font-bold text-foreground text-right ml-2">2015</span>
-                  </div>
-                  <div className="flex justify-between items-start border-b border-border/40 pb-2 text-xs">
-                    <span className="text-text-muted font-semibold">Institution</span>
-                    <span className="font-bold text-foreground text-right ml-2">NITTTR Chennai</span>
-                  </div>
-                  <div className="flex justify-between items-start border-b border-border/40 pb-2 text-xs">
-                    <span className="text-text-muted font-semibold">Origin</span>
-                    <span className="font-bold text-foreground text-right ml-2">UWARL, SSN College</span>
-                  </div>
-                  <div className="flex justify-between items-start border-b border-border/40 pb-2 text-xs">
-                    <span className="text-text-muted font-semibold">Domains</span>
-                    <span className="font-bold text-foreground text-right ml-2">Acoustics & Subsea Systems</span>
-                  </div>
-                  <div className="flex justify-between items-start pb-2 text-xs">
-                    <span className="text-text-muted font-semibold">Core Focus</span>
-                    <span className="font-bold text-foreground text-right ml-2">Research, Training & Consultancy</span>
-                  </div>
+                  {sortedFacts.map((fact, fIdx) => (
+                    <div key={fact.id || fIdx} className={`flex justify-between items-start ${fIdx < sortedFacts.length - 1 ? 'border-b border-border/40 pb-2' : ''} text-xs`}>
+                      <span className="text-text-muted font-semibold">{fact.title}</span>
+                      <span className="font-bold text-foreground text-right ml-2">{fact.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1392,53 +1395,20 @@ function Home() {
                 <span>Vision</span>
               </h3>
               <p className="text-xs md:text-sm text-text-secondary leading-relaxed italic border-l-2 border-accent pl-4">
-                &ldquo;To be recognized globally as an institutional center of excellence in ocean technologies and underwater acoustics. We pioneer sustainable engineering models, foster interdisciplinary marine studies, and empower technical educators.&rdquo;
+                &ldquo;{settings.visionText || "To be recognized globally as an institutional center of excellence in ocean technologies and underwater acoustics. We pioneer sustainable engineering models, foster interdisciplinary marine studies, and empower technical educators."}&rdquo;
               </p>
             </div>
 
-            {/* Mission Cards */}
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-3">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            {/* Mission Card */}
+            <div className="lg:col-span-7 rounded-2xl border border-border bg-card p-6 relative overflow-hidden shadow-sm flex flex-col justify-center">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent-secondary/5 rounded-full blur-xl pointer-events-none"></div>
+              <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-accent-secondary"></span>
                 <span>Mission</span>
               </h3>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border bg-card p-4 hover:border-accent-secondary/30 transition duration-300 flex flex-col justify-between">
-                  <div>
-                    <div className="rounded-lg bg-accent-secondary/10 p-2 text-accent-secondary w-fit mb-2.5">
-                      <Cpu className="h-4 w-4" />
-                    </div>
-                    <h4 className="text-xs font-bold text-foreground mb-1.5">Research</h4>
-                    <p className="text-3xs text-text-secondary leading-relaxed">
-                      Publish high-impact research in digital signal processing, coral diagnostics, and subsea automation.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-card p-4 hover:border-accent-secondary/30 transition duration-300 flex flex-col justify-between">
-                  <div>
-                    <div className="rounded-lg bg-accent-secondary/10 p-2 text-accent-secondary w-fit mb-2.5">
-                      <Briefcase className="h-4 w-4" />
-                    </div>
-                    <h4 className="text-xs font-bold text-foreground mb-1.5">Capacity Training</h4>
-                    <p className="text-3xs text-text-secondary leading-relaxed">
-                      Deliver specialized technical courses for educators, scholars, and international delegations.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-card p-4 hover:border-accent-secondary/30 transition duration-300 flex flex-col justify-between">
-                  <div>
-                    <div className="rounded-lg bg-accent-secondary/10 p-2 text-accent-secondary w-fit mb-2.5">
-                      <Globe className="h-4 w-4" />
-                    </div>
-                    <h4 className="text-xs font-bold text-foreground mb-1.5">Innovation</h4>
-                    <p className="text-3xs text-text-secondary leading-relaxed">
-                      Prototype subsea platforms (ORCA ROV), sensor arrays, and seawater green energy converters.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs md:text-sm text-text-secondary leading-relaxed border-l-2 border-accent-secondary pl-4 whitespace-pre-line">
+                {settings.missionText || `Publish high-impact research in digital signal processing, coral diagnostics, and subsea automation.\n\nDeliver specialized technical courses for educators, scholars, and international delegations.\n\nPrototype subsea platforms (ORCA ROV), sensor arrays, and seawater green energy converters.`}
+              </p>
             </div>
           </div>
         </div>
@@ -1544,225 +1514,6 @@ function Home() {
                 </p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. FACILITIES HIGHLIGHTS SECTION */}
-      <section className="mx-auto max-w-6xl px-6 py-16" id="facilities">
-        <div className="border-b border-border pb-4 mb-8">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-teal-500/10 text-teal-500 border border-teal-500/20">
-              Lab Resources
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold text-foreground">
-            Facilities Highlights
-          </h2>
-          <div className="h-1 w-16 bg-teal-500 rounded-full mt-2"></div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {sortedHighlights.map((facility, idx) => (
-            <div
-              key={idx}
-              className="group rounded-xl border border-border bg-card overflow-hidden hover:border-teal-500/40 hover:shadow-md transition duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="h-44 bg-muted relative overflow-hidden">
-                  <img
-                    src={resolveAssetUrl(facility.image || facility.thumbnail)}
-                    alt={facility.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover opacity-75 group-hover:scale-103 transition-transform duration-500"
-                  />
-                  <span className="absolute top-3 left-3 bg-teal-500 text-white font-bold text-3xs uppercase px-2 py-0.5 rounded shadow-sm">
-                    {facility.tag || ""}
-                  </span>
-                </div>
-                <div className="p-5 pb-2">
-                  <h3 className="font-bold text-foreground text-sm mb-1.5">
-                    {facility.title}
-                  </h3>
-                  <p className="text-xs text-text-secondary leading-relaxed">
-                    {facility.description}
-                  </p>
-                  {/* Specifications Block */}
-                  <div className="mt-3.5 border-t border-border/40 pt-3.5 space-y-1.5">
-                    {(Array.isArray(facility.specs)
-                      ? facility.specs
-                      : typeof facility.specs === "string"
-                        ? (() => { try { return JSON.parse(facility.specs); } catch { return []; } })()
-                        : []
-                    ).map((spec: any, sIdx: number) => (
-                      <div key={sIdx} className="grid grid-cols-[90px_1fr] gap-x-2 text-3xs items-start text-left">
-                        <span className="text-text-muted font-semibold">{spec.label}</span>
-                        <span className="font-bold text-foreground break-words">{spec.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="p-5 pt-3">
-                <Link
-                  to="/research"
-                  hash={facility.linkHash || "facilities"}
-                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-bold text-xs uppercase px-4 py-2 transition duration-300 shadow-sm cursor-pointer select-none"
-                >
-                  Explore Facility &rarr;
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 7. FIELD ACTIVITIES & OCEAN OPERATIONS SECTION */}
-      <section className="bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent dark:via-emerald-500/2 border-y border-border py-16" id="field-activities">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="border-b border-border pb-4 mb-8">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                Ocean Validation
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">
-              Field Activities & Ocean Operations
-            </h2>
-            <div className="h-1 w-16 bg-emerald-500 rounded-full mt-2"></div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {FIELD_ACTIVITIES.map((activity, idx) => (
-              <div
-                key={idx}
-                className="group rounded-xl border border-border bg-card overflow-hidden hover:border-emerald-500/40 hover:shadow-md transition duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="h-44 bg-muted relative overflow-hidden">
-                    <img
-                      src={resolveAssetUrl(activity.image)}
-                      alt={activity.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover opacity-70 group-hover:scale-103 transition-transform duration-500"
-                    />
-                    {/* Location Badge */}
-                    <span className="absolute bottom-3 right-3 bg-black/60 text-white font-mono text-4xs px-2 py-0.5 rounded backdrop-blur-xs">
-                      {activity.location}
-                    </span>
-                    {/* Operation Type Badge */}
-                    <span className="absolute top-3 left-3 bg-emerald-500 text-white font-bold text-3xs uppercase px-2 py-0.5 rounded shadow-sm">
-                      {activity.operationType}
-                    </span>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-foreground text-sm mb-1.5">
-                      {activity.title}
-                    </h3>
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      {activity.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 8. COLLABORATIONS SNAPSHOT SECTION */}
-      <section className="mx-auto max-w-6xl px-6 py-16" id="collaborations">
-        <div className="border-b border-border pb-4 mb-8">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-emerald-600/10 text-emerald-600 border border-emerald-600/20">
-              Partners & Alliances
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold text-foreground">
-            Collaborations Snapshot
-          </h2>
-          <div className="h-1 w-16 bg-emerald-600 rounded-full mt-2"></div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {COLLABORATIONS.map((collab, idx) => (
-            <div
-              key={idx}
-              className="rounded-xl border border-border bg-card p-5 hover:border-emerald-600/40 hover:shadow-md transition duration-300 flex flex-col h-full"
-            >
-              <div className="flex-1 flex flex-col">
-                <span className="text-3xs font-mono font-bold text-emerald-600 bg-emerald-600/10 px-2.5 py-1 rounded-md mb-3 inline-block w-fit">
-                  {collab.type}
-                </span>
-                <h3 className="font-bold text-foreground text-sm mb-2">
-                  {collab.title}
-                </h3>
-                <p className="text-xs text-text-secondary leading-relaxed mb-4">
-                  {collab.description}
-                </p>
-              </div>
-              <div className="border-t border-border/40 pt-3.5 mt-auto">
-                <div className="text-4xs font-bold uppercase tracking-wider text-text-muted mb-2">Key Targets</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {collab.partners.map((partner, pidx) => (
-                    <span
-                      key={pidx}
-                      className="text-4xs font-semibold bg-secondary text-text-secondary border border-border/30 px-2 py-0.5 rounded-sm"
-                    >
-                      {partner}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 9. PEOPLE SNAPSHOT SECTION */}
-      <section className="bg-gradient-to-b from-transparent via-indigo-500/5 to-transparent dark:via-indigo-500/2 border-y border-border py-16" id="people-snapshot">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="border-b border-border pb-4 mb-8">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                Our Team
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">
-              People Snapshot
-            </h2>
-            <div className="h-1 w-16 bg-indigo-500 rounded-full mt-2"></div>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-10">
-            {peopleStats.map((stat, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl border border-border bg-card p-5 hover:border-indigo-500/40 hover:shadow-xs transition duration-300 text-center flex flex-col justify-center min-h-[140px]"
-              >
-                <div className="rounded-full bg-indigo-500/10 p-2 text-indigo-500 w-fit mx-auto mb-2 dark:bg-indigo-500/20">
-                  <LucideIcon name={stat.icon || "Users"} className="h-5 w-5" />
-                </div>
-                <div className="font-extrabold text-2xl text-indigo-500 mb-0.5">
-                  <AnimatedCounter value={stat.count || "0"} />
-                </div>
-                <div className="text-2xs font-bold text-foreground uppercase tracking-wider">
-                  {stat.label}
-                </div>
-                <p className="text-4xs text-text-muted mt-1 leading-normal">
-                  {stat.desc || ""}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link
-              to="/people"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs uppercase px-5 py-3 transition duration-300 shadow-md cursor-pointer select-none"
-            >
-              Meet Our Team &rarr;
-            </Link>
           </div>
         </div>
       </section>
