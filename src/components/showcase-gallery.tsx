@@ -17,6 +17,8 @@ interface ShowcaseCardProps {
   items: ShowcaseItem[];
   accent: "gold" | "cyan";
   aspectRatio?: "16/9" | "4/3";
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
 }
 
 export function ShowcaseCard({
@@ -25,6 +27,8 @@ export function ShowcaseCard({
   items,
   accent,
   aspectRatio = "16/9",
+  onExportExcel,
+  onExportPdf,
 }: ShowcaseCardProps) {
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -72,13 +76,33 @@ export function ShowcaseCard({
       >
         <div>
           {/* Card Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl" role="img" aria-label={title}>
-              {icon}
-            </span>
-            <h2 className={`text-lg font-bold tracking-wide ${textAccentClass}`}>
-              {title}
-            </h2>
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl" role="img" aria-label={title}>
+                {icon}
+              </span>
+              <h2 className={`text-lg font-bold tracking-wide ${textAccentClass}`}>
+                {title}
+              </h2>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {onExportExcel && (
+                <button
+                  onClick={onExportExcel}
+                  className="inline-flex items-center gap-1 rounded border border-border bg-background/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+                >
+                  Excel
+                </button>
+              )}
+              {onExportPdf && (
+                <button
+                  onClick={onExportPdf}
+                  className="inline-flex items-center gap-1 rounded border border-border bg-background/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+                >
+                  PDF
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Empty State Area */}
@@ -107,13 +131,33 @@ export function ShowcaseCard({
     >
       <div>
         {/* Card Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl" role="img" aria-label={title}>
-            {icon}
-          </span>
-          <h2 className={`text-lg font-bold tracking-wide ${textAccentClass}`}>
-            {title}
-          </h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl" role="img" aria-label={title}>
+              {icon}
+            </span>
+            <h2 className={`text-lg font-bold tracking-wide ${textAccentClass}`}>
+              {title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {onExportExcel && (
+              <button
+                onClick={onExportExcel}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                Excel
+              </button>
+            )}
+            {onExportPdf && (
+              <button
+                onClick={onExportPdf}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                PDF
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Carousel Image Area */}

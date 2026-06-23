@@ -69,6 +69,8 @@ function PublicationTable({
   borderClass,
   icon: Icon,
   renderRow,
+  onExportExcel,
+  onExportPdf,
 }: {
   title: string;
   id: string;
@@ -78,6 +80,8 @@ function PublicationTable({
   borderClass: string;
   icon: React.ComponentType<{ className?: string }>;
   renderRow: (r: RepoRecord) => React.ReactNode;
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
 }) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -95,7 +99,7 @@ function PublicationTable({
       className={`scroll-mt-28 rounded-xl border border-border bg-card p-6 shadow-sm hover:${borderClass} transition-all duration-300`}
     >
       <div
-        className={`border-b ${borderClass} pb-3 flex items-center justify-between`}
+        className={`border-b ${borderClass} pb-3 flex items-center justify-between flex-wrap gap-2`}
       >
         <div className="flex items-center gap-2">
           <Icon className={`h-5 w-5 ${accentClass}`} />
@@ -103,11 +107,31 @@ function PublicationTable({
             {title}
           </h2>
         </div>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
-        >
-          {items.length} records
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            {onExportExcel && (
+              <button
+                onClick={onExportExcel}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <Download className="h-3 w-3" /> Excel
+              </button>
+            )}
+            {onExportPdf && (
+              <button
+                onClick={onExportPdf}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <FileText className="h-3 w-3" /> PDF
+              </button>
+            )}
+          </div>
+          <span
+            className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
+          >
+            {items.length} records
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 orl-table-container">
@@ -329,33 +353,29 @@ function PublicationsPage() {
       : [...result].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
   }, [rawPublications, q, sortDesc]);
 
-  // Derived counts for filtered items
-  const journals = useMemo(
-    () => filteredPublications.filter((r) => r.subtype === "Journal"),
-    [filteredPublications],
-  );
-  const conferences = useMemo(
-    () => filteredPublications.filter((r) => r.subtype === "Conference"),
-    [filteredPublications],
-  );
-  const books = useMemo(
-    () => filteredPublications.filter((r) => r.subtype === "Book"),
-    [filteredPublications],
-  );
+  // Extract publication subtypes dynamically from the database records
+  const subtypes = useMemo(() => {
+    const set = new Set(rawPublications.map((r) => r.subtype || "Other"));
+    const list = Array.from(set);
+    const order = ["Journal", "Conference", "Book"];
+    return list.sort((a, b) => {
+      const idxA = order.indexOf(a);
+      const idxB = order.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [rawPublications]);
 
-  // Raw counts for navigation indicators (always derived from current full dataset)
-  const rawJournalsCount = useMemo(
-    () => rawPublications.filter((r) => r.subtype === "Journal").length,
-    [rawPublications],
-  );
-  const rawConferencesCount = useMemo(
-    () => rawPublications.filter((r) => r.subtype === "Conference").length,
-    [rawPublications],
-  );
-  const rawBooksCount = useMemo(
-    () => rawPublications.filter((r) => r.subtype === "Book").length,
-    [rawPublications],
-  );
+  // Derived counts for filtered items per subtype
+  const countsBySubtype = useMemo(() => {
+    const counts: Record<string, number> = {};
+    subtypes.forEach((sub) => {
+      counts[sub] = rawPublications.filter((r) => (r.subtype || "Other") === sub).length;
+    });
+    return counts;
+  }, [subtypes, rawPublications]);
 
   const handleScroll = (id: string) => {
     const el = document.getElementById(id);
@@ -371,11 +391,32 @@ function PublicationsPage() {
     }
   };
 
-  const navItems = useMemo(() => [
-    { label: "Journals", id: "journals", icon: BookOpen, count: rawJournalsCount, theme: "sky" as const },
-    { label: "Conferences", id: "conferences", icon: Presentation, count: rawConferencesCount, theme: "indigo" as const },
-    { label: "Books", id: "books", icon: Book, count: rawBooksCount, theme: "teal" as const }
-  ], [rawJournalsCount, rawConferencesCount, rawBooksCount]);
+  const navItems = useMemo(() => {
+    return subtypes.map((subtype) => {
+      const count = countsBySubtype[subtype] || 0;
+      let label = `${subtype}s`;
+      if (subtype === "Book") label = "Books / Book Chapters";
+      else if (subtype === "Journal") label = "Journals";
+      else if (subtype === "Conference") label = "Conferences";
+
+      let icon = BookOpen;
+      if (subtype === "Conference") icon = Presentation;
+      else if (subtype === "Book") icon = Book;
+
+      let theme: "sky" | "indigo" | "teal" | "cyan" | "violet" | "emerald" = "sky";
+      if (subtype === "Journal") theme = "sky";
+      else if (subtype === "Conference") theme = "indigo";
+      else if (subtype === "Book") theme = "teal";
+
+      return {
+        label,
+        id: subtype.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+        icon,
+        count,
+        theme,
+      };
+    });
+  }, [subtypes, countsBySubtype]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 transition-colors duration-300 page-publications">
@@ -417,50 +458,6 @@ function PublicationsPage() {
           </label>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToExcel(
-                    filteredPublications,
-                    [
-                      { label: "Year", key: "date" },
-                      { label: "Subtype", key: "subtype" },
-                      { label: "Title of Paper", key: "title" },
-                      { label: "Authors", key: "authors" },
-                      { label: "Journal/Publisher/Venue", key: "organization" },
-                      { label: "DOI Reference", key: "doi" }
-                    ],
-                    "orl_publications"
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Excel
-            </button>
-            <button
-              onClick={() => {
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToPdf(
-                    "Publications List",
-                    filteredPublications,
-                    [
-                      { label: "Year", key: "date" },
-                      { label: "Subtype", key: "subtype" },
-                      { label: "Title of Paper", key: "title" },
-                      { label: "Authors", key: "authors" },
-                      { label: "Journal/Publisher/Venue", key: "organization" },
-                      { label: "DOI Reference", key: "doi" }
-                    ],
-                    "orl_publications",
-                    q
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <FileText className="h-3.5 w-3.5" /> Export PDF
-            </button>
-            <button
               onClick={() => setSortDesc((s) => !s)}
               className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
             >
@@ -472,118 +469,140 @@ function PublicationsPage() {
 
         {/* Sections */}
         <div className="space-y-12">
-          {/* JOURNALS */}
-          <PublicationTable
-            title="Journal Publications"
-            id="journals"
-            items={journals}
-            icon={BookOpen}
-            accentClass="text-sky-600 dark:text-sky-400"
-            borderClass="border-sky-500/20"
-            headers={[
-              "Year",
-              "Title of the Paper",
-              "Authors",
-              "Journal Name",
-              "DOI",
-            ]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-semibold text-foreground leading-snug">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground italic max-w-xs">
-                  {r.authors || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground max-w-xs">
-                  {r.organization || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground whitespace-nowrap">
-                  {r.doi ? (
-                    <a
-                      href={
-                        r.doi.startsWith("http")
-                          ? r.doi
-                          : `https://doi.org/${r.doi}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-0.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:underline"
-                    >
-                      DOI Link <ExternalLink className="h-3 w-3 inline" />
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-              </>
-            )}
-          />
+          {subtypes.map((subtype) => {
+            const items = filteredPublications.filter((r) => (r.subtype || "Other") === subtype);
+            const id = subtype.toLowerCase().replace(/[^a-z0-9]/g, "-");
+            
+            let label = `${subtype} Publications`;
+            if (subtype === "Book") label = "Books / Book Chapters";
+            
+            let icon = BookOpen;
+            let accentClass = "text-sky-600 dark:text-sky-400";
+            let borderClass = "border-sky-500/20";
+            
+            if (subtype === "Conference") {
+              icon = Presentation;
+              accentClass = "text-indigo-600 dark:text-indigo-400";
+              borderClass = "border-indigo-500/20";
+            } else if (subtype === "Book") {
+              icon = Book;
+              accentClass = "text-teal-600 dark:text-teal-400";
+              borderClass = "border-teal-500/20";
+            }
 
-          {/* CONFERENCES */}
-          <PublicationTable
-            title="Conference Publications"
-            id="conferences"
-            items={conferences}
-            icon={Presentation}
-            accentClass="text-indigo-600 dark:text-indigo-400"
-            borderClass="border-indigo-500/20"
-            headers={[
-              "Year",
-              "Title of the Paper",
-              "Authors",
-              "Conference Name",
-            ]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-semibold text-foreground leading-snug">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground italic max-w-xs">
-                  {r.authors || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground max-w-xs">
-                  {r.organization || "—"}
-                </td>
-              </>
-            )}
-          />
+            let headers = ["Year", "Title of the Paper", "Authors", "Journal/Publisher/Venue", "DOI"];
+            if (subtype === "Book") {
+              headers = ["Year", "Book / Chapter Title", "Authors", "Publisher"];
+            } else if (subtype === "Conference") {
+              headers = ["Year", "Title of the Paper", "Authors", "Conference Name"];
+            }
 
-          {/* BOOKS */}
-          <PublicationTable
-            title="Books / Book Chapters"
-            id="books"
-            items={books}
-            icon={Book}
-            accentClass="text-teal-600 dark:text-teal-400"
-            borderClass="border-teal-500/20"
-            headers={["Year", "Book / Chapter Title", "Authors", "Publisher"]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-semibold text-foreground leading-snug">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground italic max-w-xs">
-                  {r.authors || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground max-w-xs">
-                  {r.organization || "—"}
-                </td>
-              </>
-            )}
-          />
+            // Export Excel
+            const handleExportExcel = () => {
+              const exportData = items.map((r) => ({
+                date: formatDate(r.date),
+                subtype: r.subtype || "Other",
+                title: r.title,
+                authors: r.authors || "—",
+                organization: r.organization || "—",
+                doi: r.doi || "—"
+              }));
+              import("@/lib/export-helper").then((mod) => {
+                mod.exportToExcel(
+                  exportData,
+                  [
+                    { label: "Year", key: "date" },
+                    { label: "Subtype", key: "subtype" },
+                    { label: "Title of Paper", key: "title" },
+                    { label: "Authors", key: "authors" },
+                    { label: "Journal/Publisher/Venue", key: "organization" },
+                    { label: "DOI Reference", key: "doi" }
+                  ],
+                  `orl_publications_${id}`
+                );
+              });
+            };
+
+            // Export PDF
+            const handleExportPdf = () => {
+              const exportData = items.map((r) => ({
+                date: formatDate(r.date),
+                subtype: r.subtype || "Other",
+                title: r.title,
+                authors: r.authors || "—",
+                organization: r.organization || "—",
+                doi: r.doi || "—"
+              }));
+              import("@/lib/export-helper").then((mod) => {
+                mod.exportToPdf(
+                  `${subtype} Publications`,
+                  exportData,
+                  [
+                    { label: "Year", key: "date" },
+                    { label: "Subtype", key: "subtype" },
+                    { label: "Title of Paper", key: "title" },
+                    { label: "Authors", key: "authors" },
+                    { label: "Journal/Publisher/Venue", key: "organization" },
+                    { label: "DOI Reference", key: "doi" }
+                  ],
+                  `orl_publications_${id}`,
+                  q
+                );
+              });
+            };
+
+            return (
+              <PublicationTable
+                key={subtype}
+                title={label}
+                id={id}
+                items={items}
+                icon={icon}
+                accentClass={accentClass}
+                borderClass={borderClass}
+                headers={headers}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                renderRow={(r) => (
+                  <>
+                    <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
+                      {formatDate(r.date)}
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs font-semibold text-foreground leading-snug">
+                      {r.title}
+                      {renderAttachments(r)}
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs text-muted-foreground italic max-w-xs">
+                      {r.authors || "—"}
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs text-muted-foreground max-w-xs">
+                      {r.organization || "—"}
+                    </td>
+                    {subtype !== "Book" && subtype !== "Conference" ? (
+                      <td className="px-4 py-3 align-top text-xs text-muted-foreground whitespace-nowrap">
+                        {r.doi ? (
+                          <a
+                            href={
+                              r.doi.startsWith("http")
+                                ? r.doi
+                                : `https://doi.org/${r.doi}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:underline"
+                          >
+                            DOI Link <ExternalLink className="h-3 w-3 inline" />
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    ) : null}
+                  </>
+                )}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

@@ -72,6 +72,8 @@ function AcademicTable({
   borderClass,
   icon: Icon,
   renderRow,
+  onExportExcel,
+  onExportPdf,
 }: {
   title: string;
   id: string;
@@ -81,6 +83,8 @@ function AcademicTable({
   borderClass: string;
   icon: React.ComponentType<{ className?: string }>;
   renderRow: (r: RepoRecord) => React.ReactNode;
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
 }) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -98,7 +102,7 @@ function AcademicTable({
       className={`scroll-mt-28 rounded-xl border border-border bg-card p-6 shadow-sm hover:${borderClass} transition-all duration-300`}
     >
       <div
-        className={`border-b ${borderClass} pb-3 flex items-center justify-between`}
+        className={`border-b ${borderClass} pb-3 flex items-center justify-between flex-wrap gap-2`}
       >
         <div className="flex items-center gap-2">
           <Icon className={`h-5 w-5 ${accentClass}`} />
@@ -106,11 +110,31 @@ function AcademicTable({
             {title}
           </h2>
         </div>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
-        >
-          {items.length} records
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            {onExportExcel && (
+              <button
+                onClick={onExportExcel}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <Download className="h-3 w-3" /> Excel
+              </button>
+            )}
+            {onExportPdf && (
+              <button
+                onClick={onExportPdf}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <FileText className="h-3 w-3" /> PDF
+              </button>
+            )}
+          </div>
+          <span
+            className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
+          >
+            {items.length} records
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 orl-table-container">
@@ -314,66 +338,6 @@ function AcademicActivitiesPage() {
           </label>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                const exportData = filteredActivities.map(r => ({
-                  ...r,
-                  type: r.type === "dc" ? "Doctoral Committee" :
-                        r.type === "talk" ? "Invited Talk" :
-                        r.type === "workshop" ? "Workshop" :
-                        r.type === "bos" ? "Board of Studies" : r.type,
-                  date: formatDate(r.date)
-                }));
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToExcel(
-                    exportData,
-                    [
-                      { label: "Period/Year", key: "date" },
-                      { label: "Type", key: "type" },
-                      { label: "Title / Detail", key: "title" },
-                      { label: "Institution / Host / Venue", key: "organization" },
-                      { label: "Place", key: "place" },
-                      { label: "Summary", key: "summary" }
-                    ],
-                    "orl_academic_activities"
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Excel
-            </button>
-            <button
-              onClick={() => {
-                const exportData = filteredActivities.map(r => ({
-                  ...r,
-                  type: r.type === "dc" ? "Doctoral Committee" :
-                        r.type === "talk" ? "Invited Talk" :
-                        r.type === "workshop" ? "Workshop" :
-                        r.type === "bos" ? "Board of Studies" : r.type,
-                  date: formatDate(r.date)
-                }));
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToPdf(
-                    "Academic Activities",
-                    exportData,
-                    [
-                      { label: "Period/Year", key: "date" },
-                      { label: "Type", key: "type" },
-                      { label: "Title / Detail", key: "title" },
-                      { label: "Institution / Host / Venue", key: "organization" },
-                      { label: "Place", key: "place" },
-                      { label: "Summary", key: "summary" }
-                    ],
-                    "orl_academic_activities",
-                    q
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <FileText className="h-3.5 w-3.5" /> Export PDF
-            </button>
-            <button
               onClick={() => setSortDesc((s) => !s)}
               className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
             >
@@ -398,6 +362,34 @@ function AcademicActivitiesPage() {
               "Research Scholar / Committee Detail",
               "Institution",
             ]}
+            onExportExcel={() => {
+              const exportData = dcItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToExcel(exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Research Scholar / Committee Detail", key: "title" },
+                  { label: "Institution", key: "organization" }
+                ], "orl_academic_dc");
+              });
+            }}
+            onExportPdf={() => {
+              const exportData = dcItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToPdf("Research Supervision (PhD Guidance)", exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Research Scholar / Committee Detail", key: "title" },
+                  { label: "Institution", key: "organization" }
+                ], "orl_academic_dc", q);
+              });
+            }}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
@@ -423,6 +415,38 @@ function AcademicActivitiesPage() {
             accentClass="text-sky-600 dark:text-sky-400"
             borderClass="border-sky-500/20"
             headers={["Date", "Title of the Talk", "Venue", "Place"]}
+            onExportExcel={() => {
+              const exportData = talkItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title + (r.subtitle ? ` (${r.subtitle})` : ""),
+                organization: r.organization || "—",
+                place: r.place || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToExcel(exportData, [
+                  { label: "Date", key: "date" },
+                  { label: "Title of the Talk", key: "title" },
+                  { label: "Venue", key: "organization" },
+                  { label: "Place", key: "place" }
+                ], "orl_academic_talks");
+              });
+            }}
+            onExportPdf={() => {
+              const exportData = talkItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title + (r.subtitle ? ` (${r.subtitle})` : ""),
+                organization: r.organization || "—",
+                place: r.place || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToPdf("Invited Talks & Lectures", exportData, [
+                  { label: "Date", key: "date" },
+                  { label: "Title of the Talk", key: "title" },
+                  { label: "Venue", key: "organization" },
+                  { label: "Place", key: "place" }
+                ], "orl_academic_talks", q);
+              });
+            }}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
@@ -462,6 +486,42 @@ function AcademicActivitiesPage() {
               "Duration",
               "Mode",
             ]}
+            onExportExcel={() => {
+              const exportData = workshopItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—",
+                duration: r.duration || "—",
+                mode: r.mode || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToExcel(exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Workshop Title", key: "title" },
+                  { label: "Host / Organizing Body", key: "organization" },
+                  { label: "Duration", key: "duration" },
+                  { label: "Mode", key: "mode" }
+                ], "orl_academic_workshops");
+              });
+            }}
+            onExportPdf={() => {
+              const exportData = workshopItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—",
+                duration: r.duration || "—",
+                mode: r.mode || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToPdf("Workshops, Seminars & Tutorials", exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Workshop Title", key: "title" },
+                  { label: "Host / Organizing Body", key: "organization" },
+                  { label: "Duration", key: "duration" },
+                  { label: "Mode", key: "mode" }
+                ], "orl_academic_workshops", q);
+              });
+            }}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
@@ -498,6 +558,38 @@ function AcademicActivitiesPage() {
               "Institution / University",
               "Details Summary",
             ]}
+            onExportExcel={() => {
+              const exportData = bosItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—",
+                summary: r.summary || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToExcel(exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Role & Academic Body", key: "title" },
+                  { label: "Institution / University", key: "organization" },
+                  { label: "Details Summary", key: "summary" }
+                ], "orl_academic_bos");
+              });
+            }}
+            onExportPdf={() => {
+              const exportData = bosItems.map(r => ({
+                date: formatDate(r.date),
+                title: r.title,
+                organization: r.organization || "—",
+                summary: r.summary || "—"
+              }));
+              import("@/lib/export-helper").then(mod => {
+                mod.exportToPdf("Board of Studies & Governance", exportData, [
+                  { label: "Period", key: "date" },
+                  { label: "Role & Academic Body", key: "title" },
+                  { label: "Institution / University", key: "organization" },
+                  { label: "Details Summary", key: "summary" }
+                ], "orl_academic_bos", q);
+              });
+            }}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">

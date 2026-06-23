@@ -63,6 +63,27 @@ export function StickySectionNav({
 }: StickySectionNavProps) {
   const [activeId, setActiveId] = useState<string>("");
   const navRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+
+    const checkOverflow = () => {
+      setIsOverflowing(container.scrollWidth > container.clientWidth + 5);
+    };
+
+    // Use ResizeObserver for robust layout width changes
+    const observer = new ResizeObserver(checkOverflow);
+    observer.observe(container);
+
+    checkOverflow();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [items]);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -142,26 +163,33 @@ export function StickySectionNav({
       <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
       <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
 
-      <div className="mx-auto max-w-6xl flex items-center justify-start gap-3 overflow-x-auto flex-nowrap whitespace-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-6 w-full">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeId === item.id;
-          const themeClasses = getThemeClasses(item.theme, isActive);
-          return (
-            <button
-              key={item.id}
-              data-nav-id={item.id}
-              onClick={() => handleScroll(item.id)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition duration-300 cursor-pointer select-none ${themeClasses}`}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5" />}
-              {item.label}
-              {item.count !== undefined && (
-                <span className="text-[10px] opacity-75 font-mono">({item.count})</span>
-              )}
-            </button>
-          );
-        })}
+      <div
+        ref={containerRef}
+        className={`mx-auto max-w-6xl w-full px-6 overflow-x-auto flex-nowrap scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex ${
+          isOverflowing ? "justify-start" : "justify-center"
+        }`}
+      >
+        <div className="flex items-center gap-3 py-1 shrink-0">
+          {items.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeId === item.id;
+            const themeClasses = getThemeClasses(item.theme, isActive);
+            return (
+              <button
+                key={item.id}
+                data-nav-id={item.id}
+                onClick={() => handleScroll(item.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition duration-300 cursor-pointer select-none ${themeClasses}`}
+              >
+                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {item.label}
+                {item.count !== undefined && (
+                  <span className="text-[10px] opacity-75 font-mono">({item.count})</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

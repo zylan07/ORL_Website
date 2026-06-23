@@ -72,3 +72,41 @@ export function parseDateSafe(dateStr: string | null | undefined): Date {
   return new Date(year, month, day);
 }
 
+export function isValidImage(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (
+    trimmed === "" ||
+    trimmed === "null" ||
+    trimmed === "undefined" ||
+    trimmed === "—" ||
+    trimmed === "#"
+  ) {
+    return false;
+  }
+  
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("placeholder") ||
+    lower.includes("preview unavailable") ||
+    lower.includes("avatar_fallback") ||
+    lower.includes("fallback") ||
+    lower.startsWith("<svg") ||
+    lower.startsWith("data:image/svg+xml")
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function hasContent(val: any): boolean {
+  if (val === null || val === undefined) return false;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    return trimmed !== "" && trimmed !== "null" && trimmed !== "undefined" && trimmed !== "—";
+  }
+  if (Array.isArray(val)) return val.length > 0;
+  return true;
+}
+
+

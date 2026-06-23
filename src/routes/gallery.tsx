@@ -87,43 +87,87 @@ function ElegantPlaceholder({ category, title }: PlaceholderProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:10px_10px] opacity-40" />
       <Sparkles className="h-6 w-6 mb-2 opacity-75 animate-pulse" />
       <span className="text-[10px] font-mono uppercase tracking-widest opacity-60">ORL Archive</span>
-      <span className="text-[9px] font-semibold text-text-muted mt-1.5 leading-snug line-clamp-2 px-2">{title}</span>
+      <span className="text-[9px] font-semibold text-text-muted mt-1.5 leading-snug line-clamp-2 px-2">{cleanCaptionOrText(title, category)}</span>
     </div>
   );
 }
 
-// Helper to strip automatic section name prefixes from descriptions
-export function cleanDescription(description: string | undefined, sectionName: string, sectionId?: string): string {
-  if (!description) return "";
-  let cleaned = description.trim();
+// Helper to strip automatic section name prefixes from titles, captions, or descriptions
+export function cleanCaptionOrText(text: string | undefined, sectionName: string, sectionId?: string): string {
+  if (!text) return "";
+  let cleaned = text.trim();
   
-  // Clean section name prefix (e.g. "Imported Gallery - description")
-  const secNamePrefix = `${sectionName.toLowerCase()} -`;
-  if (cleaned.toLowerCase().startsWith(secNamePrefix)) {
-    cleaned = cleaned.substring(secNamePrefix.length).trim();
-  }
-  
-  // Clean section id prefix (e.g. "imported-gallery - description" or "research - description")
+  const bases = [
+    sectionName,
+    sectionId || "",
+    "Research Activities",
+    "Field Activities",
+    "Facilities",
+    "Events",
+    "Internships",
+    "Research",
+    "Field"
+  ];
+
   if (sectionId) {
-    const secIdPrefix = `${sectionId.toLowerCase()} -`;
-    if (cleaned.toLowerCase().startsWith(secIdPrefix)) {
-      cleaned = cleaned.substring(secIdPrefix.length).trim();
-    }
-    
-    // Also handle replacing hyphens with spaces for sectionId (e.g. "imported gallery - ")
-    const secIdSpacePrefix = `${sectionId.toLowerCase().replace(/-/g, " ")} -`;
-    if (cleaned.toLowerCase().startsWith(secIdSpacePrefix)) {
-      cleaned = cleaned.substring(secIdSpacePrefix.length).trim();
+    bases.push(sectionId.replace(/-/g, " "));
+  }
+
+  // Dynamically load any custom section names/IDs from local storage to handle user-created categories
+  if (typeof window !== "undefined") {
+    try {
+      const storedSecs = localStorage.getItem("uwarl-db-gallery-sections");
+      if (storedSecs) {
+        const parsed = JSON.parse(storedSecs);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((s: any) => {
+            if (s.name) bases.push(s.name);
+            if (s.id) {
+              bases.push(s.id);
+              bases.push(s.id.replace(/-/g, " "));
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
     }
   }
-  
-  // Capitalize first letter of cleaned description if it was modified
-  if (cleaned !== description && cleaned.length > 0) {
+
+  // Create unique, non-empty bases
+  const uniqueBases = Array.from(new Set(
+    bases
+      .map(b => b?.trim())
+      .filter(Boolean)
+  ));
+
+  // Sort unique bases descending by length to match longer prefixes first
+  uniqueBases.sort((a, b) => b.length - a.length);
+
+  const basePatterns = uniqueBases
+    .map(b => b.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')) // escape regex special chars
+    .join('|');
+
+  if (basePatterns) {
+    // Matches any of the bases followed by optional spaces, a separator (hyphen, en-dash, em-dash, colon, vertical bar, slash), and optional spaces
+    const regex = new RegExp(`^(${basePatterns})\\s*[\\-–—‐‑‒―─:|/]\\s*`, 'i');
+    
+    let lastText = "";
+    while (cleaned !== lastText) {
+      lastText = cleaned;
+      cleaned = cleaned.replace(regex, "").trim();
+    }
+  }
+
+  // Capitalize first letter of cleaned text if it was modified
+  if (cleaned !== text && cleaned.length > 0) {
     cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   }
   
   return cleaned;
 }
+
+export const cleanDescription = cleanCaptionOrText;
 
 // ----------------- MEDIA LIGHTBOX MODAL -----------------
 
@@ -198,11 +242,8 @@ function MediaModal({ item, onClose }: MediaModalProps) {
 
         {/* Modal Header */}
         <div className="space-y-2.5 pr-8 font-sans">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-5xs font-bold uppercase tracking-wider bg-secondary border border-border/45 text-text-secondary">
-            {sectionName}
-          </span>
           <h3 className="text-lg font-black leading-snug text-foreground">
-            {item.title}
+            {cleanCaptionOrText(item.title, sectionName, item.sectionId)}
           </h3>
           {item.date && (
             <p className="text-3xs font-mono text-text-muted">
@@ -283,7 +324,7 @@ function MediaModal({ item, onClose }: MediaModalProps) {
           {item.description && (
             <div>
               <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Description</span>
-              <p className="text-text-secondary leading-relaxed font-normal mt-0.5">{cleanDescription(item.description, sectionName, item.sectionId)}</p>
+              <p className="text-text-secondary leading-relaxed font-normal mt-0.5">{cleanCaptionOrText(item.description, sectionName, item.sectionId)}</p>
             </div>
           )}
 
@@ -553,8 +594,7 @@ function GalleryPage() {
                 {sectionRecs.map((rec) => (
                   <div
                     key={rec.id}
-                    onClick={() => openDetail(rec)}
-                    className={`rounded-xl border border-border bg-card p-4 transition duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-xs select-none group ${borderThemeClass}`}
+                    className={`rounded-xl border border-border bg-card p-4 transition duration-300 hover:scale-[1.02] hover:shadow-xs select-none group ${borderThemeClass}`}
                   >
                     <div className="relative mb-3 rounded-lg overflow-hidden border border-border bg-muted">
                       {rec.thumbnail ? (
@@ -569,20 +609,17 @@ function GalleryPage() {
                       )}
                     </div>
                     <div className="space-y-1.5 font-sans">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-5xs font-bold uppercase tracking-wider ${textAccent}`}>
-                          {sec.name}
-                        </span>
-                        {rec.date && (
+                      {rec.date && (
+                        <div className="flex justify-end">
                           <span className="text-[10px] text-text-muted font-mono">{rec.date}</span>
-                        )}
-                      </div>
-                      <h3 className="text-xs font-bold text-foreground leading-snug truncate">
-                        {rec.title}
+                        </div>
+                      )}
+                      <h3 className="text-xs font-bold text-foreground leading-snug">
+                        {cleanCaptionOrText(rec.title, sec.name, sec.id)}
                       </h3>
                       {rec.description && (
-                        <p className="text-3xs text-text-secondary leading-relaxed line-clamp-2">
-                          {cleanDescription(rec.description, sec.name, sec.id)}
+                        <p className="text-3xs text-text-secondary leading-relaxed">
+                          {cleanCaptionOrText(rec.description, sec.name, sec.id)}
                         </p>
                       )}
                     </div>

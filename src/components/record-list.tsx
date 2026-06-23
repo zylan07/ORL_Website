@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Download,
   FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   searchRecords,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/repository-data";
 import { ShowcaseGallery, ShowcaseCard } from "./showcase-gallery";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { parseDateSafe } from "@/lib/utils";
 
 function getAutomaticAwardCategory(
   title: string,
@@ -241,6 +243,139 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
     }, durationMs);
     return () => clearTimeout(timer);
   }, [images, activeIdx]);
+
+  // Filter showcase gallery carousels dynamically based on search query Q
+  const filteredFacultyShowcase = useMemo(() => {
+    const list = showcaseGalleryData.faculty;
+    if (!deferredQ.trim()) return list;
+    const query = deferredQ.trim().toLowerCase();
+    return list.filter(item => 
+      [item.title, item.organization ?? "", item.recipient ?? ""].join(" ").toLowerCase().includes(query)
+    );
+  }, [showcaseGalleryData.faculty, deferredQ]);
+
+  const filteredStudentShowcase = useMemo(() => {
+    const list = showcaseGalleryData.student;
+    if (!deferredQ.trim()) return list;
+    const query = deferredQ.trim().toLowerCase();
+    return list.filter(item => 
+      [item.title, item.organization ?? "", item.recipient ?? ""].join(" ").toLowerCase().includes(query)
+    );
+  }, [showcaseGalleryData.student, deferredQ]);
+
+  // Classification helper for student vs faculty award
+  const isStudentAward = (r: RepoRecord) => {
+    const audience = r.awardAudience || r.showcaseCategory;
+    if (audience === "student") return true;
+    if (audience === "faculty") return false;
+    return getAutomaticAwardCategory(r.title, r.recipient) === "student";
+  };
+
+  // State variables for independent pagination
+  const [facultyPage, setFacultyPage] = useState(1);
+  const [studentPage, setStudentPage] = useState(1);
+
+  // Reset pagination on search query change
+  useEffect(() => {
+    setFacultyPage(1);
+    setStudentPage(1);
+  }, [q]);
+
+  // Filtered lists for Faculty and Student awards
+  const allAwards = useMemo(() => {
+    return records.filter(r => r.type === "award");
+  }, [records]);
+
+  const searchedAwards = useMemo(() => {
+    if (!deferredQ.trim()) return allAwards;
+    const query = deferredQ.trim().toLowerCase();
+    return allAwards.filter(r => 
+      [r.title, r.organization ?? "", r.recipient ?? "", r.date ?? ""].join(" ").toLowerCase().includes(query)
+    );
+  }, [allAwards, deferredQ]);
+
+  const facultyAwardsFiltered = useMemo(() => {
+    const list = searchedAwards.filter(r => !isStudentAward(r));
+    return sortDesc 
+      ? [...list].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime())
+      : [...list].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
+  }, [searchedAwards, sortDesc]);
+
+  const studentAwardsFiltered = useMemo(() => {
+    const list = searchedAwards.filter(r => isStudentAward(r));
+    return sortDesc 
+      ? [...list].sort((a, b) => parseDateSafe(b.date).getTime() - parseDateSafe(a.date).getTime())
+      : [...list].sort((a, b) => parseDateSafe(a.date).getTime() - parseDateSafe(b.date).getTime());
+  }, [searchedAwards, sortDesc]);
+
+  // Export handlers for Faculty and Student awards operating on active lists
+  const exportFacultyAwardsExcel = () => {
+    const exportData = facultyAwardsFiltered.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      recipient: r.recipient || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Year", key: "date" },
+        { label: "Award/Recognition", key: "title" },
+        { label: "Awarded By", key: "organization" },
+        { label: "Recipient", key: "recipient" }
+      ], "orl_awards_faculty");
+    });
+  };
+
+  const exportFacultyAwardsPdf = () => {
+    const exportData = facultyAwardsFiltered.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      recipient: r.recipient || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("Faculty Awards & Recognitions", exportData, [
+        { label: "Year", key: "date" },
+        { label: "Award/Recognition", key: "title" },
+        { label: "Awarded By", key: "organization" },
+        { label: "Recipient", key: "recipient" }
+      ], "orl_awards_faculty", q);
+    });
+  };
+
+  const exportStudentAwardsExcel = () => {
+    const exportData = studentAwardsFiltered.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      recipient: r.recipient || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Year", key: "date" },
+        { label: "Award/Recognition", key: "title" },
+        { label: "Awarded By", key: "organization" },
+        { label: "Recipient", key: "recipient" }
+      ], "orl_awards_student");
+    });
+  };
+
+  const exportStudentAwardsPdf = () => {
+    const exportData = studentAwardsFiltered.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      recipient: r.recipient || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("Student Awards & Recognitions", exportData, [
+        { label: "Year", key: "date" },
+        { label: "Award/Recognition", key: "title" },
+        { label: "Awarded By", key: "organization" },
+        { label: "Recipient", key: "recipient" }
+      ], "orl_awards_student", q);
+    });
+  };
 
   const results = useMemo(() => {
     let list = searchRecords(type, deferredQ);
@@ -777,12 +912,12 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
 
       {/* Reusable Dual Showcase Carousels */}
       {type === "award" && (
-        <div className="grid gap-6 md:grid-cols-2 w-full mt-6">
+        <div className="grid gap-6 md:grid-cols-2 w-full mt-6 font-sans">
           <div>
             <ShowcaseCard
               title="Faculty Awards"
               icon="🏆"
-              items={showcaseGalleryData.faculty}
+              items={filteredFacultyShowcase}
               accent="gold"
               aspectRatio="16/9"
             />
@@ -791,7 +926,7 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
             <ShowcaseCard
               title="Student Awards"
               icon="🎖️"
-              items={showcaseGalleryData.student}
+              items={filteredStudentShowcase}
               accent="cyan"
               aspectRatio="16/9"
             />
@@ -815,58 +950,6 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
           />
         </label>
         <div className="flex items-center gap-2">
-          {type === "award" && (
-            <>
-              <button
-                onClick={() => {
-                  const exportData = results.map(r => ({
-                    ...r,
-                    date: formatDate(r.date)
-                  }));
-                  import("@/lib/export-helper").then(mod => {
-                    mod.exportToExcel(
-                      exportData,
-                      [
-                        { label: "Year", key: "date" },
-                        { label: "Award/Recognition", key: "title" },
-                        { label: "Awarded By", key: "organization" },
-                        { label: "Recipient", key: "recipient" }
-                      ],
-                      "orl_awards"
-                    );
-                  });
-                }}
-                className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-              >
-                <Download className="h-3.5 w-3.5" /> Export Excel
-              </button>
-              <button
-                onClick={() => {
-                  const exportData = results.map(r => ({
-                    ...r,
-                    date: formatDate(r.date)
-                  }));
-                  import("@/lib/export-helper").then(mod => {
-                    mod.exportToPdf(
-                      "Awards & Recognitions",
-                      exportData,
-                      [
-                        { label: "Year", key: "date" },
-                        { label: "Award/Recognition", key: "title" },
-                        { label: "Awarded By", key: "organization" },
-                        { label: "Recipient", key: "recipient" }
-                      ],
-                      "orl_awards",
-                      q
-                    );
-                  });
-                }}
-                className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-              >
-                <FileText className="h-3.5 w-3.5" /> Export PDF
-              </button>
-            </>
-          )}
           <button
             onClick={() => setSortDesc((s) => !s)}
             className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
@@ -877,67 +960,233 @@ export function RecordList({ type, subtype, breadcrumb, hideHeader }: Props) {
         </div>
       </div>
 
-      {/* Academic Table Layout */}
-      <div className="mt-4 orl-table-container">
-        <table className="orl-table">
-          <thead>
-            <tr>
-              {tableHeaders.map((hdr) => (
-                <th key={hdr}>
-                  {hdr}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {paged.map((r) => (
-              <tr
-                key={r.id}
-              >
-                {renderRowCells(r)}
-              </tr>
-            ))}
-            {paged.length === 0 && (
-              <tr>
-                <td
-                  colSpan={tableHeaders.length}
-                  className="px-4 py-10 text-center text-sm text-text-muted font-sans"
-                >
-                  {sectionRecords.length === 0 ? "No records available." : "No records match your search filter."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {type === "award" ? (
+        /* Slice data for award tables */
+        (() => {
+          const totalFacultyPages = Math.max(1, Math.ceil(facultyAwardsFiltered.length / PAGE_SIZE));
+          const safeFacultyPage = Math.min(facultyPage, totalFacultyPages);
+          const pagedFaculty = facultyAwardsFiltered.slice((safeFacultyPage - 1) * PAGE_SIZE, safeFacultyPage * PAGE_SIZE);
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>
-            Showing {(safePage - 1) * PAGE_SIZE + 1}–
-            {Math.min(safePage * PAGE_SIZE, results.length)} of {results.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              className="inline-flex items-center gap-1 rounded border border-border bg-background px-2.5 py-1 disabled:opacity-40 hover:bg-accent transition"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" /> Prev
-            </button>
-            <span className="px-2 tabular-nums">
-              Page {safePage} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-              className="inline-flex items-center gap-1 rounded border border-border bg-background px-2.5 py-1 disabled:opacity-40 hover:bg-accent transition"
-            >
-              Next <ChevronRight className="h-3.5 w-3.5" />
-            </button>
+          const totalStudentPages = Math.max(1, Math.ceil(studentAwardsFiltered.length / PAGE_SIZE));
+          const safeStudentPage = Math.min(studentPage, totalStudentPages);
+          const pagedStudent = studentAwardsFiltered.slice((safeStudentPage - 1) * PAGE_SIZE, safeStudentPage * PAGE_SIZE);
+
+          return (
+            <div className="mt-8 space-y-12">
+              {/* Faculty Awards Section */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/45 pb-2">
+                  <h2 className="text-lg font-black text-foreground flex items-center gap-2 font-sans uppercase tracking-tight">
+                    <span>🏆</span> Faculty Awards
+                    <span className="text-xs font-semibold text-muted-foreground">({facultyAwardsFiltered.length})</span>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={exportFacultyAwardsPdf}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-4xs font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition cursor-pointer select-none"
+                    >
+                      <FileText className="h-3 w-3" /> PDF
+                    </button>
+                    <button
+                      onClick={exportFacultyAwardsExcel}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-4xs font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition cursor-pointer select-none"
+                    >
+                      <FileSpreadsheet className="h-3 w-3" /> Excel
+                    </button>
+                  </div>
+                </div>
+                <div className="orl-table-container">
+                  <table className="orl-table">
+                    <thead>
+                      <tr>
+                        {tableHeaders.map((hdr) => (
+                          <th key={hdr}>{hdr}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {pagedFaculty.map((r) => (
+                        <tr key={r.id}>{renderRowCells(r)}</tr>
+                      ))}
+                      {pagedFaculty.length === 0 && (
+                        <tr>
+                          <td colSpan={tableHeaders.length} className="px-4 py-10 text-center text-sm text-text-muted font-sans">
+                            No faculty awards match your search filter.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Faculty Pagination */}
+                {totalFacultyPages > 1 && (
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-wider font-mono">
+                    <span>
+                      Showing {(safeFacultyPage - 1) * PAGE_SIZE + 1}–{Math.min(safeFacultyPage * PAGE_SIZE, facultyAwardsFiltered.length)} of {facultyAwardsFiltered.length}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setFacultyPage((p) => Math.max(1, p - 1))}
+                        disabled={safeFacultyPage === 1}
+                        className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 disabled:opacity-40 hover:bg-accent transition cursor-pointer"
+                      >
+                        <ChevronLeft className="h-3 w-3" /> Prev
+                      </button>
+                      <span className="px-2">
+                        Page {safeFacultyPage} / {totalFacultyPages}
+                      </span>
+                      <button
+                        onClick={() => setFacultyPage((p) => Math.min(totalFacultyPages, p + 1))}
+                        disabled={safeFacultyPage === totalFacultyPages}
+                        className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 disabled:opacity-40 hover:bg-accent transition cursor-pointer"
+                      >
+                        Next <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Student Awards Section */}
+              <div className="space-y-4 pt-4 border-t border-border/25">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/45 pb-2">
+                  <h2 className="text-lg font-black text-foreground flex items-center gap-2 font-sans uppercase tracking-tight">
+                    <span>🎖️</span> Student Awards
+                    <span className="text-xs font-semibold text-muted-foreground">({studentAwardsFiltered.length})</span>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={exportStudentAwardsPdf}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-4xs font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition cursor-pointer select-none"
+                    >
+                      <FileText className="h-3 w-3" /> PDF
+                    </button>
+                    <button
+                      onClick={exportStudentAwardsExcel}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-4xs font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition cursor-pointer select-none"
+                    >
+                      <FileSpreadsheet className="h-3 w-3" /> Excel
+                    </button>
+                  </div>
+                </div>
+                <div className="orl-table-container">
+                  <table className="orl-table">
+                    <thead>
+                      <tr>
+                        {tableHeaders.map((hdr) => (
+                          <th key={hdr}>{hdr}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {pagedStudent.map((r) => (
+                        <tr key={r.id}>{renderRowCells(r)}</tr>
+                      ))}
+                      {pagedStudent.length === 0 && (
+                        <tr>
+                          <td colSpan={tableHeaders.length} className="px-4 py-10 text-center text-sm text-text-muted font-sans">
+                            No student awards match your search filter.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Student Pagination */}
+                {totalStudentPages > 1 && (
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-wider font-mono">
+                    <span>
+                      Showing {(safeStudentPage - 1) * PAGE_SIZE + 1}–{Math.min(safeStudentPage * PAGE_SIZE, studentAwardsFiltered.length)} of {studentAwardsFiltered.length}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setStudentPage((p) => Math.max(1, p - 1))}
+                        disabled={safeStudentPage === 1}
+                        className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 disabled:opacity-40 hover:bg-accent transition cursor-pointer"
+                      >
+                        <ChevronLeft className="h-3 w-3" /> Prev
+                      </button>
+                      <span className="px-2">
+                        Page {safeStudentPage} / {totalStudentPages}
+                      </span>
+                      <button
+                        onClick={() => setStudentPage((p) => Math.min(totalStudentPages, p + 1))}
+                        disabled={safeStudentPage === totalStudentPages}
+                        className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 disabled:opacity-40 hover:bg-accent transition cursor-pointer"
+                      >
+                        Next <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()
+      ) : (
+        <>
+          <div className="mt-4 orl-table-container">
+            <table className="orl-table">
+              <thead>
+                <tr>
+                  {tableHeaders.map((hdr) => (
+                    <th key={hdr}>
+                      {hdr}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {paged.map((r) => (
+                  <tr
+                    key={r.id}
+                  >
+                    {renderRowCells(r)}
+                  </tr>
+                ))}
+                {paged.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={tableHeaders.length}
+                      className="px-4 py-10 text-center text-sm text-text-muted font-sans"
+                    >
+                      {sectionRecords.length === 0 ? "No records available." : "No records match your search filter."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+              <span>
+                Showing {(safePage - 1) * PAGE_SIZE + 1}–
+                {Math.min(safePage * PAGE_SIZE, results.length)} of {results.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="inline-flex items-center gap-1 rounded border border-border bg-background px-2.5 py-1 disabled:opacity-40 hover:bg-accent transition"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Prev
+                </button>
+                <span className="px-2 tabular-nums">
+                  Page {safePage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  className="inline-flex items-center gap-1 rounded border border-border bg-background px-2.5 py-1 disabled:opacity-40 hover:bg-accent transition"
+                >
+                  Next <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

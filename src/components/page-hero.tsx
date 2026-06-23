@@ -1,4 +1,8 @@
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { useSiteSettings } from "@/lib/admin-store";
+import { isValidLogo } from "@/lib/asset-validation";
+
+
 
 interface PageHeroProps {
   title: string;
@@ -21,10 +25,15 @@ export function PageHero({
   overlayOpacity = 60,
   accentText,
 }: PageHeroProps) {
+  const settings = useSiteSettings();
+  const showLeft = isValidLogo(settings.institutionLogo);
+  const showRight = isValidLogo(settings.websiteLogo);
+
   const resolvedMedia = mediaUrl ? resolveAssetUrl(mediaUrl) : "";
   const isVideo = mediaType === "video" && resolvedMedia;
   const isImage = mediaType === "image" && resolvedMedia;
   const opacityVal = overlayOpacity / 100;
+
 
   // Render Background Media Layout
   if (mediaPosition === "background") {
@@ -57,6 +66,25 @@ export function PageHero({
           style={{ zIndex: 1 }}
         />
         
+        {showLeft && (
+          <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-start">
+            <img
+              src={resolveAssetUrl(settings.institutionLogo)}
+              alt={settings.institutionLogoAlt || "NITTTR Chennai Logo"}
+              className="h-full w-auto object-contain"
+            />
+          </div>
+        )}
+        {showRight && (
+          <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-end">
+            <img
+              src={resolveAssetUrl(settings.websiteLogo)}
+              alt={settings.websiteLogoAlt || "ORL Website Logo"}
+              className="h-full w-auto object-contain"
+            />
+          </div>
+        )}
+        
         <div className="mx-auto max-w-5xl text-center space-y-5 relative z-10">
           {accentText && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/25">
@@ -78,6 +106,7 @@ export function PageHero({
           )}
         </div>
       </section>
+
     );
   }
 
@@ -85,6 +114,24 @@ export function PageHero({
   const isLeft = mediaPosition === "left";
   return (
     <section className="relative overflow-hidden border-b border-border bg-[#020712] text-white py-12 md:py-16 px-6 flex flex-col md:flex-row items-center gap-8 md:gap-12 mx-auto w-full">
+      {showLeft && (
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-start">
+          <img
+            src={resolveAssetUrl(settings.institutionLogo)}
+            alt={settings.institutionLogoAlt || "NITTTR Chennai Logo"}
+            className="h-full w-auto object-contain"
+          />
+        </div>
+      )}
+      {showRight && (
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-end">
+          <img
+            src={resolveAssetUrl(settings.websiteLogo)}
+            alt={settings.websiteLogoAlt || "ORL Website Logo"}
+            className="h-full w-auto object-contain"
+          />
+        </div>
+      )}
       <div 
         className="absolute inset-0 bg-[#020712]/40 pointer-events-none" 
         style={{ zIndex: 1 }}
@@ -111,6 +158,8 @@ export function PageHero({
           </p>
         )}
       </div>
+
+
 
       {/* Media Col */}
       <div className={`w-full md:w-1/2 shrink-0 relative z-10 ${isLeft ? "md:order-1" : "md:order-2"}`}>

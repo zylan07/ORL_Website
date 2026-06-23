@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useSiteSettings, useDatasetRecords } from "@/lib/admin-store";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { isValidLogo } from "@/lib/asset-validation";
+
+
 import {
   ArrowRight,
   Award,
@@ -230,6 +233,7 @@ const PEOPLE_STATS: PeopleStat[] = [
 
 const QUICK_ACCESS_SECTIONS = [
   {
+    id: "qa-0",
     label: "Research & Facilities",
     to: "/research",
     icon: "Compass",
@@ -237,6 +241,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "sky",
   },
   {
+    id: "qa-1",
     label: "Publications",
     to: "/publications",
     icon: "FileText",
@@ -244,6 +249,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "sky",
   },
   {
+    id: "qa-2",
     label: "Technical Training",
     to: "/technical-training",
     icon: "Briefcase",
@@ -251,6 +257,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "indigo",
   },
   {
+    id: "qa-3",
     label: "Academic Activities",
     to: "/academic-activities",
     icon: "GraduationCap",
@@ -258,6 +265,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "violet",
   },
   {
+    id: "qa-4",
     label: "Awards & Recognition",
     to: "/awards",
     icon: "Award",
@@ -265,6 +273,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "amber",
   },
   {
+    id: "qa-5",
     label: "People",
     to: "/people",
     icon: "Users",
@@ -272,6 +281,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "indigo",
   },
   {
+    id: "qa-6",
     label: "Gallery",
     to: "/gallery",
     icon: "Camera",
@@ -279,6 +289,7 @@ const QUICK_ACCESS_SECTIONS = [
     color: "cyan",
   },
   {
+    id: "qa-7",
     label: "Collaborations",
     to: "/collaborations-consultancy",
     icon: "Globe",
@@ -1232,16 +1243,7 @@ function Home() {
         className="relative overflow-hidden border-b border-border bg-[#020712] text-white py-24 md:py-32 px-6"
         style={heroBg ? { backgroundImage: `linear-gradient(to bottom, rgba(2, 7, 18, 0.75), rgba(10, 25, 47, 0.95)), url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
       >
-        {settings.institutionLogo && (
-          <div className="absolute top-6 left-6 z-20 pointer-events-auto">
-            <img
-              src={resolveAssetUrl(settings.institutionLogo)}
-              alt={settings.institutionLogoAlt || "Institution Logo"}
-              style={{ width: settings.institutionLogoWidth ? `${settings.institutionLogoWidth}px` : "120px" }}
-              className="max-h-16 object-contain"
-            />
-          </div>
-        )}
+
         {heroVid && (
           <>
             <video 
@@ -1261,6 +1263,24 @@ function Home() {
         )}
         <div className="light-caustics" />
         <HeroCanvas />
+        {isValidLogo(settings.institutionLogo) && (
+          <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-start">
+            <img
+              src={resolveAssetUrl(settings.institutionLogo)}
+              alt={settings.institutionLogoAlt || "NITTTR Chennai Logo"}
+              className="h-full w-auto object-contain"
+            />
+          </div>
+        )}
+        {isValidLogo(settings.websiteLogo) && (
+          <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20 h-16 md:h-32 max-w-[180px] md:max-w-[300px] w-auto select-none pointer-events-none flex items-center justify-end">
+            <img
+              src={resolveAssetUrl(settings.websiteLogo)}
+              alt={settings.websiteLogoAlt || "ORL Website Logo"}
+              className="h-full w-auto object-contain"
+            />
+          </div>
+        )}
         <div className="relative mx-auto max-w-5xl text-center flex flex-col items-center z-10">
           <h2
             className="font-tamil text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider text-sky-400 mb-3 drop-shadow-[0_2px_8px_rgba(56,189,248,0.3)] animate-pulse"

@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Mail, Phone, MapPin, Clock, ArrowRight, Map, Briefcase, GraduationCap, FileText } from "lucide-react";
 import { useSiteSettings } from "@/lib/admin-store";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { PageHero } from "@/components/page-hero";
+import { hasContent } from "@/lib/utils";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -18,162 +20,139 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-interface KeyContact {
-  name: string;
-  designation: string;
-  email?: string;
-  phone?: string;
-  imageUrl?: string;
-}
-
-const KEY_CONTACTS: KeyContact[] = [
-  {
-    name: "Dr. S. Sakthivel Murugan",
-    designation: "Laboratory Head & Professor",
-    email: "orl@nitttrc.ac.in",
-  },
-  {
-    name: "Dr. K. Muthumeenakshi",
-    designation: "Associate Professor (Research Enquiries)",
-    email: "orl@nitttrc.ac.in",
-  },
-  {
-    name: "Dr. S. Sakthivel Murugan",
-    designation: "Professor (Consultancy Enquiries)",
-    email: "orl@nitttrc.ac.in",
-  },
-  {
-    name: "Dr. S. Sakthivel Murugan",
-    designation: "Professor (Training Programmes)",
-    email: "orl@nitttrc.ac.in",
-  }
-];
-
 function ContactPage() {
   const settings = useSiteSettings();
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
       
-      {/* Section 1 – Contact Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-teal-950/20 via-background to-background py-16 px-6 border-b border-border/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(20,184,166,0.12),rgba(255,255,255,0))]" />
-        <div className="mx-auto max-w-5xl text-center space-y-4 relative z-10 font-sans">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-5xs font-bold uppercase tracking-wider bg-teal-500/10 text-teal-500 border border-teal-500/25">
-            ORL Touchpoint
-          </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            {settings.siteName}
-          </h1>
-          <p className="mx-auto max-w-xl text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-widest">
-            {settings.siteDescription}
-          </p>
-          <p className="mx-auto max-w-lg text-[11px] text-text-secondary leading-relaxed font-medium pt-2">
-            Connecting technical expertise and ocean science. Reach out to our laboratory coordinators for research partnerships, equipment hiring, and postgraduate courses.
-          </p>
-        </div>
-      </section>
+      {/* 1. Hero Section */}
+      <PageHero
+        title={settings.contactHero?.title || "Contact Details"}
+        subtitle={settings.contactHero?.subtitle || "Ocean Research Laboratory"}
+        description={settings.contactHero?.description || "Reach out to the ORL team for academic collaborations, industrial consultancy, student internships, or technical facility usage requests."}
+        mediaType={settings.contactHero?.mediaType || "none"}
+        mediaUrl={settings.contactHero?.mediaUrl || ""}
+        mediaPosition={settings.contactHero?.mediaPosition || "background"}
+        overlayOpacity={settings.contactHero?.overlayOpacity !== undefined ? settings.contactHero.overlayOpacity : 60}
+      />
 
       <div className="mx-auto max-w-4xl px-6 mt-12 space-y-16">
         
         {/* Section 2 – Contact Information Cards (Teal Theme) */}
-        <section className="space-y-6">
-          <div className="text-center border-b border-border/40 pb-4">
-            <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Channels</span>
-            <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Contact Information</h2>
-          </div>
-
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            {/* Postal Address */}
-            <div className="p-5 rounded-2xl border border-border bg-card flex gap-4 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none">
-              <div className="h-10 w-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <div className="space-y-1 font-sans">
-                <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors">
-                  Postal Address
-                </h3>
-                <p className="text-3xs text-text-secondary leading-relaxed pt-1 whitespace-pre-line">
-                  {settings.address || `Department of Electronics and Communication Engineering\nNational Institute of Technical Teachers Training and Research\nTaramani, Chennai – 600113\nTamil Nadu, India`}
-                </p>
-              </div>
+        {(hasContent(settings.address) || hasContent(settings.contactEmail) || hasContent(settings.contactPhone) || hasContent(settings.workingHours)) && (
+          <section className="space-y-6">
+            <div className="text-center border-b border-border/40 pb-4">
+              <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Channels</span>
+              <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Contact Information</h2>
             </div>
 
-            {/* Contact Details Stack */}
-            <div className="space-y-4 flex flex-col justify-between">
-              {/* Email Card */}
-              <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
-                <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
-                  <Mail className="h-4.5 w-4.5" />
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              {/* Postal Address */}
+              {hasContent(settings.address) && (
+                <div className="p-5 rounded-2xl border border-border bg-card flex gap-4 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none">
+                  <div className="h-10 w-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1 font-sans">
+                    <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-teal-500 transition-colors">
+                      Postal Address
+                    </h3>
+                    <p className="text-3xs text-text-secondary leading-relaxed pt-1 whitespace-pre-line">
+                      {settings.address}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Email</span>
-                  <a href={`mailto:${settings.contactEmail}`} className="text-xs font-bold text-foreground hover:text-teal-500 transition-colors break-all">
-                    {settings.contactEmail}
-                  </a>
-                </div>
-              </div>
+              )}
 
-              {/* Phone Card */}
-              <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
-                <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
-                  <Phone className="h-4.5 w-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Office Contact</span>
-                  <p className="text-xs font-mono font-bold text-foreground leading-none">
-                    {settings.contactPhone}
-                  </p>
-                </div>
-              </div>
+              {/* Contact Details Stack */}
+              {(hasContent(settings.contactEmail) || hasContent(settings.contactPhone) || hasContent(settings.workingHours)) && (
+                <div className="space-y-4 flex flex-col justify-between">
+                  {/* Email Card */}
+                  {hasContent(settings.contactEmail) && (
+                    <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
+                      <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
+                        <Mail className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Email</span>
+                        <a href={`mailto:${settings.contactEmail}`} className="text-xs font-bold text-foreground hover:text-teal-500 transition-colors break-all">
+                          {settings.contactEmail}
+                        </a>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Working Hours Card */}
-              <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
-                <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
-                  <Clock className="h-4.5 w-4.5" />
+                  {/* Phone Card */}
+                  {hasContent(settings.contactPhone) && (
+                    <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
+                      <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
+                        <Phone className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Office Contact</span>
+                        <p className="text-xs font-mono font-bold text-foreground leading-none">
+                          {settings.contactPhone}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Working Hours Card */}
+                  {hasContent(settings.workingHours) && (
+                    <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-3.5 hover:border-teal-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 group select-none flex-1">
+                      <div className="h-9 w-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-500 shrink-0 shadow-xs">
+                        <Clock className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Working Hours</span>
+                        <p className="text-xs font-sans font-bold text-foreground leading-none">
+                          {settings.workingHours}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <span className="text-5xs uppercase tracking-wider text-text-muted block font-semibold">Working Hours</span>
-                  <p className="text-xs font-sans font-bold text-foreground leading-none">
-                    {settings.workingHours}
-                  </p>
-                </div>
-              </div>
-            </div> {/* Close Contact Details Stack */}
-          </div> {/* Close Grid container */}
-        </section>
+              )}
+            </div> {/* Close Grid container */}
+          </section>
+        )}
 
         {/* Section 3 – Lab Location */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-border/40 pb-4">
-            <div>
-              <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Mapping</span>
-              <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Lab Location</h2>
+        {hasContent(settings.googleMapsEmbedUrl) && (
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-border/40 pb-4">
+              <div>
+                <span className="text-5xs font-mono font-bold uppercase tracking-wider text-teal-500">Mapping</span>
+                <h2 className="text-xl font-bold tracking-tight text-foreground mt-0.5 font-sans">Lab Location</h2>
+              </div>
+              
+              {/* Open in Google Maps link */}
+              {hasContent(settings.googleMapsUrl) && (
+                <a
+                  href={settings.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-500/25 bg-teal-500/5 hover:bg-teal-500/10 text-teal-500 text-4xs font-bold uppercase tracking-wider transition cursor-pointer select-none"
+                >
+                  <Map className="h-3.5 w-3.5" /> Open in Google Maps
+                </a>
+              )}
             </div>
-            
-            {/* Open in Google Maps link */}
-            <a
-              href="https://maps.google.com/?q=NITTTR+Chennai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-500/25 bg-teal-500/5 hover:bg-teal-500/10 text-teal-500 text-4xs font-bold uppercase tracking-wider transition cursor-pointer select-none"
-            >
-              <Map className="h-3.5 w-3.5" /> Open in Google Maps
-            </a>
-          </div>
- 
-          {/* Container designed to prevent layout shifts */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden border border-border bg-muted group shadow-xs">
-            <iframe
-              title="NITTTR Chennai Location Map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.8967468114467!2d80.24716497479017!3d12.97841101473636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525d614ffdfdd9%3A0xe5a363cb05697d!2sNITTTR%20Chennai!5e0!3m2!1sen!2sin!4v1718000000000!5m2!1sen!2sin"
-              className="w-full h-full border-0 transition duration-300 dark:brightness-[0.75] dark:contrast-[1.2] dark:invert-[0.9] dark:hue-rotate-[180deg]"
-              allowFullScreen={false}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </section>
+   
+            {/* Container designed to prevent layout shifts */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-border bg-muted group shadow-xs">
+              <iframe
+                title="NITTTR Chennai Location Map"
+                src={settings.googleMapsEmbedUrl}
+                className="w-full h-full border-0 transition duration-300 dark:brightness-[0.75] dark:contrast-[1.2] dark:invert-[0.9] dark:hue-rotate-[180deg]"
+                allowFullScreen={false}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </section>
+        )}
 
         {/* Section 4 – Collaboration & Research CTA */}
         <section className="font-sans">

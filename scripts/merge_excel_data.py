@@ -3,7 +3,7 @@ import re
 import json
 import pandas as pd
 
-workspace = r"c:\Users\Admin\OneDrive\Documents\NITTTRC\lovable_web"
+workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 records = []
 
 def parse_precision_date(val):
@@ -504,7 +504,7 @@ print(f"Records Missing Titles: {missing_titles}")
 print(f"Publications Missing DOI: {missing_doi} (out of {total_pubs})")
 print(f"Records Missing Attachments: {missing_attachments}")
 
-report_dir = r"C:\Users\Admin\.gemini\antigravity-ide\brain\317ad546-9c3d-4516-8196-e84d19369631"
+report_dir = os.path.join(workspace, "docs", "project-history")
 os.makedirs(report_dir, exist_ok=True)
 report_file = os.path.join(report_dir, "data_validation_report.md")
 

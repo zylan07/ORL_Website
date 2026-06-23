@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Waves, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSiteSettings } from "@/lib/admin-store";
+import { hasContent } from "@/lib/utils";
 
 type NavItem = {
   label: string;
@@ -306,57 +308,106 @@ function FooterBubblesCanvas() {
 }
 
 export function SiteFooter() {
+  const settings = useSiteSettings();
+
   return (
     <footer className="relative mt-16 overflow-hidden border-t border-sky-950/40 bg-gradient-to-b from-slate-900 to-indigo-950 text-slate-300 py-10">
       <FooterBubblesCanvas />
 
       <div className="relative mx-auto max-w-6xl px-6 z-10 text-sm">
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-4">
+          {/* Card 1: Organization Details */}
           <div>
             <div className="font-bold text-white text-base tracking-wide">
-              Ocean Research Laboratory
+              {settings.footerOrgName || "Ocean Research Laboratory"}
             </div>
-            <p className="mt-2.5 text-slate-400 leading-relaxed">
-              National Institute of Technical Teachers Training and Research
-              (NITTTR)
-              <br />
-              Taramani, Chennai
-              <br />
-              Tamil Nadu - 600113
-            </p>
+            {hasContent(settings.footerOrgDesc) && (
+              <p className="mt-2.5 text-slate-400 leading-relaxed font-sans">
+                {settings.footerOrgDesc}
+              </p>
+            )}
           </div>
-          <div>
-            <div className="font-bold text-white text-base tracking-wide">
-              Contact Information
+
+          {/* Card 2: Contact Info */}
+          {(hasContent(settings.footerContactEmail) || hasContent(settings.footerContactPhone) || hasContent(settings.footerContactAddress)) && (
+            <div>
+              <div className="font-bold text-white text-base tracking-wide">
+                {settings.footerContactTitle || "Contact Information"}
+              </div>
+              <p className="mt-2.5 text-slate-400 leading-relaxed font-sans space-y-1">
+                {hasContent(settings.footerContactEmail) && (
+                  <span className="block">
+                    <span className="font-semibold text-slate-300">Email:</span>{" "}
+                    <a
+                      className="text-sky-400 hover:text-sky-300 hover:underline"
+                      href={`mailto:${settings.footerContactEmail}`}
+                    >
+                      {settings.footerContactEmail}
+                    </a>
+                  </span>
+                )}
+                {hasContent(settings.footerContactPhone) && (
+                  <span className="block">
+                    <span className="font-semibold text-slate-300">Phone:</span>{" "}
+                    {settings.footerContactPhone}
+                  </span>
+                )}
+                {hasContent(settings.footerContactAddress) && (
+                  <span className="block">
+                    <span className="font-semibold text-slate-300">Address:</span>{" "}
+                    {settings.footerContactAddress}
+                  </span>
+                )}
+              </p>
             </div>
-            <p className="mt-2.5 text-slate-400 leading-relaxed">
-              <span className="font-semibold text-slate-300">Email:</span>{" "}
-              <a
-                className="text-sky-400 hover:text-sky-300 hover:underline"
-                href="mailto:orl@nitttrc.ac.in"
-              >
-                orl@nitttrc.ac.in
-              </a>
-              <br />
-              <span className="font-semibold text-slate-300">Phone:</span> +91
-              44 2254 5400
-            </p>
-          </div>
-          <div>
-            <div className="font-bold text-white text-base tracking-wide">
-              Academic Repository
+          )}
+
+          {/* Card 3: Quick Navigation links */}
+          {(settings.footerLinks || []).length > 0 && (
+            <div>
+              <div className="font-bold text-white text-base tracking-wide">
+                {settings.footerLinksTitle || "Quick Links"}
+              </div>
+              <ul className="mt-2.5 space-y-1.5 font-sans">
+                {(settings.footerLinks || []).map((link, lIdx) => (
+                  <li key={lIdx}>
+                    <Link to={link.url} className="text-sky-400 hover:text-sky-300 hover:underline">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="mt-2.5 text-slate-400 leading-relaxed">
-              A comprehensive website detailing publications, academic awards,
-              advisory boards, pg activities, and coordinator-led initiatives.
-            </p>
-          </div>
+          )}
+
+          {/* Card 4: Social Connections */}
+          {(settings.footerSocials || []).length > 0 && (
+            <div>
+              <div className="font-bold text-white text-base tracking-wide">
+                {settings.footerSocialTitle || "Connect With Us"}
+              </div>
+              <ul className="mt-2.5 space-y-1.5 font-sans">
+                {(settings.footerSocials || []).map((social, sIdx) => (
+                  <li key={sIdx}>
+                    <a
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sky-400 hover:text-sky-300 hover:underline"
+                    >
+                      {social.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
-        <div className="mt-10 border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+        {/* Card 5: Footer Bottom copyright & links */}
+        <div className="mt-10 border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-sans">
           <div>
-            © {new Date().getFullYear()} Ocean Research Laboratory, NITTTR
-            Chennai. All rights reserved.
+            {settings.footerCopyright || `© ${new Date().getFullYear()} Ocean Research Laboratory, NITTTR Chennai. All rights reserved.`}
           </div>
           <div className="mt-2 sm:mt-0 flex gap-4">
             <Link to="/" className="hover:text-slate-400 transition-colors">

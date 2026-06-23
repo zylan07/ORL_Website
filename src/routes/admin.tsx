@@ -50,11 +50,11 @@ import {
   DEFAULT_SETTINGS,
   type SiteSettings,
   type GenericEntity,
-  type KeyContactSetting,
   type PeopleStatSetting,
   type PageHeroConfig
 } from "@/lib/admin-store";
 import { resolveAssetUrl, registerAsset, getAssets, type UploadedAsset, type Attachment } from "@/lib/storage-service";
+import { cleanCaptionOrText } from "./gallery";
 import {
   useRecords,
   createRecord,
@@ -448,7 +448,7 @@ function PageHeroEditor({
   settingsKey,
   label
 }: {
-  settingsKey: "researchHero" | "publicationsHero" | "trainingHero" | "academicHero" | "peopleHero" | "galleryHero" | "awardsHero" | "collaborationsHero";
+  settingsKey: "researchHero" | "publicationsHero" | "trainingHero" | "academicHero" | "peopleHero" | "galleryHero" | "awardsHero" | "collaborationsHero" | "contactHero";
   label: string;
 }) {
   const settings = useSiteSettings();
@@ -673,6 +673,7 @@ function Admin() {
     { id: "training", label: "Technical Training", icon: GraduationCap },
     { id: "activities", label: "Academic Activities", icon: FileText },
     { id: "contact", label: "Contact Details", icon: MapPin },
+    { id: "footer", label: "Footer Settings", icon: FileText },
     { id: "backup", label: "Settings & Backup", icon: SettingsIcon }
   ];
 
@@ -941,92 +942,57 @@ function Admin() {
               </p>
             </div>
 
-            {/* Institution Logo Branding Card */}
+            {/* 1. Logo Settings */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Institution Logo branding</h3>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="sm:col-span-1">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Website Branding Logos</h3>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* Left Logo (NITTTR) */}
+                <div className="p-4 rounded-lg border border-border bg-secondary/10 space-y-3">
+                  <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">Left Logo (NITTTR Logo)</span>
                   <AssetUploadInput
-                    label="Institution Logo"
+                    label="Left Logo File"
                     value={settings.institutionLogo || ""}
                     type="image"
                     onChange={(val) => saveSettings({ ...settings, institutionLogo: val })}
                     category="branding"
                   />
-                </div>
-                <label className="block space-y-1">
-                  <span className="text-[10px] font-bold text-text-muted uppercase">Logo Alt Text</span>
-                  <input
-                    type="text"
-                    value={settings.institutionLogoAlt || ""}
-                    onChange={(e) => saveSettings({ ...settings, institutionLogoAlt: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                    placeholder="e.g. NITTTR Chennai Logo"
-                  />
-                </label>
-                <label className="block space-y-1">
-                  <span className="text-[10px] font-bold text-text-muted uppercase">Logo Width (pixels)</span>
-                  <input
-                    type="text"
-                    value={settings.institutionLogoWidth || ""}
-                    onChange={(e) => saveSettings({ ...settings, institutionLogoWidth: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                    placeholder="e.g. 120"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* About Laboratory, Vision & Mission Settings Card */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">About Laboratory, Vision & Mission</h3>
-              <div className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">About Section Title</span>
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Left Logo Alt Text</span>
                     <input
                       type="text"
-                      value={settings.aboutLabTitle || ""}
-                      onChange={(e) => saveSettings({ ...settings, aboutLabTitle: e.target.value })}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                      placeholder="e.g. Advancing Deep-Ocean Exploration"
-                    />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">About Section Description</span>
-                    <ResizingTextarea
-                      value={settings.aboutLabDesc || ""}
-                      onChange={(val) => saveSettings({ ...settings, aboutLabDesc: val })}
-                      maxLength={500}
-                      placeholder="About description..."
+                      value={settings.institutionLogoAlt || ""}
+                      onChange={(e) => saveSettings({ ...settings, institutionLogoAlt: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                      placeholder="e.g. NITTTR Chennai Logo"
                     />
                   </label>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                {/* Right Logo (Website / ORL) */}
+                <div className="p-4 rounded-lg border border-border bg-secondary/10 space-y-3">
+                  <span className="text-[10px] font-bold text-teal-500 uppercase tracking-widest block font-mono">Right Logo (Website / ORL Logo)</span>
+                  <AssetUploadInput
+                    label="Right Logo File"
+                    value={settings.websiteLogo || ""}
+                    type="image"
+                    onChange={(val) => saveSettings({ ...settings, websiteLogo: val })}
+                    category="branding"
+                  />
                   <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">Vision Statement</span>
-                    <ResizingTextarea
-                      value={settings.visionText || ""}
-                      onChange={(val) => saveSettings({ ...settings, visionText: val })}
-                      maxLength={500}
-                      placeholder="Laboratory vision..."
-                    />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-[10px] font-bold text-text-muted uppercase">Mission Statement</span>
-                    <ResizingTextarea
-                      value={settings.missionText || ""}
-                      onChange={(val) => saveSettings({ ...settings, missionText: val })}
-                      maxLength={1000}
-                      placeholder="Laboratory mission (newlines supported)..."
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Right Logo Alt Text</span>
+                    <input
+                      type="text"
+                      value={settings.websiteLogoAlt || ""}
+                      onChange={(e) => saveSettings({ ...settings, websiteLogoAlt: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                      placeholder="e.g. ORL Website Logo"
                     />
                   </label>
                 </div>
               </div>
             </div>
 
-            {/* Hero Section Card */}
+            {/* 2. Hero Section Settings */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Hero Section Settings</h3>
               <div className="space-y-4">
@@ -1101,15 +1067,10 @@ function Admin() {
                     </label>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Hero Background Media Manager Card */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Hero Background Media Manager</h3>
-              <div className="space-y-4">
-                <div className="p-3 bg-secondary/30 rounded-xl border border-border/60 space-y-2 font-sans text-xs">
-                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Media Background Type</span>
+                {/* Hero Background Media Manager */}
+                <div className="p-4 rounded-xl border border-border bg-secondary/10 space-y-3">
+                  <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider block">Media Background Type</span>
                   <div className="flex gap-6 mt-1">
                     {(["image", "video", "none"] as const).map((type) => (
                       <label key={type} className="inline-flex items-center gap-2 text-xs font-semibold cursor-pointer text-foreground">
@@ -1124,35 +1085,32 @@ function Admin() {
                       </label>
                     ))}
                   </div>
+                  {settings.heroMediaType === "image" && (
+                    <AssetUploadInput
+                      label="Hero Background Image"
+                      value={settings.heroBgImage || ""}
+                      type="image"
+                      onChange={(val) => saveSettings({ ...settings, heroBgImage: val })}
+                      category="home"
+                    />
+                  )}
+                  {settings.heroMediaType === "video" && (
+                    <AssetUploadInput
+                      label="Hero Background Video"
+                      value={settings.heroBgVideo || ""}
+                      type="video"
+                      onChange={(val) => saveSettings({ ...settings, heroBgVideo: val })}
+                      category="home"
+                    />
+                  )}
                 </div>
-
-                {settings.heroMediaType === "image" && (
-                  <AssetUploadInput
-                    label="Hero Background Image"
-                    value={settings.heroBgImage || ""}
-                    type="image"
-                    onChange={(val) => saveSettings({ ...settings, heroBgImage: val })}
-                    category="home"
-                  />
-                )}
-
-                {settings.heroMediaType === "video" && (
-                  <AssetUploadInput
-                    label="Hero Background Video"
-                    value={settings.heroBgVideo || ""}
-                    type="video"
-                    onChange={(val) => saveSettings({ ...settings, heroBgVideo: val })}
-                    category="home"
-                  />
-                )}
               </div>
             </div>
 
-            {/* Buttons Setup Card */}
+            {/* Hero Buttons Settings Card */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Hero Buttons Settings</h3>
               <div className="grid gap-4 sm:grid-cols-2">
-
                 <label className="block space-y-1">
                   <span className="text-[10px] font-bold text-text-muted uppercase">Primary Button Label</span>
                   <input
@@ -1192,51 +1150,58 @@ function Admin() {
               </div>
             </div>
 
-            {/* Research Focus Card */}
+            {/* 3. About Laboratory Card */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Research Focus Areas</h3>
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Focus Card Title / Description</th>
-                      <th className="px-4 py-2">Icon</th>
-                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {focusCards.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3">
-                          <span className="font-bold block">{item.title}</span>
-                          <span className="text-4xs text-text-muted">{item.description}</span>
-                        </td>
-                        <td className="px-4 py-3 font-mono font-bold text-teal-500">{item.icon}</td>
-                        <td className="px-4 py-3 text-center">
-                          <OrderControls
-                            index={idx}
-                            total={focusCards.length}
-                            onMoveUp={() => handleMoveItem("home-research-focus", focusCards, idx, "up")}
-                            onMoveDown={() => handleMoveItem("home-research-focus", focusCards, idx, "down")}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => setEditingItem({ key: "home-research-focus", isNew: false, index: idx, data: item })}
-                            className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">About Laboratory</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">About Section Title</span>
+                  <input
+                    type="text"
+                    value={settings.aboutLabTitle || ""}
+                    onChange={(e) => saveSettings({ ...settings, aboutLabTitle: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                    placeholder="e.g. Advancing Deep-Ocean Exploration"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">About Section Description</span>
+                  <ResizingTextarea
+                    value={settings.aboutLabDesc || ""}
+                    onChange={(val) => saveSettings({ ...settings, aboutLabDesc: val })}
+                    maxLength={500}
+                    placeholder="About description..."
+                  />
+                </label>
               </div>
             </div>
 
-            {/* Key Laboratory Facts Editor */}
+            {/* 4. Vision & Mission Settings Card */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Vision & Mission</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Vision Statement</span>
+                  <ResizingTextarea
+                    value={settings.visionText || ""}
+                    onChange={(val) => saveSettings({ ...settings, visionText: val })}
+                    maxLength={500}
+                    placeholder="Laboratory vision..."
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Mission Statement</span>
+                  <ResizingTextarea
+                    value={settings.missionText || ""}
+                    onChange={(val) => saveSettings({ ...settings, missionText: val })}
+                    maxLength={1000}
+                    placeholder="Laboratory mission (newlines supported)..."
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* 5. Key Laboratory Facts Editor */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">Key Laboratory Facts</h3>
@@ -1306,7 +1271,51 @@ function Admin() {
               </div>
             </div>
 
-            {/* Statistic Counters */}
+            {/* 6. Research Focus Card */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Research Focus Areas</h3>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Focus Card Title / Description</th>
+                      <th className="px-4 py-2">Icon</th>
+                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {focusCards.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3">
+                          <span className="font-bold block">{item.title}</span>
+                          <span className="text-4xs text-text-muted">{item.description}</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono font-bold text-teal-500">{item.icon}</td>
+                        <td className="px-4 py-3 text-center">
+                          <OrderControls
+                            index={idx}
+                            total={focusCards.length}
+                            onMoveUp={() => handleMoveItem("home-research-focus", focusCards, idx, "up")}
+                            onMoveDown={() => handleMoveItem("home-research-focus", focusCards, idx, "down")}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => setEditingItem({ key: "home-research-focus", isNew: false, index: idx, data: item })}
+                            className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 7. Homepage Statistic Counters */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">Homepage Statistic Counters</h3>
@@ -1399,9 +1408,21 @@ function Admin() {
               </div>
             </div>
 
-            {/* Quick Access Links */}
+            {/* 8. Quick Access Links */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Quick Access Navigation Cards</h3>
+              <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Quick Access Navigation Cards</h3>
+                <button
+                  onClick={() => setEditingItem({
+                    key: "home-quick-access",
+                    isNew: true,
+                    data: { label: "", to: "", icon: "Compass", color: "sky", description: "" }
+                  })}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-teal-500 hover:bg-teal-600 text-white text-[10px] font-bold uppercase transition select-none cursor-pointer"
+                >
+                  <Plus className="h-3 w-3" /> Add Card
+                </button>
+              </div>
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-xs text-left">
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
@@ -1411,13 +1432,13 @@ function Admin() {
                       <th className="px-4 py-2">Icon</th>
                       <th className="px-4 py-2">Color</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                      <th className="px-4 py-2 w-24 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {quickAccess.map((item, idx) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3 font-semibold">{item.label}</td>
+                        <td className="px-4 py-3 font-semibold">{item.label || item.title}</td>
                         <td className="px-4 py-3 font-mono text-text-muted">{item.to}</td>
                         <td className="px-4 py-3 font-mono text-text-secondary">{item.icon}</td>
                         <td className="px-4 py-3 font-semibold text-teal-500">{item.color}</td>
@@ -1434,8 +1455,22 @@ function Admin() {
                             <button
                               onClick={() => setEditingItem({ key: "home-quick-access", isNew: false, index: idx, data: item })}
                               className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                              title="Edit Card"
                             >
                               <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete the quick access card "${item.label || item.title}"?`)) {
+                                  const updated = quickAccess.filter(qa => qa.id !== item.id);
+                                  saveDatasetRecords("home-quick-access", updated);
+                                  toast.success("Quick Access card deleted successfully.");
+                                }
+                              }}
+                              className="p-1 rounded text-red-500 hover:bg-red-500/10"
+                              title="Delete Card"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -1544,7 +1579,7 @@ function Admin() {
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">PhD Research Registry</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "research-projects", isNew: true, data: { type: "phd", scholar: "", guide: "", title: "", researchArea: "", status: "Active", publicationCount: 0, thumbnail: "", documents: [], images: [] } })}
+                  onClick={() => setEditingItem({ key: "research-projects", isNew: true, data: { type: "phd", scholar: "", guide: "", title: "", researchArea: "", status: "Active", publicationCount: 0, projectSummary: "", fullDescription: "", thumbnail: "", documents: [], images: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add PhD Scholar
@@ -1568,9 +1603,16 @@ function Admin() {
                       return (
                         <tr key={item.id} className="hover:bg-secondary/10">
                           <td className="px-4 py-3">
-                            <span className="font-bold block leading-snug">{item.scholar || item.name}</span>
-                            <span className="text-4xs text-text-muted line-clamp-1 mt-0.5">{item.title}</span>
-                          </td>
+                             <div className="flex items-center gap-3">
+                               {item.thumbnail && (
+                                 <img src={resolveAssetUrl(item.thumbnail)} className="h-8 w-8 rounded-full object-cover border" />
+                               )}
+                               <div>
+                                 <span className="font-bold block leading-snug">{item.scholar || item.name}</span>
+                                 <span className="text-4xs text-text-muted line-clamp-1 mt-0.5">{item.title}</span>
+                               </div>
+                             </div>
+                           </td>
                           <td className="px-4 py-3 font-semibold text-text-secondary">
                             {item.researchArea}
                           </td>
@@ -1756,9 +1798,8 @@ function Admin() {
             {/* Equipment & Facilities List */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Equipment & Systems Manager</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "research-equipment", isNew: true, data: { name: "", category: facilities[0]?.id || "sensors-comm", specs: "", purpose: "", url: "", thumbnail: "" } })}
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Equipment & Systems Manager</h3>                <button
+                  onClick={() => setEditingItem({ key: "research-equipment", isNew: true, data: { name: "", category: facilities[0]?.id || "sensors-comm", specs: "", purpose: "", url: "", thumbnail: "", applications: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add Equipment & Systems
@@ -1877,75 +1918,6 @@ function Admin() {
                                   const filtered = fieldActivities.filter((_, i) => i !== idx);
                                   saveDatasetRecords("research-activities", filtered);
                                   toast.success("Expedition removed successfully.");
-                                }
-                              }}
-                              className="p-1 rounded text-text-muted hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Technical Discussions Manager */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Technical Discussions & Scientific Colloquia</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "research-discussions", isNew: true, data: { title: "", date: "", participants: "", summary: "", thumbnail: "", documents: [] } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Discussion
-                </button>
-              </div>
-
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Session Title</th>
-                      <th className="px-4 py-2">Date Reference</th>
-                      <th className="px-4 py-2">Participants</th>
-                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {discussions.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3">
-                          <span className="font-bold block leading-snug">{item.title || item.name}</span>
-                          {item.summary && <span className="text-4xs text-text-muted leading-relaxed max-w-sm block mt-0.5">{item.summary}</span>}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-text-secondary font-mono">{item.date}</td>
-                        <td className="px-4 py-3 text-text-muted">{item.participants || "—"}</td>
-                        <td className="px-4 py-3 text-center">
-                          <OrderControls
-                            index={idx}
-                            total={discussions.length}
-                            onMoveUp={() => handleMoveItem("research-discussions", discussions, idx, "up")}
-                            onMoveDown={() => handleMoveItem("research-discussions", discussions, idx, "down")}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => setEditingItem({ key: "research-discussions", isNew: false, index: idx, data: item })}
-                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this technical discussion record?")) {
-                                  const filtered = discussions.filter((_, i) => i !== idx);
-                                  saveDatasetRecords("research-discussions", filtered);
-                                  toast.success("Technical discussion removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -2388,7 +2360,7 @@ function Admin() {
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">UG Alumni</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "ug-alumni", isNew: true, data: { name: "", role: "alumni", link: "", imageUrl: "", status: "active" } })}
+                  onClick={() => setEditingItem({ key: "ug-alumni", isNew: true, data: { name: "", role: "alumni", link: "", imageUrl: "", status: "active", institution: "", duration: "", topic: "" } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add UG Alumnus
@@ -2399,7 +2371,6 @@ function Admin() {
                 <table className="w-full text-xs text-left">
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
-                      <th className="px-4 py-2">Photo</th>
                       <th className="px-4 py-2">Alumnus Name</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
@@ -2410,9 +2381,6 @@ function Admin() {
                       const absoluteIndex = members.findIndex(m => m.id === item.id);
                       return (
                         <tr key={item.id} className="hover:bg-secondary/10">
-                          <td className="px-4 py-2 w-14">
-                            <img src={resolveAssetUrl(item.imageUrl || item.thumbnail)} className="h-8 w-8 rounded-full object-cover border" />
-                          </td>
                           <td className="px-4 py-3 font-semibold flex items-center gap-1.5">
                             {item.name || item.title}
                             <span className={`inline-flex items-center px-1.5 py-0.25 rounded text-[8px] font-bold uppercase tracking-wider border ${
@@ -2483,7 +2451,7 @@ function Admin() {
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">PG Alumni</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "pg-alumni", isNew: true, data: { name: "", role: "alumni", programme: "M.E Applied Electronics", link: "", imageUrl: "", status: "active" } })}
+                  onClick={() => setEditingItem({ key: "pg-alumni", isNew: true, data: { name: "", role: "alumni", programme: "M.E Applied Electronics", link: "", imageUrl: "", status: "active", institution: "", duration: "", topic: "" } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
                   <Plus className="h-3.5 w-3.5" /> Add PG Alumnus
@@ -2494,7 +2462,6 @@ function Admin() {
                 <table className="w-full text-xs text-left">
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
-                      <th className="px-4 py-2">Photo</th>
                       <th className="px-4 py-2">Alumnus Name</th>
                       <th className="px-4 py-2">Programme</th>
                       <th className="px-4 py-2 w-28 text-center">Reorder</th>
@@ -2506,9 +2473,6 @@ function Admin() {
                       const absoluteIndex = members.findIndex(m => m.id === item.id);
                       return (
                         <tr key={item.id} className="hover:bg-secondary/10">
-                          <td className="px-4 py-2 w-14">
-                            <img src={resolveAssetUrl(item.imageUrl || item.thumbnail)} className="h-8 w-8 rounded-full object-cover border" />
-                          </td>
                           <td className="px-4 py-3 font-semibold flex items-center gap-1.5">
                             {item.name || item.title}
                             <span className={`inline-flex items-center px-1.5 py-0.25 rounded text-[8px] font-bold uppercase tracking-wider border ${
@@ -2663,6 +2627,75 @@ function Admin() {
                                   const filtered = internships.filter((_, i) => i !== idx);
                                   saveDatasetRecords("people-internships", filtered);
                                   toast.success("Internship record removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Technical Discussions Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Technical Discussions & Scientific Colloquia</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "research-discussions", isNew: true, data: { title: "", date: "", participants: "", summary: "", thumbnail: "", imageUrl: "", images: [], documents: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Discussion
+                </button>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Session Title</th>
+                      <th className="px-4 py-2">Date Reference</th>
+                      <th className="px-4 py-2">Participants</th>
+                      <th className="px-4 py-2 w-28 text-center">Reorder</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {discussions.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3">
+                          <span className="font-bold block leading-snug">{item.title || item.name}</span>
+                          {item.summary && <span className="text-4xs text-text-muted leading-relaxed max-w-sm block mt-0.5">{item.summary}</span>}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-text-secondary font-mono">{item.date}</td>
+                        <td className="px-4 py-3 text-text-muted">{item.participants || "—"}</td>
+                        <td className="px-4 py-3 text-center">
+                          <OrderControls
+                            index={idx}
+                            total={discussions.length}
+                            onMoveUp={() => handleMoveItem("research-discussions", discussions, idx, "up")}
+                            onMoveDown={() => handleMoveItem("research-discussions", discussions, idx, "down")}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "research-discussions", isNew: false, index: idx, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this technical discussion record?")) {
+                                  const filtered = discussions.filter((_, i) => i !== idx);
+                                  saveDatasetRecords("research-discussions", filtered);
+                                  toast.success("Technical discussion removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -3021,6 +3054,8 @@ function Admin() {
 
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                 {(() => {
+                  const currentSec = gallerySections.find(s => s.id === selectedAdminSection);
+                  const currentSecName = currentSec ? currentSec.name : "";
                   const filtered = gallery
                     .filter((item) => item.sectionId === selectedAdminSection)
                     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
@@ -3047,13 +3082,14 @@ function Admin() {
                                 Placeholder
                               </div>
                             )}
-                            <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-4xs uppercase tracking-wider px-2 py-0.5 rounded font-bold">
-                              {gallerySections.find(s => s.id === item.sectionId)?.name || "Gallery"}
-                            </span>
                           </div>
                           <div className="p-4 space-y-1">
-                            <h4 className="font-bold text-xs text-foreground leading-snug">{item.title}</h4>
-                            <p className="text-4xs text-text-muted leading-relaxed line-clamp-2">{item.description}</p>
+                            <h4 className="font-bold text-xs text-foreground leading-snug">
+                              {cleanCaptionOrText(item.title, currentSecName, selectedAdminSection)}
+                            </h4>
+                            <p className="text-4xs text-text-muted leading-relaxed line-clamp-2">
+                              {cleanCaptionOrText(item.description, currentSecName, selectedAdminSection)}
+                            </p>
                           </div>
                         </div>
 
@@ -3532,15 +3568,15 @@ function Admin() {
 
             <PageHeroEditor settingsKey="trainingHero" label="Technical Training" />
 
-            {/* 1. Host Institution Manager */}
+            {/* 1. PDP as Resource Person Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">Host Institution Engagement</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">PDP as Resource Person</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "host", title: "", organization: "", date: "", duration: "", role: "Visiting Faculty", attachments: [] } })}
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "pdp", title: "", organization: "", subtitle: "", duration: "", role: "Resource Person", mode: "Contact", date: "", attachments: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Host Engagement
+                  <Plus className="h-3.5 w-3.5" /> Add PDP Resource Listing
                 </button>
               </div>
               <div className="overflow-x-auto rounded-lg border border-border">
@@ -3548,19 +3584,22 @@ function Admin() {
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
                       <th className="px-4 py-2">Programme Title</th>
-                      <th className="px-4 py-2">Host Institution</th>
+                      <th className="px-4 py-2">Organizing Institution</th>
                       <th className="px-4 py-2 font-mono">Date / Duration</th>
-                      <th className="px-4 py-2">Role</th>
+                      <th className="px-4 py-2">Topic & Mode</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => r.type === "host").map((item) => (
+                    {repoRecords.filter(r => r.type === "pdp").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.role || "Visiting Faculty"}</td>
+                        <td className="px-4 py-3 text-text-secondary">
+                          <span className="font-semibold block leading-snug">{item.subtitle}</span>
+                          <span className="block text-4xs font-mono text-text-muted mt-0.5">{item.mode || "Contact"}</span>
+                        </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -3571,9 +3610,9 @@ function Admin() {
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm("Remove this host engagement?")) {
+                                if (confirm("Remove this PDP Resource listing?")) {
                                   deleteRecord(item.id);
-                                  toast.success("Host engagement removed.");
+                                  toast.success("PDP Resource listing removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -3584,7 +3623,7 @@ function Admin() {
                         </td>
                       </tr>
                     ))}
-                    {repoRecords.filter(r => r.type === "host").length === 0 && (
+                    {repoRecords.filter(r => r.type === "pdp").length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
                       </tr>
@@ -3594,129 +3633,7 @@ function Admin() {
               </div>
             </div>
 
-            {/* 2. ITEC Manager */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">ITEC Programmes</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itec", title: "", place: "", date: "", duration: "", code: "", summary: "", attachments: [], images: [] } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add ITEC Programme
-                </button>
-              </div>
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Programme Title</th>
-                      <th className="px-4 py-2">Country / Venue</th>
-                      <th className="px-4 py-2 font-mono">Date / Duration</th>
-                      <th className="px-4 py-2">Participants</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => r.type === "itec").map((item) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
-                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
-                        <td className="px-4 py-3 text-text-secondary font-mono">{item.code || "—"}</td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
-                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this ITEC programme?")) {
-                                  deleteRecord(item.id);
-                                  toast.success("ITEC programme removed.");
-                                }
-                              }}
-                              className="p-1 rounded text-text-muted hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {repoRecords.filter(r => r.type === "itec").length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* 3. ITP Manager */}
-            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
-              <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">ITP Programmes</h3>
-                <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itp", title: "", place: "", date: "", duration: "", summary: "", attachments: [], images: [] } })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add ITP Programme
-                </button>
-              </div>
-              <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
-                    <tr>
-                      <th className="px-4 py-2">Programme Title</th>
-                      <th className="px-4 py-2">Country / Venue</th>
-                      <th className="px-4 py-2 font-mono">Date / Duration</th>
-                      <th className="px-4 py-2 w-20 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => r.type === "itp").map((item) => (
-                      <tr key={item.id} className="hover:bg-secondary/10">
-                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
-                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex gap-1.5 justify-end">
-                            <button
-                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
-                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this ITP programme?")) {
-                                  deleteRecord(item.id);
-                                  toast.success("ITP programme removed.");
-                                }
-                              }}
-                              className="p-1 rounded text-text-muted hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {repoRecords.filter(r => r.type === "itp").length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-text-muted">No records available.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* 4. PDP as Coordinator Manager */}
+            {/* 2. PDP as Coordinator Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
                 <h3 className="font-extrabold text-xs text-foreground uppercase">PDP as Coordinator</h3>
@@ -3778,15 +3695,15 @@ function Admin() {
               </div>
             </div>
 
-            {/* 5. PDP as Resource Person Manager */}
+            {/* 3. ITEC Manager */}
             <div className="p-5 rounded-xl border border-border bg-card space-y-4">
               <div className="flex justify-between items-center border-b border-border/40 pb-2">
-                <h3 className="font-extrabold text-xs text-foreground uppercase">PDP as Resource Person</h3>
+                <h3 className="font-extrabold text-xs text-foreground uppercase">ITEC Programmes</h3>
                 <button
-                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "pdp", title: "", organization: "", subtitle: "", duration: "", role: "Resource Person", mode: "Contact", date: "", attachments: [] } })}
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itec", title: "", place: "", date: "", duration: "", code: "", summary: "", attachments: [], images: [] } })}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add PDP Resource Listing
+                  <Plus className="h-3.5 w-3.5" /> Add ITEC Programme
                 </button>
               </div>
               <div className="overflow-x-auto rounded-lg border border-border">
@@ -3794,22 +3711,19 @@ function Admin() {
                   <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
                     <tr>
                       <th className="px-4 py-2">Programme Title</th>
-                      <th className="px-4 py-2">Organizing Institution</th>
+                      <th className="px-4 py-2">Country / Venue</th>
                       <th className="px-4 py-2 font-mono">Date / Duration</th>
-                      <th className="px-4 py-2">Topic & Mode</th>
+                      <th className="px-4 py-2">Participants</th>
                       <th className="px-4 py-2 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {repoRecords.filter(r => r.type === "pdp").map((item) => (
+                    {repoRecords.filter(r => r.type === "itec").map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/10">
                         <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
-                        <td className="px-4 py-3 text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
                         <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
-                        <td className="px-4 py-3 text-text-secondary">
-                          <span className="font-semibold block leading-snug">{item.subtitle}</span>
-                          <span className="block text-4xs font-mono text-text-muted mt-0.5">{item.mode || "Contact"}</span>
-                        </td>
+                        <td className="px-4 py-3 text-text-secondary font-mono">{item.code || "—"}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex gap-1.5 justify-end">
                             <button
@@ -3820,9 +3734,9 @@ function Admin() {
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm("Remove this PDP Resource listing?")) {
+                                if (confirm("Remove this ITEC programme?")) {
                                   deleteRecord(item.id);
-                                  toast.success("PDP Resource listing removed.");
+                                  toast.success("ITEC programme removed.");
                                 }
                               }}
                               className="p-1 rounded text-text-muted hover:text-destructive"
@@ -3833,7 +3747,129 @@ function Admin() {
                         </td>
                       </tr>
                     ))}
-                    {repoRecords.filter(r => r.type === "pdp").length === 0 && (
+                    {repoRecords.filter(r => r.type === "itec").length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 4. ITP Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">ITP Programmes</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "itp", title: "", place: "", date: "", duration: "", summary: "", attachments: [], images: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add ITP Programme
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Country / Venue</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "itp").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.place}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this ITP programme?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("ITP programme removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "itp").length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-text-muted">No records available.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 5. Host Institution Engagement Manager */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">Host Institution Engagement</h3>
+                <button
+                  onClick={() => setEditingItem({ key: "repo-records", isNew: true, data: { type: "host", title: "", organization: "", date: "", duration: "", role: "Visiting Faculty", attachments: [] } })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Host Engagement
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-wider text-text-muted font-mono border-b border-border">
+                    <tr>
+                      <th className="px-4 py-2">Programme Title</th>
+                      <th className="px-4 py-2">Host Institution</th>
+                      <th className="px-4 py-2 font-mono">Date / Duration</th>
+                      <th className="px-4 py-2">Role</th>
+                      <th className="px-4 py-2 w-20 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {repoRecords.filter(r => r.type === "host").map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/10">
+                        <td className="px-4 py-3 font-semibold leading-snug">{item.title}</td>
+                        <td className="px-4 py-3 font-semibold text-text-secondary">{item.organization}</td>
+                        <td className="px-4 py-3 text-text-muted font-mono">{item.date} {item.duration && `(${item.duration})`}</td>
+                        <td className="px-4 py-3 text-text-secondary">{item.role || "Visiting Faculty"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setEditingItem({ key: "repo-records", isNew: false, data: item })}
+                              className="p-1 rounded text-teal-500 hover:bg-teal-500/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this host engagement?")) {
+                                  deleteRecord(item.id);
+                                  toast.success("Host engagement removed.");
+                                }
+                              }}
+                              className="p-1 rounded text-text-muted hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {repoRecords.filter(r => r.type === "host").length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-4 py-6 text-center text-text-muted">No records available.</td>
                       </tr>
@@ -4189,6 +4225,8 @@ function Admin() {
               </p>
             </div>
 
+            <PageHeroEditor settingsKey="contactHero" label="Contact Details" />
+
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
               
               {/* General Contact Info card */}
@@ -4233,7 +4271,295 @@ function Admin() {
                 </div>
               </div>
 
+              {/* Map Location Settings card */}
+              <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+                <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Map Location Settings</h3>
+                <div className="space-y-3">
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Google Maps Embed URL</span>
+                    <input
+                      type="text"
+                      value={settings.googleMapsEmbedUrl || ""}
+                      onChange={(e) => saveSettings({ ...settings, googleMapsEmbedUrl: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                      placeholder="https://www.google.com/maps/embed?pb=..."
+                    />
+                    <span className="text-[10px] text-text-muted leading-relaxed block mt-1">
+                      The iframe source URL (embed link) from Google Maps.
+                    </span>
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-bold text-text-muted uppercase">Google Maps Direct Link URL</span>
+                    <input
+                      type="text"
+                      value={settings.googleMapsUrl || ""}
+                      onChange={(e) => saveSettings({ ...settings, googleMapsUrl: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                      placeholder="https://maps.google.com/?q=..."
+                    />
+                    <span className="text-[10px] text-text-muted leading-relaxed block mt-1">
+                      Direct Google Maps link for the "Open in Google Maps" button.
+                    </span>
+                  </label>
+                </div>
+              </div>
 
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================== FOOTER SETTINGS MANAGER ==================== */}
+        {activeTab === "footer" && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Footer Settings Manager</h1>
+              <p className="text-xs text-text-secondary mt-1">
+                Customize global footer sections, quick links, social links, contact info, and copyright notices.
+              </p>
+            </div>
+
+            {/* 1. Organization Section */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">1. Organization Details</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Organization Name</span>
+                  <input
+                    type="text"
+                    value={settings.footerOrgName || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerOrgName: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                  />
+                </label>
+                <div className="sm:col-span-2">
+                  <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Organization Description</span>
+                  <ResizingTextarea
+                    value={settings.footerOrgDesc || ""}
+                    onChange={(val) => saveSettings({ ...settings, footerOrgDesc: val })}
+                    maxLength={300}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Contact Section */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">2. Contact Information</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Contact Title</span>
+                  <input
+                    type="text"
+                    value={settings.footerContactTitle || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerContactTitle: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Email Address</span>
+                  <input
+                    type="email"
+                    value={settings.footerContactEmail || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerContactEmail: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Phone Number</span>
+                  <input
+                    type="text"
+                    value={settings.footerContactPhone || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerContactPhone: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
+                  />
+                </label>
+                <label className="block space-y-1 sm:col-span-2">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Office Address</span>
+                  <input
+                    type="text"
+                    value={settings.footerContactAddress || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerContactAddress: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-sans"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* 3. Navigation Links (Quick Links) */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">3. Navigation / Quick Links</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const links = [...(settings.footerLinks || [])];
+                    links.push({ label: "New Link", url: "/" });
+                    saveSettings({ ...settings, footerLinks: links });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Link
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Navigation Title</span>
+                  <input
+                    type="text"
+                    value={settings.footerLinksTitle || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerLinksTitle: e.target.value })}
+                    className="w-full max-w-md rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                  />
+                </label>
+
+                <div className="space-y-2.5 font-sans">
+                  {(settings.footerLinks || []).map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/10">
+                      <div className="grid grid-cols-2 gap-3 flex-1">
+                        <label className="block space-y-1">
+                          <span className="text-[9px] font-bold text-text-muted uppercase">Link Label</span>
+                          <input
+                            type="text"
+                            value={link.label || ""}
+                            onChange={(e) => {
+                              const links = [...(settings.footerLinks || [])];
+                              links[idx] = { ...link, label: e.target.value };
+                              saveSettings({ ...settings, footerLinks: links });
+                            }}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-teal-500"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-[9px] font-bold text-text-muted uppercase">Link URL / Path</span>
+                          <input
+                            type="text"
+                            value={link.url || ""}
+                            onChange={(e) => {
+                              const links = [...(settings.footerLinks || [])];
+                              links[idx] = { ...link, url: e.target.value };
+                              saveSettings({ ...settings, footerLinks: links });
+                            }}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-teal-500 font-mono"
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const links = (settings.footerLinks || []).filter((_, i) => i !== idx);
+                          saveSettings({ ...settings, footerLinks: links });
+                          toast.success("Link row removed.");
+                        }}
+                        className="p-2 rounded border border-border bg-card hover:bg-secondary text-text-muted hover:text-destructive shrink-0 mt-4 cursor-pointer"
+                        aria-label="Remove link row"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {(settings.footerLinks || []).length === 0 && (
+                    <p className="text-xs text-text-muted italic py-2">No navigation links added yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Social Links */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex justify-between items-center border-b border-border/40 pb-2">
+                <h3 className="font-extrabold text-xs text-foreground uppercase">4. Social Links</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const socials = [...(settings.footerSocials || [])];
+                    socials.push({ label: "LinkedIn", url: "https://linkedin.com" });
+                    saveSettings({ ...settings, footerSocials: socials });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500 text-teal-950 hover:bg-teal-600 text-4xs font-bold uppercase tracking-wider font-sans cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Add Link
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Social Section Title</span>
+                  <input
+                    type="text"
+                    value={settings.footerSocialTitle || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerSocialTitle: e.target.value })}
+                    className="w-full max-w-md rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                  />
+                </label>
+
+                <div className="space-y-2.5 font-sans">
+                  {(settings.footerSocials || []).map((social, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/10">
+                      <div className="grid grid-cols-2 gap-3 flex-1">
+                        <label className="block space-y-1">
+                          <span className="text-[9px] font-bold text-text-muted uppercase">Platform / Label</span>
+                          <input
+                            type="text"
+                            value={social.label || ""}
+                            onChange={(e) => {
+                              const socials = [...(settings.footerSocials || [])];
+                              socials[idx] = { ...social, label: e.target.value };
+                              saveSettings({ ...settings, footerSocials: socials });
+                            }}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-teal-500 font-sans"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-[9px] font-bold text-text-muted uppercase">Profile URL</span>
+                          <input
+                            type="text"
+                            value={social.url || ""}
+                            onChange={(e) => {
+                              const socials = [...(settings.footerSocials || [])];
+                              socials[idx] = { ...social, url: e.target.value };
+                              saveSettings({ ...settings, footerSocials: socials });
+                            }}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-teal-500 font-mono"
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const socials = (settings.footerSocials || []).filter((_, i) => i !== idx);
+                          saveSettings({ ...settings, footerSocials: socials });
+                          toast.success("Social link row removed.");
+                        }}
+                        className="p-2 rounded border border-border bg-card hover:bg-secondary text-text-muted hover:text-destructive shrink-0 mt-4 cursor-pointer"
+                        aria-label="Remove social link row"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {(settings.footerSocials || []).length === 0 && (
+                    <p className="text-xs text-text-muted italic py-2">No social links added yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Footer Bottom */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">5. Footer Copyright & Bottom</h3>
+              <div className="space-y-3">
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-bold text-text-muted uppercase">Copyright Text Notice</span>
+                  <input
+                    type="text"
+                    value={settings.footerCopyright || ""}
+                    onChange={(e) => saveSettings({ ...settings, footerCopyright: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-sans"
+                  />
+                </label>
+              </div>
             </div>
 
           </div>
@@ -4779,7 +5105,7 @@ function Admin() {
                             type="text"
                             value={editingItem.data.scholar || ""}
                             onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, scholar: e.target.value } })}
-                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
                           />
                         </label>
                         <label className="block space-y-1">
@@ -4789,6 +5115,16 @@ function Admin() {
                             value={editingItem.data.title || ""}
                             onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
                             className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Research Area</span>
+                          <input
+                            type="text"
+                            value={editingItem.data.researchArea || ""}
+                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, researchArea: e.target.value } })}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                            placeholder="e.g. Underground Communication"
                           />
                         </label>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -4806,7 +5142,7 @@ function Admin() {
                             <select
                               value={editingItem.data.status || "Active"}
                               onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, status: e.target.value } })}
-                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
                             >
                               <option value="Active">Active</option>
                               <option value="Coursework Completed">Coursework Completed</option>
@@ -4815,6 +5151,29 @@ function Admin() {
                             </select>
                           </label>
                         </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Project One-Line Summary</span>
+                          <ResizingTextarea
+                            value={editingItem.data.projectSummary || ""}
+                            onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, projectSummary: val } })}
+                            maxLength={300}
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Full Detailed Description</span>
+                          <ResizingTextarea
+                            value={editingItem.data.fullDescription || ""}
+                            onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, fullDescription: val } })}
+                            maxLength={1000}
+                          />
+                        </div>
+                        <AssetUploadInput
+                          label="Scholar Portrait Photo"
+                          value={editingItem.data.thumbnail || ""}
+                          type="image"
+                          onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
+                          category="projects"
+                        />
                       </>
                     ) : editingItem.data.type === "student" ? (
                       <>
@@ -4975,14 +5334,6 @@ function Admin() {
                         </div>
 
                         <AssetUploadInput
-                          label="Project Thumbnail Image"
-                          value={editingItem.data.thumbnail || ""}
-                          type="image"
-                          onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
-                          category="projects"
-                        />
-
-                        <AssetUploadInput
                           label="Attach Research Report PDF"
                           value={Array.isArray(editingItem.data.documents) ? editingItem.data.documents[0] || "" : editingItem.data.documents || ""}
                           type="document"
@@ -5046,40 +5397,7 @@ function Admin() {
                       </select>
                     </label>
 
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Manufacturer</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.manufacturer || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, manufacturer: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                          placeholder="e.g. Kongsberg"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Year Acquired</span>
-                        <input
-                          type="text"
-                          value={editingItem.data.yearAcquired || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, yearAcquired: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                          placeholder="e.g. 2021"
-                        />
-                      </label>
-                      <label className="block space-y-1">
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Status</span>
-                        <select
-                          value={editingItem.data.status || "active"}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, status: e.target.value } })}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500"
-                        >
-                          <option value="active">Active / Operational</option>
-                          <option value="maintenance">Maintenance</option>
-                          <option value="decommissioned">Decommissioned</option>
-                        </select>
-                      </label>
-                    </div>
+
 
                     <div>
                       <span className="text-[10px] font-bold text-text-muted uppercase block mb-1">Short Description</span>
@@ -5804,6 +6122,38 @@ function Admin() {
                         </select>
                       </label>
                     </div>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Institution</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.institution || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, institution: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. SSN College of Engineering"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Duration / Period</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.duration || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. 2020 - 2024"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Area / Topic</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.topic || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, topic: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. Underwater Robotics"
+                        />
+                      </label>
+                    </div>
                     <label className="block space-y-1">
                       <span className="text-[10px] font-bold text-text-muted uppercase">Academic Profile Link</span>
                       <input
@@ -5813,13 +6163,6 @@ function Admin() {
                         className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
                       />
                     </label>
-                    <AssetUploadInput
-                      label="Alumnus Photograph"
-                      value={editingItem.data.imageUrl || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, imageUrl: val } })}
-                      category="alumni"
-                    />
                   </div>
                 )}
 
@@ -5858,6 +6201,38 @@ function Admin() {
                         placeholder="e.g. M.E. Applied Electronics"
                       />
                     </label>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Institution</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.institution || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, institution: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. SSN College of Engineering"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Duration / Period</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.duration || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. 2020 - 2024"
+                        />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-bold text-text-muted uppercase">Area / Topic</span>
+                        <input
+                          type="text"
+                          value={editingItem.data.topic || ""}
+                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, topic: e.target.value } })}
+                          className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-semibold"
+                          placeholder="e.g. Underwater Robotics"
+                        />
+                      </label>
+                    </div>
                     <label className="block space-y-1">
                       <span className="text-[10px] font-bold text-text-muted uppercase">Academic Profile Link</span>
                       <input
@@ -5867,13 +6242,6 @@ function Admin() {
                         className="w-full rounded-lg border border-border bg-background px-3 py-1.75 text-xs outline-none focus:border-teal-500 font-mono"
                       />
                     </label>
-                    <AssetUploadInput
-                      label="Alumnus Photograph"
-                      value={editingItem.data.imageUrl || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, imageUrl: val } })}
-                      category="alumni"
-                    />
                   </div>
                 )}
 
@@ -7153,6 +7521,8 @@ function Admin() {
                           <option value="teal">Teal Green</option>
                           <option value="emerald">Emerald Green</option>
                           <option value="amber">Amber Gold</option>
+                          <option value="violet">Violet Purple</option>
+                          <option value="cyan">Cyan Blue</option>
                         </select>
                       </label>
                     </div>
@@ -7246,18 +7616,11 @@ function Admin() {
                         maxLength={600}
                       />
                     </div>
-                    <AssetUploadInput
-                      label="Cover Photograph"
-                      value={editingItem.data.thumbnail || ""}
-                      type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, thumbnail: val } })}
-                      category="field-activities"
-                    />
                     <MultiAssetUploadInput
-                      label="Gallery / Deployment Photos"
-                      values={editingItem.data.images || []}
+                      label="Field Activity Photos"
+                      values={editingItem.data.images || (editingItem.data.thumbnail ? [editingItem.data.thumbnail] : (editingItem.data.image ? [editingItem.data.image] : []))}
                       type="image"
-                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, images: val } })}
+                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, images: val, thumbnail: val[0] || "", image: val[0] || "" } })}
                       category="field-activities"
                     />
                     <MultiAssetUploadInput
@@ -7539,6 +7902,13 @@ function Admin() {
                         maxLength={500}
                       />
                     </div>
+                    <MultiAssetUploadInput
+                      label="Discussion Images"
+                      values={editingItem.data.images || (editingItem.data.imageUrl ? [editingItem.data.imageUrl] : (editingItem.data.thumbnail ? [editingItem.data.thumbnail] : []))}
+                      type="image"
+                      onChange={(val) => setEditingItem({ ...editingItem, data: { ...editingItem.data, images: val, imageUrl: val[0] || "", thumbnail: val[0] || "" } })}
+                      category="discussions"
+                    />
                   </div>
                 )}
 

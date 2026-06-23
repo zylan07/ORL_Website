@@ -4,6 +4,11 @@ import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } fro
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
 import { PageHero } from "@/components/page-hero";
+import { isValidImage, hasContent } from "@/lib/utils";
+import { normalizeImages } from "@/lib/media-normalizer";
+import { ModalImageCarousel } from "@/components/modal-image-carousel";
+import { CardImageCarousel } from "@/components/card-image-carousel";
+
 import { z } from "zod";
 import {
   Compass,
@@ -74,6 +79,9 @@ export interface FacilityCategory {
   images?: string[];
   thumbnail?: string;
 }
+
+// Shared CardImageCarousel imported from components
+
 
 // Facilities categories mapping
 const FACILITIES_CATEGORIES: FacilityCategory[] = [
@@ -154,6 +162,39 @@ function EquipmentModalContent({ item }: { item: any }) {
     }
     return list;
   }, [item.thumbnail, item.image, item.images]);
+
+  const appsArray = useMemo(() => {
+    if (!item.applications) return [];
+    
+    let rawList: any[] = [];
+    if (Array.isArray(item.applications)) {
+      rawList = item.applications;
+    } else if (typeof item.applications === "string") {
+      const trimmed = item.applications.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            rawList = parsed;
+          } else {
+            rawList = [parsed];
+          }
+        } catch {
+          rawList = trimmed.split(/[,\n;]/);
+        }
+      } else {
+        rawList = trimmed.split(/[,\n;]/);
+      }
+    } else {
+      rawList = [item.applications];
+    }
+
+    const processed = rawList
+      .map((x) => String(x).trim())
+      .filter((x) => x !== "" && x !== "null" && x !== "undefined" && x !== "—");
+
+    return Array.from(new Set(processed));
+  }, [item.applications]);
 
   return (
     <div className="space-y-4 text-left font-sans text-xs">
@@ -258,10 +299,16 @@ function EquipmentModalContent({ item }: { item: any }) {
       )}
 
       {/* Applications */}
-      {item.applications && (
+      {appsArray.length > 0 && (
         <div className="space-y-2 pt-4 border-t border-border/30">
           <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Applications</h4>
-          <p className="text-xs text-text-secondary leading-relaxed font-sans">{item.applications}</p>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {appsArray.map((app, idx) => (
+              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                {app}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -324,7 +371,10 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
   }, [item.equipmentTags]);
 
   // Determine available sections
-  const hasOverview = !!(item.description || item.purpose);
+  const modalDescription = type === "project" && item.type === "phd"
+    ? (item.fullDescription || item.description || "")
+    : (item.description || "");
+  const hasOverview = !!(modalDescription || item.purpose);
   
   const hasProjectDetails = !!(
     item.fundingAgency ||
@@ -342,25 +392,24 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
   const hasTeam = teamArray.length > 0;
   const hasEquipment = equipmentTagsArray.length > 0;
   const hasPublications = !!(item.publicationCount && item.publicationCount > 0);
-  const hasGallery = !!(
-    (item.images && item.images.length > 0) ||
-    item.thumbnail ||
-    item.image
-  );
+  const isFundedProject = type === "project" && (item.type === "external" || item.type === "internal");
 
-  const modalThumbnail = item.thumbnail || item.image;
+  const modalThumbnail = !isFundedProject ? (item.thumbnail || item.image) : null;
 
   // Deduplicate gallery images so we don't display the cover image/thumbnail twice
   const galleryImages = useMemo(() => {
+    if (isFundedProject) return [];
     const list: string[] = [];
-    if (modalThumbnail) list.push(modalThumbnail);
+    if (modalThumbnail && isValidImage(modalThumbnail)) list.push(modalThumbnail);
     if (item.images && Array.isArray(item.images)) {
       item.images.forEach((img: string) => {
-        if (img && !list.includes(img)) list.push(img);
+        if (img && isValidImage(img) && !list.includes(img)) list.push(img);
       });
     }
     return list;
-  }, [modalThumbnail, item.images]);
+  }, [modalThumbnail, item.images, isFundedProject]);
+
+  const hasGallery = galleryImages.length > 0;
 
   return (
     <div
@@ -402,9 +451,9 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
             )}
           </div>
           <h3 className="text-lg font-bold text-foreground leading-snug font-sans">
-            {item.title || item.name}
+            {type === "project" && item.type === "phd" ? (item.scholar || item.title || item.name) : (item.title || item.name)}
           </h3>
-          {item.scholar && (
+          {item.scholar && !(type === "project" && item.type === "phd") && (
             <p className="text-xs text-text-secondary font-medium font-sans">
               Scholar: <span className="text-foreground">{item.scholar}</span>
             </p>
@@ -423,21 +472,10 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
           ) : type === "activity" ? (
             // Dedicated Field Activity modal layout
             <>
-              {/* Gallery (top) */}
-              {hasGallery && (
-                <div className="space-y-3 pt-4 border-t border-border/30 first:pt-0 first:border-0 font-sans">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Gallery</h4>
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                    {galleryImages.map((img: string, index: number) => (
-                      <div key={index} className="relative aspect-video overflow-hidden rounded-lg border border-border/40 bg-muted">
-                        <img
-                          src={resolveAssetUrl(img)}
-                          alt={`${item.title || item.name || "Activity asset"} ${index + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
+              {/* Reusable Modal Carousel */}
+              {item.images && item.images.length > 0 && (
+                <div className="mb-4">
+                  <ModalImageCarousel images={item.images} title={item.title || item.name} themeColor="cyan" />
                 </div>
               )}
 
@@ -521,8 +559,8 @@ function DetailModal({ item, type, onClose }: DetailModalProps) {
               {hasOverview && (
                 <div className="space-y-3 pt-4 border-t border-border/30 first:pt-0 first:border-0">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-500 font-mono">Overview</h4>
-                  {item.description && (
-                    <p className="text-xs text-text-secondary leading-relaxed font-sans">{item.description}</p>
+                  {modalDescription && (
+                    <p className="text-xs text-text-secondary leading-relaxed font-sans">{modalDescription}</p>
                   )}
                   {item.purpose && (
                     <p className="text-xs text-text-secondary leading-relaxed font-sans">{item.purpose}</p>
@@ -782,7 +820,7 @@ function ResearchPage() {
     }
 
     return list;
-  }, [studentSearch, studentSortField, studentSortOrder]);
+  }, [studentSearch, studentSortField, studentSortOrder, PROJECTS_DATABASE]);
 
   const handleStudentSort = (field: "title" | "amount" | "duration" | "agency" | "role") => {
     if (studentSortField === field) {
@@ -828,7 +866,7 @@ function ResearchPage() {
       }
     });
     return ["All", ...Array.from(list)];
-  }, []);
+  }, [PROJECTS_DATABASE]);
 
   const statuses = ["All", "Ongoing", "Completed", "Coursework Completed", "Thesis Submitted"];
 
@@ -838,7 +876,7 @@ function ResearchPage() {
       list.add(fa.year.toString());
     });
     return ["All", ...Array.from(list).sort().reverse()];
-  }, []);
+  }, [FIELD_ACTIVITIES_DATABASE]);
 
   // Filtered projects
   const filteredProjects = useMemo(() => {
@@ -871,7 +909,7 @@ function ResearchPage() {
 
       return matchesSearch && matchesAgency && matchesStatus;
     });
-  }, [projectSearch, projectAgency, projectStatus]);
+  }, [PROJECTS_DATABASE, projectSearch, projectAgency, projectStatus]);
 
   // Filtered equipment list
   const filteredEquipment = useMemo(() => {
@@ -883,7 +921,7 @@ function ResearchPage() {
         String(eq.shortDescription ?? "").toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, facilitiesSearch]);
+  }, [EQUIPMENT_DATABASE, activeCategory, facilitiesSearch]);
 
   // Filtered field activities
   const filteredActivities = useMemo(() => {
@@ -903,8 +941,15 @@ function ResearchPage() {
       const matchesYear = activitiesYear === "All" || fa.year.toString() === activitiesYear;
 
       return matchesSearch && matchesYear;
+    }).map((fa) => {
+      const normImages = normalizeImages(fa);
+      return {
+        ...fa,
+        imageUrl: normImages[0] || null,
+        images: normImages,
+      };
     });
-  }, [activitiesSearch, activitiesYear]);
+  }, [FIELD_ACTIVITIES_DATABASE, activitiesSearch, activitiesYear]);
 
   // Group field activities by year
   const groupedActivities = useMemo(() => {
@@ -1195,38 +1240,58 @@ function ResearchPage() {
                               "bg-emerald-500"
                             }`} />
                           </span>
-
                           <div
-                            className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none"
+                            onClick={() => {
+                              setSelectedItem(proj);
+                              setSelectedType("project");
+                            }}
+                            className="rounded-2xl border border-border bg-card p-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-5 select-none hover:border-cyan-500/40 hover:bg-secondary/10 transition duration-300 cursor-pointer w-full"
                           >
-                            <div className="space-y-1">
-                              {(proj.title || proj.researchArea) && (
-                                <h4 className="font-bold text-foreground text-xs leading-relaxed">
-                                  {proj.title || proj.researchArea}
+                            <div className="flex-1 space-y-2 text-left">
+                              <div className="space-y-0.5">
+                                <h4 className="font-bold text-foreground text-xs leading-snug">
+                                  {proj.scholar || proj.title}
                                 </h4>
-                              )}
-                              {proj.scholar && (
-                                <p className="text-4xs text-text-muted mt-1">
-                                  Scholar: <span className="font-semibold text-text-secondary">{proj.scholar}</span>
+                                {(proj.researchArea || (proj.scholar && proj.title && proj.title !== proj.scholar)) && (
+                                  <p className="text-4xs text-text-secondary font-medium font-sans">
+                                    {proj.researchArea || proj.title}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              {(proj.projectSummary || proj.description) && (
+                                <p className="text-4xs text-text-muted leading-relaxed font-sans line-clamp-3">
+                                  {proj.projectSummary || proj.description}
                                 </p>
                               )}
+
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                {(proj.publicationCount !== undefined && proj.publicationCount !== null && proj.publicationCount > 0) && (
+                                  <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
+                                    {proj.publicationCount} Publications
+                                  </span>
+                                )}
+                                {proj.status && (
+                                  <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
+                                    proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                    proj.status === "Thesis Submitted" || proj.status === "Completed" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
+                                    "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                  }`}>
+                                    {proj.status}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {(proj.publicationCount !== undefined && proj.publicationCount !== null) && (
-                                <span className="text-5xs font-mono font-bold bg-secondary text-text-secondary border border-border/40 px-2 py-0.5 rounded">
-                                  {proj.publicationCount} Publications
-                                </span>
-                              )}
-                              {proj.status && (
-                                <span className={`rounded-sm px-2 py-0.5 text-5xs font-semibold uppercase tracking-wide border ${
-                                  proj.status === "Coursework Completed" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                                  proj.status === "Thesis Submitted" || proj.status === "Completed" ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" :
-                                  "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                }`}>
-                                  {proj.status}
-                                </span>
-                              )}
-                            </div>
+
+                            {isValidImage(proj.thumbnail) && (
+                              <div className="w-16 h-20 sm:w-20 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-border/60 bg-secondary/20 self-center md:self-start">
+                                <img
+                                  src={resolveAssetUrl(proj.thumbnail)}
+                                  alt={proj.scholar || "Scholar Portrait"}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       ));
@@ -1408,7 +1473,7 @@ function ResearchPage() {
                           className="p-4 rounded-xl border border-border bg-card/65 hover:border-cyan-500/35 shadow-xs hover:shadow-md hover:translate-y-[-2px] transition-all duration-300 flex flex-col justify-between cursor-pointer group"
                         >
                           <div className="space-y-3">
-                            {primaryImage && (
+                            {isValidImage(primaryImage) && (
                               <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-secondary/50 border border-border/40">
                                 <img
                                   src={resolveAssetUrl(primaryImage)}
@@ -1490,7 +1555,6 @@ function ResearchPage() {
 
                 <div className="grid gap-4 sm:grid-cols-2 pl-2">
                   {groupedActivities.groups[yr].map((activity) => {
-                    const actThumb = activity.thumbnail || activity.images?.[0];
                     return (
                       <div
                         key={activity.id}
@@ -1498,28 +1562,34 @@ function ResearchPage() {
                         className="p-5 rounded-lg border border-border bg-card hover:border-cyan-500/30 transition duration-300 flex flex-col justify-between cursor-pointer group"
                       >
                         <div className="space-y-3">
-                          {actThumb && (
-                            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-secondary/50 border border-border/40 mb-1">
-                              <img
-                                src={resolveAssetUrl(actThumb)}
-                                alt={activity.title}
-                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                              />
-                            </div>
+                          {activity.images && activity.images.length > 0 && (
+                            <CardImageCarousel
+                              images={activity.images as string[]}
+                              title={activity.title}
+                              activeColorClass="bg-cyan-500"
+                            />
                           )}
-                          <div className="flex items-center justify-between gap-2">
+                          
+                          <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors line-clamp-2">
+                            {activity.title}
+                          </h4>
+
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-5xs text-text-secondary">
                             <span className="inline-flex items-center text-5xs font-bold uppercase tracking-wider text-cyan-500 bg-cyan-500/5 px-2 py-0.5 rounded border border-cyan-500/20">
                               {activity.activityType}
                             </span>
-                            <span className="text-5xs font-mono text-text-muted">{activity.date}</span>
+                            <span className="font-mono text-text-muted">{activity.date}</span>
+                            <span className="flex items-center gap-1 truncate font-sans">
+                              <MapPin className="h-3 w-3 text-text-muted shrink-0" />
+                              <span className="truncate">{activity.location}</span>
+                            </span>
                           </div>
-                          <h4 className="font-bold text-foreground text-xs leading-snug group-hover:text-cyan-500 transition-colors">
-                            {activity.title}
-                          </h4>
-                          <div className="flex items-center gap-1 text-5xs text-text-secondary font-sans">
-                            <MapPin className="h-3 w-3 text-text-muted shrink-0" />
-                            <span className="truncate">{activity.location}</span>
-                          </div>
+
+                          {activity.description && (
+                            <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-2 pt-0.5">
+                              {activity.description}
+                            </p>
+                          )}
                         </div>
                         {(() => {
                           const tagsArray = Array.isArray(activity.equipmentTags)

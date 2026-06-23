@@ -5,6 +5,11 @@ import { StickySectionNav } from "@/components/sticky-section-nav";
 import { PageHero } from "@/components/page-hero";
 import { z } from "zod";
 import { resolveAssetUrl } from "@/lib/storage-service";
+import { isValidImage, hasContent } from "@/lib/utils";
+import { normalizeImages } from "@/lib/media-normalizer";
+import { ModalImageCarousel } from "@/components/modal-image-carousel";
+import { CardImageCarousel } from "@/components/card-image-carousel";
+
 import {
   GraduationCap,
   Users,
@@ -116,6 +121,10 @@ export interface UGAlumnus {
   imageUrl: string | null;
   galleryImages?: string[];
   link?: string;
+  institution?: string;
+  duration?: string;
+  topic?: string;
+  status?: string;
 }
 
 export interface PGAlumnus {
@@ -125,6 +134,10 @@ export interface PGAlumnus {
   imageUrl: string | null;
   galleryImages?: string[];
   link?: string;
+  institution?: string;
+  duration?: string;
+  topic?: string;
+  status?: string;
 }
 
 export interface Internship {
@@ -585,10 +598,40 @@ const STATIC_TECHNICAL_DISCUSSIONS: TechnicalDiscussion[] = [
   }
 ];
 
+export function hasDetailContent(item: any): boolean {
+  if (!item) return false;
+  
+  // Check basic biography / summary text
+  const bioText = item.bio || item.summary || item.description || item.fullDescription;
+  if (bioText && bioText.trim() !== "") return true;
+
+  // Check academic credentials / details
+  if (item.qualification || item.specialization || item.researchArea || item.researchInterests) return true;
+  if (item.orcid || item.googleScholar || item.cvId || item.link) return true;
+  if (item.department || item.institution || item.designation) return true;
+  if (item.mode || item.graduationDate || item.topic || item.duration || item.programme) return true;
+
+  // Check projects/publications counts or arrays
+  if (item.associatedProjects && item.associatedProjects.length > 0) return true;
+  if (item.projectRoles && item.projectRoles.length > 0) return true;
+  if (item.publicationCount && item.publicationCount > 0) return true;
+  if (item.participants) return true;
+
+  // Check images/gallery
+  const normalized = normalizeImages(item);
+  if (normalized.length > 0) return true;
+  if (item.galleryImages && item.galleryImages.length > 0) return true;
+
+  return false;
+}
+
+// Shared CardImageCarousel imported from components
+
+
 // ----------------- AVATAR FALLBACK RENDERER -----------------
 
 function PersonAvatar({ imageUrl, name, themeColor }: { imageUrl: string | null; name: string; themeColor: string }) {
-  if (imageUrl) {
+  if (isValidImage(imageUrl)) {
     return (
       <div className="relative aspect-square w-16 h-16 rounded-full overflow-hidden border border-border/40 bg-muted shrink-0 shadow-xs">
         <img src={resolveAssetUrl(imageUrl)} alt={name} className="h-full w-full object-cover" />
@@ -636,10 +679,10 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
   if (!item) return null;
 
   // Compute unique gallery images (exclude thumbnail/imageUrl duplication)
-  const hasGallery = !!((item.galleryImages && item.galleryImages.length > 0) || item.imageUrl);
+  const hasGallery = !!((item.galleryImages && item.galleryImages.filter(isValidImage).length > 0) || isValidImage(item.imageUrl || item.thumbnail));
   const galleryImages = [
-    ...(item.imageUrl ? [item.imageUrl] : []),
-    ...(item.galleryImages || [])
+    ...(isValidImage(item.imageUrl || item.thumbnail) ? [item.imageUrl || item.thumbnail] : []),
+    ...(item.galleryImages || []).filter(isValidImage)
   ].filter((v, i, self) => self.indexOf(v) === i);
 
   // Field validation to prevent empty labels/sections
@@ -681,7 +724,13 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
 
         {/* Modal Header */}
         <div className="flex items-start gap-4 pr-8">
-          <PersonAvatar imageUrl={item.imageUrl} name={item.name || item.title} themeColor={themeColor} />
+          {!showDiscussionDetails ? (
+            <PersonAvatar imageUrl={item.imageUrl} name={item.name || item.title} themeColor={themeColor} />
+          ) : (
+            <div className={`p-2.5 rounded-xl ${currentTheme.bg} ${currentTheme.text} shrink-0 border ${currentTheme.border}`}>
+              <BookOpen className="h-5 w-5" />
+            </div>
+          )}
           <div className="space-y-1 mt-1">
             <h3 className="text-lg font-black leading-snug font-sans text-foreground">
               {item.name || item.title}
@@ -911,6 +960,11 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
           {/* Technical Discussion details */}
           {showDiscussionDetails && (
             <div className="space-y-3 pt-4 border-t border-border/40 font-sans">
+              {item.roleCategory === "discussion" && item.images && item.images.length > 0 && (
+                <div className="mb-4">
+                  <ModalImageCarousel images={item.images} title={item.name || item.title} themeColor="amber" />
+                </div>
+              )}
               <h4 className={`text-4xs font-mono font-bold uppercase tracking-wider ${currentTheme.text}`}>Discussion Records</h4>
               <div className="space-y-3 text-xs mt-1">
                 {item.participants && (
@@ -938,7 +992,7 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
           )}
 
           {/* Links Section */}
-          {item.link && (
+          {item.link && !item.isPastContributor && (
             <div className="space-y-2 pt-4 border-t border-border/40 font-sans">
               <h4 className={`text-4xs font-mono font-bold uppercase tracking-wider ${currentTheme.text}`}>Reference Links</h4>
               <div className="mt-1">
@@ -954,8 +1008,9 @@ function PersonDetailModal({ item, themeColor, onClose }: DetailModalProps) {
             </div>
           )}
 
+
           {/* Photo Gallery (when images uploaded in the future) */}
-          {hasGallery && galleryImages.length > 0 && (
+          {hasGallery && galleryImages.length > 0 && item.roleCategory !== "discussion" && (
             <div className="space-y-2 pt-4 border-t border-border/40 font-sans">
               <h4 className={`text-4xs font-mono font-bold uppercase tracking-wider ${currentTheme.text}`}>Uploaded Photo Records</h4>
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mt-2">
@@ -988,6 +1043,7 @@ interface PassportPersonCardProps {
   link?: string;
   linkText?: string;
   themeColor: string;
+  onClick?: () => void;
 }
 
 function PassportPersonCard({
@@ -999,6 +1055,7 @@ function PassportPersonCard({
   link,
   linkText = "Profile",
   themeColor,
+  onClick,
 }: PassportPersonCardProps) {
   const themeTextColors: Record<string, string> = {
     indigo: "text-indigo-400 group-hover:text-indigo-300",
@@ -1024,25 +1081,20 @@ function PassportPersonCard({
   const borderTheme = themeBorderColors[themeColor] || "hover:border-cyan-500/35";
 
   return (
-    <div className={`group relative rounded-2xl border border-border bg-card/60 p-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col items-center text-center ${borderTheme}`}>
+    <div 
+      onClick={onClick}
+      className={`group relative rounded-2xl border border-border bg-card/60 p-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col items-center text-center ${borderTheme} ${onClick ? "cursor-pointer" : ""}`}
+    >
       {/* Photo Container */}
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
-        {imageUrl ? (
+      {isValidImage(imageUrl) && (
+        <div className="relative aspect-square w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
           <img
             src={resolveAssetUrl(imageUrl)}
             alt={name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-secondary to-muted text-text-muted text-base font-black tracking-widest uppercase">
-            {name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .slice(0, 2)}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Profile Details */}
       <div className="w-full flex-1 flex flex-col justify-between space-y-2">
@@ -1058,16 +1110,17 @@ function PassportPersonCard({
           )}
 
           {institution && (
-            <p className="text-5xs text-text-muted font-sans font-medium uppercase tracking-wider line-clamp-1">
+            <p className={`text-5xs text-text-muted font-sans font-medium uppercase tracking-wider ${onClick ? "line-clamp-1" : ""}`}>
               {institution}
             </p>
           )}
 
           {description && (
-            <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-2 mt-1">
+            <p className={`text-4xs text-text-secondary leading-relaxed font-sans mt-1 ${onClick ? "line-clamp-2" : ""}`}>
               {description}
             </p>
           )}
+
         </div>
 
         {link && (
@@ -1076,6 +1129,7 @@ function PassportPersonCard({
               href={link}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className={`inline-flex items-center gap-1 text-[10px] font-bold ${textTheme} hover:underline`}
             >
               {linkText} <ExternalLink className="h-3 w-3" />
@@ -1152,16 +1206,20 @@ function PeoplePage() {
 
   const rawDiscussions = useDatasetRecords("research-discussions", STATIC_TECHNICAL_DISCUSSIONS) as any[];
   const TECHNICAL_DISCUSSIONS = useMemo(() => {
-    return rawDiscussions.map(disc => ({
-      id: disc.id,
-      title: disc.title || disc.name || "",
-      date: disc.date || "",
-      participants: disc.participants || "",
-      summary: disc.summary || "",
-      imageUrl: disc.imageUrl || disc.thumbnail || null,
-      galleryImages: disc.galleryImages || [],
-      roleCategory: "discussion"
-    })) as TechnicalDiscussion[];
+    return rawDiscussions.map(disc => {
+      const normImages = normalizeImages(disc);
+      return {
+        id: disc.id,
+        title: disc.title || disc.name || "",
+        date: disc.date || "",
+        participants: disc.participants || "",
+        summary: disc.summary || "",
+        imageUrl: normImages[0] || null,
+        images: normImages,
+        galleryImages: disc.galleryImages || [],
+        roleCategory: "discussion"
+      };
+    }) as any[];
   }, [rawDiscussions]);
 
   // Re-split members into separate list states with original types
@@ -1321,7 +1379,11 @@ function PeoplePage() {
       roleCategory: "alumni",
       name: m.title || m.name || "",
       imageUrl: m.imageUrl || m.thumbnail || null,
-      link: m.link || ""
+      link: m.link || "",
+      institution: m.institution || "",
+      duration: m.duration || m.period || "",
+      topic: m.topic || m.area || m.researchArea || m.description || "",
+      status: m.status || ""
     })) as UGAlumnus[];
   }, [allMembers]);
 
@@ -1331,7 +1393,11 @@ function PeoplePage() {
       roleCategory: "alumni",
       name: m.title || m.name || "",
       imageUrl: m.imageUrl || m.thumbnail || null,
-      link: m.link || ""
+      link: m.link || "",
+      institution: m.institution || "",
+      duration: m.duration || m.period || "",
+      topic: m.topic || m.area || m.researchArea || m.description || "",
+      status: m.status || ""
     })) as UGAlumnus[];
   }, [allMembersPast]);
 
@@ -1342,7 +1408,11 @@ function PeoplePage() {
       name: m.title || m.name || "",
       programme: m.programme || "",
       imageUrl: m.imageUrl || m.thumbnail || null,
-      link: m.link || ""
+      link: m.link || "",
+      institution: m.institution || "",
+      duration: m.duration || m.period || "",
+      topic: m.topic || m.area || m.researchArea || m.description || "",
+      status: m.status || ""
     })) as PGAlumnus[];
   }, [allMembers]);
 
@@ -1353,7 +1423,11 @@ function PeoplePage() {
       name: m.title || m.name || "",
       programme: m.programme || "",
       imageUrl: m.imageUrl || m.thumbnail || null,
-      link: m.link || ""
+      link: m.link || "",
+      institution: m.institution || "",
+      duration: m.duration || m.period || "",
+      topic: m.topic || m.area || m.researchArea || m.description || "",
+      status: m.status || ""
     })) as PGAlumnus[];
   }, [allMembersPast]);
 
@@ -1405,7 +1479,7 @@ function PeoplePage() {
   const [pgAlumniSearch, setPgAlumniSearch] = useState("");
 
   const [internSearch, setInternSearch] = useState("");
-  const [internSortField, setInternSortField] = useState<"name" | "institution" | "topic" | "duration" | null>(null);
+  const [internSortField, setInternSortField] = useState<"name" | "institution" | "duration" | null>(null);
   const [internSortOrder, setInternSortOrder] = useState<"asc" | "desc">("asc");
 
   const [discussionSearch, setDiscussionSearch] = useState("");
@@ -1479,8 +1553,7 @@ function PeoplePage() {
       list = list.filter(
         (i) =>
           String(i.name ?? "").toLowerCase().includes(q) ||
-          String(i.institution ?? "").toLowerCase().includes(q) ||
-          String(i.topic ?? "").toLowerCase().includes(q)
+          String(i.institution ?? "").toLowerCase().includes(q)
       );
     }
 
@@ -1495,9 +1568,6 @@ function PeoplePage() {
         } else if (internSortField === "institution") {
           valA = String(a.institution ?? "").toLowerCase();
           valB = String(b.institution ?? "").toLowerCase();
-        } else if (internSortField === "topic") {
-          valA = String(a.topic ?? "").toLowerCase();
-          valB = String(b.topic ?? "").toLowerCase();
         } else if (internSortField === "duration") {
           valA = String(a.duration ?? "").toLowerCase();
           valB = String(b.duration ?? "").toLowerCase();
@@ -1521,8 +1591,7 @@ function PeoplePage() {
       list = list.filter(
         (i) =>
           String(i.name ?? "").toLowerCase().includes(q) ||
-          String(i.institution ?? "").toLowerCase().includes(q) ||
-          String(i.topic ?? "").toLowerCase().includes(q)
+          String(i.institution ?? "").toLowerCase().includes(q)
       );
     }
 
@@ -1537,9 +1606,6 @@ function PeoplePage() {
         } else if (internSortField === "institution") {
           valA = String(a.institution ?? "").toLowerCase();
           valB = String(b.institution ?? "").toLowerCase();
-        } else if (internSortField === "topic") {
-          valA = String(a.topic ?? "").toLowerCase();
-          valB = String(b.topic ?? "").toLowerCase();
         } else if (internSortField === "duration") {
           valA = String(a.duration ?? "").toLowerCase();
           valB = String(b.duration ?? "").toLowerCase();
@@ -1554,7 +1620,7 @@ function PeoplePage() {
     return list;
   }, [INTERNSHIPS_PAST, internSearch, internSortField, internSortOrder]);
 
-  const handleInternSort = (field: "name" | "institution" | "topic" | "duration") => {
+  const handleInternSort = (field: "name" | "institution" | "duration") => {
     if (internSortField === field) {
       setInternSortOrder(internSortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -1610,27 +1676,22 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             {filteredFaculty.map((member) => (
-              <div
+              <PassportPersonCard
                 key={member.id}
+                name={member.name}
+                role={member.designation}
+                institution={member.institution}
+                description={member.department}
+                imageUrl={member.imageUrl}
+                link={member.link}
+                themeColor="indigo"
                 onClick={() => openDetail(member, "indigo")}
-                className="p-5 rounded-2xl border border-border bg-card/60 hover:border-indigo-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-start gap-4 group select-none"
-              >
-                <PersonAvatar imageUrl={member.imageUrl} name={member.name} themeColor="indigo" />
-                <div className="space-y-1 mt-0.5 min-w-0 flex-1">
-                  <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-indigo-500 transition-colors truncate">
-                    {member.name}
-                  </h3>
-                  <p className="text-[11px] text-text-secondary font-medium font-sans truncate">{member.designation}</p>
-                  <p className="text-5xs text-text-muted font-sans font-medium truncate uppercase tracking-wider">
-                    {member.institution}
-                  </p>
-                </div>
-              </div>
+              />
             ))}
             {filteredFaculty.length === 0 && (
-              <div className="col-span-2 text-center text-text-muted text-xs py-6">
+              <div className="col-span-4 text-center text-text-muted text-xs py-6">
                 {TEAM_MEMBERS.length === 0 ? "No records available." : "No active faculty members found."}
               </div>
             )}
@@ -1641,27 +1702,21 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (Faculty)
               </h3>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
                 {filteredFacultyPast.map((member) => (
-                  <div
+                  <PassportPersonCard
                     key={member.id}
-                    onClick={() => openDetail(member, "indigo")}
-                    className="p-5 rounded-2xl border border-border bg-card/60 hover:border-indigo-500/35 shadow-xs hover:shadow-md hover:translate-y-[-4px] hover:scale-[1.015] transition-all duration-300 cursor-pointer flex items-start gap-4 group select-none"
-                  >
-                    <PersonAvatar imageUrl={member.imageUrl} name={member.name} themeColor="indigo" />
-                    <div className="space-y-1 mt-0.5 min-w-0 flex-1">
-                      <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-indigo-500 transition-colors truncate">
-                        {member.name}
-                      </h3>
-                      <p className="text-[11px] text-text-secondary font-medium font-sans truncate">{member.designation}</p>
-                      <p className="text-5xs text-text-muted font-sans font-medium truncate uppercase tracking-wider">
-                        {member.institution}
-                      </p>
-                    </div>
-                  </div>
+                    name={member.name}
+                    role={member.designation}
+                    institution={member.institution}
+                    description={member.department}
+                    imageUrl={member.imageUrl}
+                    themeColor="indigo"
+                    onClick={hasDetailContent(member) ? () => openDetail({ ...member, isPastContributor: true }, "indigo") : undefined}
+                  />
                 ))}
                 {filteredFacultyPast.length === 0 && (
-                  <div className="col-span-2 text-center text-text-muted text-xs py-6">
+                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
                     No past faculty members found matching search filter.
                   </div>
                 )}
@@ -1748,8 +1803,8 @@ function PeoplePage() {
                           : ""
                     }
                     imageUrl={scholar.imageUrl}
-                    link={scholar.link}
                     themeColor="sky"
+                    onClick={hasDetailContent(scholar) ? () => openDetail({ ...scholar, isPastContributor: true }, "sky") : undefined}
                   />
                 ))}
                 {filteredScholarsPast.length === 0 && (
@@ -1803,8 +1858,8 @@ function PeoplePage() {
                     institution="Ocean Research Laboratory"
                     description={staff.project ? `Project: ${staff.project}` : ""}
                     imageUrl={staff.imageUrl}
-                    link={staff.link}
                     themeColor="teal"
+                    onClick={hasDetailContent(staff) ? () => openDetail({ ...staff, isPastContributor: true }, "teal") : undefined}
                   />
                 ))}
                 {PROJECT_STAFF_PAST.length === 0 && (
@@ -1870,8 +1925,8 @@ function PeoplePage() {
                           : ""
                     }
                     imageUrl={grad.imageUrl}
-                    link={grad.link}
                     themeColor="emerald"
+                    onClick={hasDetailContent(grad) ? () => openDetail({ ...grad, isPastContributor: true }, "emerald") : undefined}
                   />
                 ))}
                 {PHD_GRADUATES_PAST.length === 0 && (
@@ -1905,24 +1960,44 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {filteredUgAlumni.map((al) => (
-              <PassportPersonCard
-                key={al.id}
-                name={al.name}
-                role="UG Alumnus"
-                institution="SSN College of Engineering"
-                description="Graduated Project Student"
-                imageUrl={al.imageUrl}
-                link={al.link}
-                themeColor="blue"
-              />
-            ))}
-            {filteredUgAlumni.length === 0 && (
-              <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match search filter."}
-              </div>
-            )}
+          <div className="orl-table-container overflow-x-auto">
+            <table className="orl-table">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredUgAlumni.map((al) => (
+                  <tr key={al.id}>
+                    <td className="px-4 py-3 align-top font-semibold text-foreground">
+                      {al.link ? (
+                        <a href={al.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition">
+                          {al.name}
+                        </a>
+                      ) : (
+                        al.name
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top text-text-secondary">
+                      {al.status ? (
+                        al.status === "active" ? "Active" :
+                        al.status === "past-contributor" ? "Past Contributor" :
+                        al.status
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+                {filteredUgAlumni.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="px-4 py-6 text-center text-text-muted text-xs">
+                      {UG_ALUMNI.length === 0 ? "No records available." : "No UG project students match search filter."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {UG_ALUMNI_PAST.length > 0 && (
@@ -1930,24 +2005,44 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (UG Alumni)
               </h3>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                {filteredUgAlumniPast.map((al) => (
-                  <PassportPersonCard
-                    key={al.id}
-                    name={al.name}
-                    role="UG Alumnus"
-                    institution="SSN College of Engineering"
-                    description="Graduated Project Student"
-                    imageUrl={al.imageUrl}
-                    link={al.link}
-                    themeColor="blue"
-                  />
-                ))}
-                {filteredUgAlumniPast.length === 0 && (
-                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                    No past UG project students match search filter.
-                  </div>
-                )}
+              <div className="orl-table-container overflow-x-auto">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredUgAlumniPast.map((al) => (
+                      <tr key={al.id}>
+                        <td className="px-4 py-3 align-top font-semibold text-foreground">
+                          {al.link ? (
+                            <a href={al.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition">
+                              {al.name}
+                            </a>
+                          ) : (
+                            al.name
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top text-text-secondary">
+                          {al.status ? (
+                            al.status === "active" ? "Active" :
+                            al.status === "past-contributor" ? "Past Contributor" :
+                            al.status
+                          ) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredUgAlumniPast.length === 0 && (
+                      <tr>
+                        <td colSpan={2} className="px-4 py-6 text-center text-text-muted text-xs">
+                          No past UG project students match search filter.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -1974,24 +2069,46 @@ function PeoplePage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {filteredPgAlumni.map((al) => (
-              <PassportPersonCard
-                key={al.id}
-                name={al.name}
-                role={al.programme || "PG Alumnus"}
-                institution="SSN College of Engineering"
-                description="Graduated Project Student"
-                imageUrl={al.imageUrl}
-                link={al.link}
-                themeColor="blue"
-              />
-            ))}
-            {filteredPgAlumni.length === 0 && (
-              <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match search filter."}
-              </div>
-            )}
+          <div className="orl-table-container overflow-x-auto">
+            <table className="orl-table">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Programme / Topic</th>
+                  <th className="px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredPgAlumni.map((al) => (
+                  <tr key={al.id}>
+                    <td className="px-4 py-3 align-top font-semibold text-foreground">
+                      {al.link ? (
+                        <a href={al.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition">
+                          {al.name}
+                        </a>
+                      ) : (
+                        al.name
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top text-text-secondary">{al.programme || al.topic || "—"}</td>
+                    <td className="px-4 py-3 align-top text-text-secondary">
+                      {al.status ? (
+                        al.status === "active" ? "Active" :
+                        al.status === "past-contributor" ? "Past Contributor" :
+                        al.status
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+                {filteredPgAlumni.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-6 text-center text-text-muted text-xs">
+                      {PG_ALUMNI.length === 0 ? "No records available." : "No PG project students match search filter."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {PG_ALUMNI_PAST.length > 0 && (
@@ -1999,24 +2116,46 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (PG Alumni)
               </h3>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                {filteredPgAlumniPast.map((al) => (
-                  <PassportPersonCard
-                    key={al.id}
-                    name={al.name}
-                    role={al.programme || "PG Alumnus"}
-                    institution="SSN College of Engineering"
-                    description="Graduated Project Student"
-                    imageUrl={al.imageUrl}
-                    link={al.link}
-                    themeColor="blue"
-                  />
-                ))}
-                {filteredPgAlumniPast.length === 0 && (
-                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                    No past PG project students match search filter.
-                  </div>
-                )}
+              <div className="orl-table-container overflow-x-auto">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Programme / Topic</th>
+                      <th className="px-4 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredPgAlumniPast.map((al) => (
+                      <tr key={al.id}>
+                        <td className="px-4 py-3 align-top font-semibold text-foreground">
+                          {al.link ? (
+                            <a href={al.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition">
+                              {al.name}
+                            </a>
+                          ) : (
+                            al.name
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top text-text-secondary">{al.programme || al.topic || "—"}</td>
+                        <td className="px-4 py-3 align-top text-text-secondary">
+                          {al.status ? (
+                            al.status === "active" ? "Active" :
+                            al.status === "past-contributor" ? "Past Contributor" :
+                            al.status
+                          ) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredPgAlumniPast.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-6 text-center text-text-muted text-xs">
+                          No past PG project students match search filter.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -2057,37 +2196,45 @@ function PeoplePage() {
                 <option value="None">Sort By</option>
                 <option value="name">Name</option>
                 <option value="institution">Institution</option>
-                <option value="topic">Topic</option>
                 <option value="duration">Duration</option>
               </select>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {processedInternships.map((intern) => (
-              <PassportPersonCard
-                key={intern.id}
-                name={intern.name}
-                role="Intern"
-                institution={intern.institution}
-                description={
-                  intern.topic 
-                    ? `Topic: ${intern.topic}${intern.duration ? ` | Duration: ${intern.duration}` : ""}` 
-                    : intern.duration 
-                      ? `Duration: ${intern.duration}` 
-                      : ""
-                }
-                imageUrl={intern.imageUrl}
-                link={intern.cvId ? resolveAssetUrl(intern.cvId) : undefined}
-                linkText="Certificate"
-                themeColor="cyan"
-              />
-            ))}
-            {processedInternships.length === 0 && (
-              <div className="col-span-4 text-center text-text-muted text-xs py-6 font-sans">
-                {INTERNSHIPS.length === 0 ? "No records available." : "No active interns found matching search filters."}
-              </div>
-            )}
+          <div className="orl-table-container overflow-x-auto">
+            <table className="orl-table">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Organization</th>
+                  <th className="px-4 py-2">Duration</th>
+                  <th className="px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {processedInternships.map((intern) => (
+                  <tr key={intern.id}>
+                    <td className="px-4 py-3 align-top font-semibold text-foreground">{intern.name}</td>
+                    <td className="px-4 py-3 align-top text-text-secondary">{intern.institution || "—"}</td>
+                    <td className="px-4 py-3 align-top text-text-secondary">{intern.duration || "—"}</td>
+                    <td className="px-4 py-3 align-top text-text-secondary">
+                      {intern.status ? (
+                        intern.status === "active" ? "Active" :
+                        intern.status === "past-contributor" ? "Past Contributor" :
+                        intern.status
+                      ) : "Active"}
+                    </td>
+                  </tr>
+                ))}
+                {processedInternships.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-text-muted text-xs">
+                      {INTERNSHIPS.length === 0 ? "No records available." : "No active interns found matching search filters."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {INTERNSHIPS_PAST.length > 0 && (
@@ -2095,31 +2242,40 @@ function PeoplePage() {
               <h3 className="text-sm font-bold tracking-tight text-text-secondary font-sans">
                 Past Contributors (Interns)
               </h3>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                {processedInternshipsPast.map((intern) => (
-                  <PassportPersonCard
-                    key={intern.id}
-                    name={intern.name}
-                    role="Intern"
-                    institution={intern.institution}
-                    description={
-                      intern.topic 
-                        ? `Topic: ${intern.topic}${intern.duration ? ` | Duration: ${intern.duration}` : ""}` 
-                        : intern.duration 
-                          ? `Duration: ${intern.duration}` 
-                          : ""
-                    }
-                    imageUrl={intern.imageUrl}
-                    link={intern.cvId ? resolveAssetUrl(intern.cvId) : undefined}
-                    linkText="Certificate"
-                    themeColor="cyan"
-                  />
-                ))}
-                {processedInternshipsPast.length === 0 && (
-                  <div className="col-span-4 text-center text-text-muted text-xs py-6">
-                    No past interns found matching search filters.
-                  </div>
-                )}
+              <div className="orl-table-container overflow-x-auto">
+                <table className="orl-table">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2">Name</th>
+                      <th className="px-4 py-2">Organization</th>
+                      <th className="px-4 py-2">Duration</th>
+                      <th className="px-4 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {processedInternshipsPast.map((intern) => (
+                      <tr key={intern.id}>
+                        <td className="px-4 py-3 align-top font-semibold text-foreground">{intern.name}</td>
+                        <td className="px-4 py-3 align-top text-text-secondary">{intern.institution || "—"}</td>
+                        <td className="px-4 py-3 align-top text-text-secondary">{intern.duration || "—"}</td>
+                        <td className="px-4 py-3 align-top text-text-secondary">
+                          {intern.status ? (
+                            intern.status === "active" ? "Active" :
+                            intern.status === "past-contributor" ? "Past Contributor" :
+                            intern.status
+                          ) : "Past Contributor"}
+                        </td>
+                      </tr>
+                    ))}
+                    {processedInternshipsPast.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-text-muted text-xs">
+                          No past interns found matching search filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -2155,24 +2311,27 @@ function PeoplePage() {
                 className="group relative rounded-2xl border border-border bg-card/60 p-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] select-none flex flex-col justify-between cursor-pointer hover:border-amber-500/35"
               >
                 <div>
-                  {/* Image Container */}
-                  <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
-                    {disc.imageUrl ? (
-                      <img
-                        src={resolveAssetUrl(disc.imageUrl)}
-                        alt={disc.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-500 border border-amber-500/10">
-                        <BookOpen className="h-8 w-8 opacity-70 mb-1" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Discussion</span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Carousel or Single Image */}
+                  {disc.images && disc.images.length > 0 && (
+                    <CardImageCarousel
+                      images={disc.images}
+                      title={disc.title}
+                      activeColorClass="bg-amber-500"
+                    />
+                  )}
 
                   {/* Content */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-3">
+                    <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-amber-500 transition-colors line-clamp-2">
+                      {disc.title}
+                    </h3>
+                    
+                    {disc.participants && (
+                      <p className="text-5xs font-semibold text-amber-500 font-sans line-clamp-1">
+                        👤 {disc.participants}
+                      </p>
+                    )}
+
                     <div className="flex items-center gap-2">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-5xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/25 uppercase font-mono tracking-wider">
                         Technical Meeting
@@ -2181,11 +2340,9 @@ function PeoplePage() {
                         <Clock className="h-3 w-3" /> {disc.date.split("on")[1]?.trim() || disc.date}
                       </span>
                     </div>
-                    <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-amber-500 transition-colors line-clamp-2">
-                      {disc.title}
-                    </h3>
+
                     {disc.summary && (
-                      <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-3">{disc.summary}</p>
+                      <p className="text-4xs text-text-secondary leading-relaxed font-sans line-clamp-3 pt-0.5">{disc.summary}</p>
                     )}
                   </div>
                 </div>

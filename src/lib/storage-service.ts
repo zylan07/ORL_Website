@@ -436,7 +436,17 @@ export function compressImage(file: File, maxWidth = 800, maxHeight = 800, quali
           return;
         }
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+        
+        const isPng = file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
+        const isWebp = file.type === "image/webp" || file.name.toLowerCase().endsWith(".webp");
+        
+        if (isPng) {
+          resolve(canvas.toDataURL("image/png"));
+        } else if (isWebp) {
+          resolve(canvas.toDataURL("image/webp", quality));
+        } else {
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        }
       };
       img.onerror = (err) => reject(err);
     };

@@ -22,10 +22,10 @@ import { getDatasetRecords, DATA_SEEDS, useDatasetRecords, useSiteSettings } fro
 import { StickySectionNav } from "@/components/sticky-section-nav";
 import { resolveAssetUrl } from "@/lib/storage-service";
 import { PageHero } from "@/components/page-hero";
-import { parseDateSafe } from "@/lib/utils";
+import { parseDateSafe, isValidImage, hasContent } from "@/lib/utils";
 
 const collabSearchSchema = z.object({
-  tab: z.enum(["mous", "institutions", "activities"]).optional(),
+  tab: z.enum(["invitation", "mous", "institutions", "activities"]).optional(),
 });
 
 export const Route = createFileRoute("/collaborations-consultancy")({
@@ -345,6 +345,7 @@ function CollaborationsPage() {
   }, [searchQuery, consultancyInstitutions]);
 
   const navItems = [
+    { label: "Consortium Invitation", id: "invitation", icon: Sparkles, count: undefined, theme: "emerald" as const },
     { label: "MoUs", id: "mous", icon: Handshake, count: mouRecords.length, theme: "emerald" as const },
     { label: "Partner Institutions", id: "institutions", icon: Building2, count: filteredInstitutions.length, theme: "indigo" as const },
     { label: "Consultancy Activities", id: "activities", icon: Activity, count: consultancyActivities.length, theme: "cyan" as const }
@@ -379,7 +380,7 @@ function CollaborationsPage() {
       <div className="mx-auto max-w-4xl px-6 mt-12 space-y-16">
         
         {/* 1. Collaboration Opportunities CTA Section */}
-        <section className="pt-4 font-sans">
+        <section id="invitation" className="scroll-mt-24 pt-4 font-sans">
           <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-indigo-950/20 via-background to-background p-6 md:p-8 space-y-5">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_bottom_right,rgba(16,185,129,0.08),rgba(255,255,255,0))]" />
             <div className="relative z-10 space-y-4">
@@ -423,21 +424,16 @@ function CollaborationsPage() {
                   >
                     <div>
                       {/* Image Container */}
-                      <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
-                        {imgUrl ? (
+                      {isValidImage(imgUrl) && (
+                        <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
                           <img
                             src={resolveAssetUrl(imgUrl)}
                             alt={mou.organization || mou.title}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
-                        ) : (
-                          <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 text-emerald-500 border border-emerald-500/10">
-                            <Handshake className="h-10 w-10 opacity-70 mb-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Academic MoU</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* Text Content */}
                       <div className="space-y-2 font-sans">
@@ -501,21 +497,16 @@ function CollaborationsPage() {
                 className="p-5 rounded-2xl border border-border bg-card/60 hover:border-sky-500/35 hover:shadow-md hover:translate-y-[-4px] transition duration-300 cursor-pointer flex flex-col items-center text-center justify-between aspect-square group select-none"
               >
                 {/* Logo Container */}
-                <div className="w-24 h-24 flex items-center justify-center bg-secondary/20 rounded-xl p-3 border border-border/40 overflow-hidden shrink-0 shadow-inner">
-                  {inst.thumbnail ? (
+                {isValidImage(inst.thumbnail) && (
+                  <div className="w-24 h-24 flex items-center justify-center bg-secondary/20 rounded-xl p-3 border border-border/40 overflow-hidden shrink-0 shadow-inner">
                     <img
                       src={resolveAssetUrl(inst.thumbnail)}
                       alt={inst.name || inst.title}
                       className="max-w-full max-h-full object-contain filter dark:brightness-95 group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-sky-500 select-none">
-                      <Building2 className="h-8 w-8 opacity-70 mb-1" />
-                      <span className="text-[11px] font-black font-mono">{(inst.name || inst.title || "").charAt(0)}</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="space-y-1 min-w-0 mt-3 flex-1 flex flex-col justify-center">
                   <h3 className="font-bold text-foreground text-xs leading-snug group-hover:text-sky-500 transition-colors line-clamp-2">
                     {inst.name || inst.title}
@@ -550,21 +541,16 @@ function CollaborationsPage() {
                 >
                   <div>
                     {/* Image Container */}
-                    <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
-                      {imgUrl ? (
+                    {isValidImage(imgUrl) && (
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border/40 bg-muted mb-4 shadow-inner">
                         <img
                           src={resolveAssetUrl(imgUrl)}
                           alt={act.institution || act.title}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
-                      ) : (
-                        <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-500 border border-amber-500/10">
-                          <Activity className="h-10 w-10 opacity-70 mb-1" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider font-mono opacity-60">Consultancy</span>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Content */}
                     <div className="space-y-3 font-sans">

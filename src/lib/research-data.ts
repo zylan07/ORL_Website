@@ -19,6 +19,8 @@ export interface ProjectRecord {
   copi?: string;
   team?: string[];
   description?: string;
+  projectSummary?: string;
+  fullDescription?: string;
   publications?: string[];
   publicationCount?: number;
   images?: string[];

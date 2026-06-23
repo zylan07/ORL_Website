@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnicalTrainingRouteImport } from './routes/technical-training'
-import { Route as Research_oldRouteImport } from './routes/research_old'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as PeopleRouteImport } from './routes/people'
@@ -26,19 +25,11 @@ import { Route as LegacyWorkshopsRouteImport } from './routes/legacy/workshops'
 import { Route as LegacyTalksRouteImport } from './routes/legacy/talks'
 import { Route as LegacyResearchSupervisionRouteImport } from './routes/legacy/research-supervision'
 import { Route as LegacyPgRouteImport } from './routes/legacy/pg'
-import { Route as LegacyFieldActivitiesRouteImport } from './routes/legacy/field-activities'
-import { Route as LegacyFacilitiesRouteImport } from './routes/legacy/facilities'
 import { Route as LegacyBosRouteImport } from './routes/legacy/bos'
-import { Route as LegacyAboutRouteImport } from './routes/legacy/about'
 
 const TechnicalTrainingRoute = TechnicalTrainingRouteImport.update({
   id: '/technical-training',
   path: '/technical-training',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Research_oldRoute = Research_oldRouteImport.update({
-  id: '/research_old',
-  path: '/research_old',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchRoute = ResearchRouteImport.update({
@@ -118,24 +109,9 @@ const LegacyPgRoute = LegacyPgRouteImport.update({
   path: '/legacy/pg',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegacyFieldActivitiesRoute = LegacyFieldActivitiesRouteImport.update({
-  id: '/legacy/field-activities',
-  path: '/legacy/field-activities',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegacyFacilitiesRoute = LegacyFacilitiesRouteImport.update({
-  id: '/legacy/facilities',
-  path: '/legacy/facilities',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LegacyBosRoute = LegacyBosRouteImport.update({
   id: '/legacy/bos',
   path: '/legacy/bos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegacyAboutRoute = LegacyAboutRouteImport.update({
-  id: '/legacy/about',
-  path: '/legacy/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -150,12 +126,8 @@ export interface FileRoutesByFullPath {
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
-  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
-  '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
-  '/legacy/facilities': typeof LegacyFacilitiesRoute
-  '/legacy/field-activities': typeof LegacyFieldActivitiesRoute
   '/legacy/pg': typeof LegacyPgRoute
   '/legacy/research-supervision': typeof LegacyResearchSupervisionRoute
   '/legacy/talks': typeof LegacyTalksRoute
@@ -173,12 +145,8 @@ export interface FileRoutesByTo {
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
-  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
-  '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
-  '/legacy/facilities': typeof LegacyFacilitiesRoute
-  '/legacy/field-activities': typeof LegacyFieldActivitiesRoute
   '/legacy/pg': typeof LegacyPgRoute
   '/legacy/research-supervision': typeof LegacyResearchSupervisionRoute
   '/legacy/talks': typeof LegacyTalksRoute
@@ -197,12 +165,8 @@ export interface FileRoutesById {
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
-  '/research_old': typeof Research_oldRoute
   '/technical-training': typeof TechnicalTrainingRoute
-  '/legacy/about': typeof LegacyAboutRoute
   '/legacy/bos': typeof LegacyBosRoute
-  '/legacy/facilities': typeof LegacyFacilitiesRoute
-  '/legacy/field-activities': typeof LegacyFieldActivitiesRoute
   '/legacy/pg': typeof LegacyPgRoute
   '/legacy/research-supervision': typeof LegacyResearchSupervisionRoute
   '/legacy/talks': typeof LegacyTalksRoute
@@ -222,12 +186,8 @@ export interface FileRouteTypes {
     | '/people'
     | '/publications'
     | '/research'
-    | '/research_old'
     | '/technical-training'
-    | '/legacy/about'
     | '/legacy/bos'
-    | '/legacy/facilities'
-    | '/legacy/field-activities'
     | '/legacy/pg'
     | '/legacy/research-supervision'
     | '/legacy/talks'
@@ -245,12 +205,8 @@ export interface FileRouteTypes {
     | '/people'
     | '/publications'
     | '/research'
-    | '/research_old'
     | '/technical-training'
-    | '/legacy/about'
     | '/legacy/bos'
-    | '/legacy/facilities'
-    | '/legacy/field-activities'
     | '/legacy/pg'
     | '/legacy/research-supervision'
     | '/legacy/talks'
@@ -268,12 +224,8 @@ export interface FileRouteTypes {
     | '/people'
     | '/publications'
     | '/research'
-    | '/research_old'
     | '/technical-training'
-    | '/legacy/about'
     | '/legacy/bos'
-    | '/legacy/facilities'
-    | '/legacy/field-activities'
     | '/legacy/pg'
     | '/legacy/research-supervision'
     | '/legacy/talks'
@@ -292,12 +244,8 @@ export interface RootRouteChildren {
   PeopleRoute: typeof PeopleRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
-  Research_oldRoute: typeof Research_oldRoute
   TechnicalTrainingRoute: typeof TechnicalTrainingRoute
-  LegacyAboutRoute: typeof LegacyAboutRoute
   LegacyBosRoute: typeof LegacyBosRoute
-  LegacyFacilitiesRoute: typeof LegacyFacilitiesRoute
-  LegacyFieldActivitiesRoute: typeof LegacyFieldActivitiesRoute
   LegacyPgRoute: typeof LegacyPgRoute
   LegacyResearchSupervisionRoute: typeof LegacyResearchSupervisionRoute
   LegacyTalksRoute: typeof LegacyTalksRoute
@@ -312,13 +260,6 @@ declare module '@tanstack/react-router' {
       path: '/technical-training'
       fullPath: '/technical-training'
       preLoaderRoute: typeof TechnicalTrainingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/research_old': {
-      id: '/research_old'
-      path: '/research_old'
-      fullPath: '/research_old'
-      preLoaderRoute: typeof Research_oldRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research': {
@@ -426,32 +367,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegacyPgRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legacy/field-activities': {
-      id: '/legacy/field-activities'
-      path: '/legacy/field-activities'
-      fullPath: '/legacy/field-activities'
-      preLoaderRoute: typeof LegacyFieldActivitiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legacy/facilities': {
-      id: '/legacy/facilities'
-      path: '/legacy/facilities'
-      fullPath: '/legacy/facilities'
-      preLoaderRoute: typeof LegacyFacilitiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/legacy/bos': {
       id: '/legacy/bos'
       path: '/legacy/bos'
       fullPath: '/legacy/bos'
       preLoaderRoute: typeof LegacyBosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legacy/about': {
-      id: '/legacy/about'
-      path: '/legacy/about'
-      fullPath: '/legacy/about'
-      preLoaderRoute: typeof LegacyAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -468,12 +388,8 @@ const rootRouteChildren: RootRouteChildren = {
   PeopleRoute: PeopleRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
-  Research_oldRoute: Research_oldRoute,
   TechnicalTrainingRoute: TechnicalTrainingRoute,
-  LegacyAboutRoute: LegacyAboutRoute,
   LegacyBosRoute: LegacyBosRoute,
-  LegacyFacilitiesRoute: LegacyFacilitiesRoute,
-  LegacyFieldActivitiesRoute: LegacyFieldActivitiesRoute,
   LegacyPgRoute: LegacyPgRoute,
   LegacyResearchSupervisionRoute: LegacyResearchSupervisionRoute,
   LegacyTalksRoute: LegacyTalksRoute,

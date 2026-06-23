@@ -29,14 +29,6 @@ export interface MediaFile {
   featured: boolean;
 }
 
-export interface KeyContactSetting {
-  name: string;
-  designation: string;
-  email?: string;
-  phone?: string;
-  imageUrl?: string;
-  displayOrder?: number;
-}
 
 export interface PeopleStatSetting {
   label: string;
@@ -55,7 +47,6 @@ export interface SiteSettings {
   workingHours: string;
   footerContent: string;
   homepageStats: { label: string; value: string; description?: string; icon?: string; displayOrder?: number }[];
-  keyContacts?: KeyContactSetting[];
   peopleStats?: PeopleStatSetting[];
   
   // Hero section additions
@@ -86,13 +77,30 @@ export interface SiteSettings {
   galleryHero?: PageHeroConfig;
   awardsHero?: PageHeroConfig;
   collaborationsHero?: PageHeroConfig;
+  contactHero?: PageHeroConfig;
   institutionLogo?: string;
   institutionLogoAlt?: string;
   institutionLogoWidth?: string;
+  websiteLogo?: string;
+  websiteLogoAlt?: string;
   aboutLabTitle?: string;
   aboutLabDesc?: string;
   visionText?: string;
   missionText?: string;
+
+  // Footer settings schema
+  footerOrgName?: string;
+  footerOrgDesc?: string;
+  footerOrgLogo?: string;
+  footerContactTitle?: string;
+  footerContactEmail?: string;
+  footerContactPhone?: string;
+  footerContactAddress?: string;
+  footerLinksTitle?: string;
+  footerLinks?: { label: string; url: string }[];
+  footerSocialTitle?: string;
+  footerSocials?: { label: string; url: string }[];
+  footerCopyright?: string;
 }
 
 export interface PageHeroConfig {
@@ -211,6 +219,62 @@ function getStoredData<T>(key: string, fallback: T[]): T[] {
         throw err;
       }
       
+      // Self-healing deduplication logic for home-quick-access
+      if (key === "home-quick-access" && Array.isArray(parsed)) {
+        const initialCount = parsed.length;
+        const seen = new Set<string>();
+        const cleaned: T[] = [];
+        parsed.forEach((item: any) => {
+          if (item && item.id) {
+            if (!seen.has(item.id)) {
+              seen.add(item.id);
+              cleaned.push(item);
+            }
+          }
+        });
+        const duplicateCount = initialCount - cleaned.length;
+        console.log(`[Self-Healing Quick Access] Before: ${initialCount}, Duplicates removed: ${duplicateCount}, After: ${cleaned.length}`);
+        
+        if (duplicateCount > 0 || cleaned.length !== initialCount) {
+          parsed = cleaned;
+          const serialized = JSON.stringify(parsed);
+          preSetItemDiagnostics(dbKey, serialized);
+          try {
+            localStorage.setItem(dbKey, serialized);
+          } catch (e) {
+            postSetItemFailureDiagnostics(dbKey, serialized, e);
+          }
+        }
+      }
+
+      // Self-healing migration for research-projects: populate projectSummary and fullDescription from description if they don't exist
+      if (key === "research-projects" && Array.isArray(parsed)) {
+        let migrated = false;
+        parsed = parsed.map((item: any) => {
+          if (item && item.description && (!item.projectSummary || !item.fullDescription)) {
+            if (!item.projectSummary) {
+              item.projectSummary = item.description;
+              migrated = true;
+            }
+            if (!item.fullDescription) {
+              item.fullDescription = item.description;
+              migrated = true;
+            }
+          }
+          return item;
+        }) as any;
+
+        if (migrated) {
+          const serialized = JSON.stringify(parsed);
+          preSetItemDiagnostics(dbKey, serialized);
+          try {
+            localStorage.setItem(dbKey, serialized);
+          } catch (e) {
+            postSetItemFailureDiagnostics(dbKey, serialized, e);
+          }
+        }
+      }
+      
       // Auto-merge logic: if the static seed has more items (e.g. newly added static seeds), merge them in
       if (Array.isArray(parsed) && Array.isArray(fallback) && fallback.length > parsed.length) {
         const merged = [...parsed];
@@ -284,11 +348,17 @@ import {
   FIELD_ACTIVITIES_DATABASE
 } from "./research-data";
 
-const INITIAL_PROJECTS: GenericEntity[] = PROJECTS_DATABASE.map(p => ({
-  ...p,
-  title: p.title || p.scholar || "",
-  description: p.description || ""
-})) as any[];
+const INITIAL_PROJECTS: GenericEntity[] = PROJECTS_DATABASE.map(p => {
+  const projectSummary = p.projectSummary || p.description || "";
+  const fullDescription = p.fullDescription || p.description || "";
+  return {
+    ...p,
+    title: p.title || p.scholar || "",
+    description: p.description || "",
+    projectSummary,
+    fullDescription
+  };
+}) as any[];
 
 const INITIAL_EQUIPMENT: GenericEntity[] = EQUIPMENT_DATABASE.map(eq => ({
   id: eq.id,
@@ -301,6 +371,7 @@ const INITIAL_EQUIPMENT: GenericEntity[] = EQUIPMENT_DATABASE.map(eq => ({
   url: eq.url || "",
   thumbnail: eq.thumbnail || eq.image || "",
   images: eq.images || [],
+  applications: (eq as any).applications || [],
   featured: false,
   displayOrder: 1
 })) as any[];
@@ -708,32 +779,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     { label: "Project Staff", count: "2", icon: "Briefcase", desc: "Hardware & Software Engineers", displayOrder: 3 },
     { label: "Students & Interns", count: "58", icon: "BookOpen", desc: "Post-Graduate & Innovation Teams", displayOrder: 4 }
   ],
-  keyContacts: [
-    {
-      name: "Dr. S. Sakthivel Murugan",
-      designation: "Laboratory Head & Professor",
-      email: "orl@nitttrc.ac.in",
-      displayOrder: 1
-    },
-    {
-      name: "Dr. K. Muthumeenakshi",
-      designation: "Associate Professor (Research Enquiries)",
-      email: "orl@nitttrc.ac.in",
-      displayOrder: 2
-    },
-    {
-      name: "Dr. S. Sakthivel Murugan",
-      designation: "Professor (Consultancy Enquiries)",
-      email: "orl@nitttrc.ac.in",
-      displayOrder: 3
-    },
-    {
-      name: "Dr. S. Sakthivel Murugan",
-      designation: "Professor (Training Programmes)",
-      email: "orl@nitttrc.ac.in",
-      displayOrder: 4
-    }
-  ],
   heroTitle: {
     en: "Ocean Research Laboratory",
     ta: "ஆழி ஆராய்ச்சி ஆய்வகம்",
@@ -827,13 +872,48 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     mediaPosition: "background",
     overlayOpacity: 60
   },
+  contactHero: {
+    title: "Contact Details",
+    subtitle: "Ocean Research Laboratory",
+    description: "Reach out to the ORL team for academic collaborations, industrial consultancy, student internships, or technical facility usage requests.",
+    mediaType: "none",
+    mediaUrl: "",
+    mediaPosition: "background",
+    overlayOpacity: 60
+  },
   institutionLogo: "",
   institutionLogoAlt: "Ocean Research Laboratory Logo",
   institutionLogoWidth: "120",
+  websiteLogo: "",
+  websiteLogoAlt: "ORL Website Logo",
   aboutLabTitle: "Advancing Deep-Ocean Exploration",
   aboutLabDesc: "The Ocean Research Laboratory (ORL) is a multidisciplinary research facility focused on underwater acoustics, ocean observation, subsea systems, marine instrumentation, and technical education.",
   visionText: "To be recognized globally as an institutional center of excellence in ocean technologies and underwater acoustics. We pioneer sustainable engineering models, foster interdisciplinary marine studies, and empower technical educators.",
-  missionText: "Publish high-impact research in digital signal processing, coral diagnostics, and subsea automation.\n\nDeliver specialized technical courses for educators, scholars, and international delegations.\n\nPrototype subsea platforms (ORCA ROV), sensor arrays, and seawater green energy converters."
+  missionText: "Publish high-impact research in digital signal processing, coral diagnostics, and subsea automation.\n\nDeliver specialized technical courses for educators, scholars, and international delegations.\n\nPrototype subsea platforms (ORCA ROV), sensor arrays, and seawater green energy converters.",
+  
+  // Footer default settings
+  footerOrgName: "Ocean Research Laboratory",
+  footerOrgDesc: "National Institute of Technical Teachers Training and Research (NITTTR), Chennai",
+  footerOrgLogo: "",
+  footerContactTitle: "Contact Information",
+  footerContactEmail: "orl@nitttrc.ac.in",
+  footerContactPhone: "+91 44 2254 5400",
+  footerContactAddress: "Taramani, Chennai, Tamil Nadu - 600113",
+  footerLinksTitle: "Quick Links",
+  footerLinks: [
+    { label: "Home", url: "/" },
+    { label: "Research", url: "/research" },
+    { label: "Publications", url: "/publications" },
+    { label: "People", url: "/people" },
+    { label: "Contact", url: "/contact" }
+  ],
+  footerSocialTitle: "Connect With Us",
+  footerSocials: [
+    { label: "ResearchGate", url: "https://www.researchgate.net" },
+    { label: "LinkedIn", url: "https://www.linkedin.com" },
+    { label: "Google Scholar", url: "https://scholar.google.com" }
+  ],
+  footerCopyright: "© 2026 Ocean Research Laboratory, NITTTR Chennai. All rights reserved."
 };
 
 // ----------------- REACT STATE MANAGERS & TRIGGER HOOKS -----------------

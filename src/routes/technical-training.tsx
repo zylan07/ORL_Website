@@ -25,7 +25,7 @@ import { PageHero } from "@/components/page-hero";
 import { useSiteSettings } from "@/lib/admin-store";
 
 const technicalTrainingSearchSchema = z.object({
-  tab: z.enum(["host", "itec", "itp", "pdp", "coordinator", "pg"]).optional(),
+  tab: z.enum(["pdp", "coordinator", "itec", "itp", "host", "pg"]).optional(),
 });
 
 export const Route = createFileRoute("/technical-training")({
@@ -72,6 +72,8 @@ function TrainingTable({
   borderClass,
   icon: Icon,
   renderRow,
+  onExportExcel,
+  onExportPdf,
 }: {
   title: string;
   id: string;
@@ -81,6 +83,8 @@ function TrainingTable({
   borderClass: string;
   icon: React.ComponentType<{ className?: string }>;
   renderRow: (r: RepoRecord) => React.ReactNode;
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
 }) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -98,7 +102,7 @@ function TrainingTable({
       className={`scroll-mt-28 rounded-xl border border-border bg-card p-6 shadow-sm hover:${borderClass} transition-all duration-300`}
     >
       <div
-        className={`border-b ${borderClass} pb-3 flex items-center justify-between`}
+        className={`border-b ${borderClass} pb-3 flex items-center justify-between flex-wrap gap-2`}
       >
         <div className="flex items-center gap-2">
           <Icon className={`h-5 w-5 ${accentClass}`} />
@@ -106,11 +110,31 @@ function TrainingTable({
             {title}
           </h2>
         </div>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
-        >
-          {items.length} records
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            {onExportExcel && (
+              <button
+                onClick={onExportExcel}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <Download className="h-3 w-3" /> Excel
+              </button>
+            )}
+            {onExportPdf && (
+              <button
+                onClick={onExportPdf}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
+              >
+                <FileText className="h-3 w-3" /> PDF
+              </button>
+            )}
+          </div>
+          <span
+            className={`text-xs font-semibold px-2 py-0.5 rounded bg-secondary/80 ${accentClass} font-mono border ${borderClass}`}
+          >
+            {items.length} records
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 orl-table-container">
@@ -201,7 +225,7 @@ function TechnicalTrainingPage() {
 
   const rawTraining = useMemo(() => {
     return records.filter((r) =>
-      ["host", "itec", "itp", "pdp", "coord", "pg"].includes(r.type),
+      ["pdp", "coord", "itec", "itp", "host", "pg"].includes(r.type),
     );
   }, [records]);
 
@@ -293,13 +317,238 @@ function TechnicalTrainingPage() {
   };
 
   const navItems = useMemo(() => [
-    { label: "Host Programmes", id: "host", icon: Building2, count: rawHostCount, theme: "teal" as const },
+    { label: "PDP as Resource Person", id: "pdp", icon: Library, count: rawPdpCount, theme: "teal" as const },
+    { label: "PDP as Coordinator", id: "coord", icon: Award, count: rawCoordCount, theme: "teal" as const },
     { label: "ITEC", id: "itec", icon: Globe, count: rawItecCount, theme: "teal" as const },
     { label: "ITP", id: "itp", icon: Briefcase, count: rawItpCount, theme: "teal" as const },
-    { label: "PDP", id: "pdp", icon: Library, count: rawPdpCount, theme: "teal" as const },
-    { label: "PG Programmes", id: "pg", icon: BookOpen, count: rawPgCount, theme: "indigo" as const },
-    { label: "Coordinatorships", id: "coord", icon: Award, count: rawCoordCount, theme: "teal" as const }
-  ], [rawHostCount, rawItecCount, rawItpCount, rawPdpCount, rawPgCount, rawCoordCount]);
+    { label: "Host Programmes", id: "host", icon: Building2, count: rawHostCount, theme: "teal" as const },
+    { label: "PG Programmes", id: "pg", icon: BookOpen, count: rawPgCount, theme: "indigo" as const }
+  ], [rawPdpCount, rawCoordCount, rawItecCount, rawItpCount, rawHostCount, rawPgCount]);
+
+  // Section-wise export functions
+  const exportPdpExcel = () => {
+    const exportData = pdpItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Code", key: "code" },
+        { label: "Duration", key: "duration" },
+        { label: "Mode", key: "mode" }
+      ], "orl_training_pdp_resource");
+    });
+  };
+
+  const exportPdpPdf = () => {
+    const exportData = pdpItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("PDP as Resource Person", exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Code", key: "code" },
+        { label: "Duration", key: "duration" },
+        { label: "Mode", key: "mode" }
+      ], "orl_training_pdp_resource", q);
+    });
+  };
+
+  const exportCoordExcel = () => {
+    const exportData = coordItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Code", key: "code" },
+        { label: "Duration", key: "duration" },
+        { label: "Mode", key: "mode" }
+      ], "orl_training_pdp_coordinator");
+    });
+  };
+
+  const exportCoordPdf = () => {
+    const exportData = coordItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("PDP as Coordinator", exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Code", key: "code" },
+        { label: "Duration", key: "duration" },
+        { label: "Mode", key: "mode" }
+      ], "orl_training_pdp_coordinator", q);
+    });
+  };
+
+  const exportItecExcel = () => {
+    const exportData = itecItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_itec");
+    });
+  };
+
+  const exportItecPdf = () => {
+    const exportData = itecItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("ITEC Programmes", exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_itec", q);
+    });
+  };
+
+  const exportItpExcel = () => {
+    const exportData = itpItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_itp");
+    });
+  };
+
+  const exportItpPdf = () => {
+    const exportData = itpItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("ITP Programmes", exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_itp", q);
+    });
+  };
+
+  const exportHostExcel = () => {
+    const exportData = hostItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Host Institution", key: "organization" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_host");
+    });
+  };
+
+  const exportHostPdf = () => {
+    const exportData = hostItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      organization: r.organization || "—",
+      duration: r.duration || "—",
+      role: r.role || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("Host Institution Sessions", exportData, [
+        { label: "Period", key: "date" },
+        { label: "Programme Title", key: "title" },
+        { label: "Host Institution", key: "organization" },
+        { label: "Duration", key: "duration" },
+        { label: "Role", key: "role" }
+      ], "orl_training_host", q);
+    });
+  };
+
+  const exportPgExcel = () => {
+    const exportData = pgItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      organization: r.organization || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToExcel(exportData, [
+        { label: "Year", key: "date" },
+        { label: "Subject Name", key: "title" },
+        { label: "Subject Code", key: "code" },
+        { label: "Programme", key: "organization" },
+        { label: "Semester", key: "duration" },
+        { label: "No. of Students", key: "mode" }
+      ], "orl_training_pg");
+    });
+  };
+
+  const exportPgPdf = () => {
+    const exportData = pgItems.map(r => ({
+      date: formatDate(r.date),
+      title: r.title,
+      code: r.code || "—",
+      organization: r.organization || "—",
+      duration: r.duration || "—",
+      mode: r.mode || "—"
+    }));
+    import("@/lib/export-helper").then(mod => {
+      mod.exportToPdf("Post Graduate Courses (M.Tech)", exportData, [
+        { label: "Year", key: "date" },
+        { label: "Subject Name", key: "title" },
+        { label: "Subject Code", key: "code" },
+        { label: "Programme", key: "organization" },
+        { label: "Semester", key: "duration" },
+        { label: "No. of Students", key: "mode" }
+      ], "orl_training_pg", q);
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16 transition-colors duration-300 page-technical-training">
@@ -332,74 +581,6 @@ function TechnicalTrainingPage() {
           </label>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                const exportData = filteredTraining.map(r => ({
-                  ...r,
-                  type: r.type === "host" ? "Host Programme" :
-                        r.type === "itec" ? "ITEC Programme" :
-                        r.type === "itp" ? "ITP Programme" :
-                        r.type === "pdp" ? "PDP Resource Person" :
-                        r.type === "coord" ? "PDP Coordinator" :
-                        r.type === "pg" ? "PG Course (M.Tech)" : r.type,
-                  date: formatDate(r.date)
-                }));
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToExcel(
-                    exportData,
-                    [
-                      { label: "Date/Period", key: "date" },
-                      { label: "Type", key: "type" },
-                      { label: "Title", key: "title" },
-                      { label: "Code", key: "code" },
-                      { label: "Host/Institution", key: "organization" },
-                      { label: "Duration/Semester", key: "duration" },
-                      { label: "Role", key: "role" },
-                      { label: "Mode/Students", key: "mode" }
-                    ],
-                    "orl_technical_training"
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Excel
-            </button>
-            <button
-              onClick={() => {
-                const exportData = filteredTraining.map(r => ({
-                  ...r,
-                  type: r.type === "host" ? "Host Programme" :
-                        r.type === "itec" ? "ITEC Programme" :
-                        r.type === "itp" ? "ITP Programme" :
-                        r.type === "pdp" ? "PDP Resource Person" :
-                        r.type === "coord" ? "PDP Coordinator" :
-                        r.type === "pg" ? "PG Course (M.Tech)" : r.type,
-                  date: formatDate(r.date)
-                }));
-                import("@/lib/export-helper").then(mod => {
-                  mod.exportToPdf(
-                    "Technical Training & PG Courses",
-                    exportData,
-                    [
-                      { label: "Date/Period", key: "date" },
-                      { label: "Type", key: "type" },
-                      { label: "Title", key: "title" },
-                      { label: "Code", key: "code" },
-                      { label: "Host/Institution", key: "organization" },
-                      { label: "Duration/Semester", key: "duration" },
-                      { label: "Role", key: "role" },
-                      { label: "Mode/Students", key: "mode" }
-                    ],
-                    "orl_technical_training",
-                    q
-                  );
-                });
-              }}
-              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-teal-500 transition-colors cursor-pointer select-none"
-            >
-              <FileText className="h-3.5 w-3.5" /> Export PDF
-            </button>
-            <button
               onClick={() => setSortDesc((s) => !s)}
               className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer select-none"
             >
@@ -411,99 +592,6 @@ function TechnicalTrainingPage() {
 
         {/* Sections */}
         <div className="space-y-12">
-          {/* HOST */}
-          <TrainingTable
-            title="Host Institution Sessions"
-            id="host"
-            items={hostItems}
-            icon={Building2}
-            accentClass="text-teal-600 dark:text-teal-400"
-            borderClass="border-teal-500/20"
-            headers={[
-              "Period",
-              "Programme Title",
-              "Host Institution",
-              "Duration",
-              "Role",
-            ]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.organization}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.duration || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.role || "—"}
-                </td>
-              </>
-            )}
-          />
-
-          {/* ITEC */}
-          <TrainingTable
-            title="ITEC Programmes"
-            id="itec"
-            items={itecItems}
-            icon={Globe}
-            accentClass="text-teal-600 dark:text-teal-400"
-            borderClass="border-teal-500/20"
-            headers={["Period", "Programme Title", "Duration", "Role"]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.duration || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.role || "—"}
-                </td>
-              </>
-            )}
-          />
-
-          {/* ITP */}
-          <TrainingTable
-            title="ITP Programmes"
-            id="itp"
-            items={itpItems}
-            icon={Briefcase}
-            accentClass="text-teal-600 dark:text-teal-400"
-            borderClass="border-teal-500/20"
-            headers={["Period", "Programme Title", "Duration", "Role"]}
-            renderRow={(r) => (
-              <>
-                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
-                  {formatDate(r.date)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
-                  {r.title}
-                  {renderAttachments(r)}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.duration || "—"}
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                  {r.role || "—"}
-                </td>
-              </>
-            )}
-          />
-
           {/* PDP RESOURCE */}
           <TrainingTable
             title="PDP as Resource Person"
@@ -513,6 +601,8 @@ function TechnicalTrainingPage() {
             accentClass="text-teal-600 dark:text-teal-400"
             borderClass="border-teal-500/20"
             headers={["Period", "Programme Title", "Code", "Duration", "Mode"]}
+            onExportExcel={exportPdpExcel}
+            onExportPdf={exportPdpPdf}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
@@ -544,6 +634,8 @@ function TechnicalTrainingPage() {
             accentClass="text-teal-600 dark:text-teal-400"
             borderClass="border-teal-500/20"
             headers={["Period", "Programme Title", "Code", "Duration", "Mode"]}
+            onExportExcel={exportCoordExcel}
+            onExportPdf={exportCoordPdf}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
@@ -566,6 +658,105 @@ function TechnicalTrainingPage() {
             )}
           />
 
+          {/* ITEC */}
+          <TrainingTable
+            title="ITEC Programmes"
+            id="itec"
+            items={itecItems}
+            icon={Globe}
+            accentClass="text-teal-600 dark:text-teal-400"
+            borderClass="border-teal-500/20"
+            headers={["Period", "Programme Title", "Duration", "Role"]}
+            onExportExcel={exportItecExcel}
+            onExportPdf={exportItecPdf}
+            renderRow={(r) => (
+              <>
+                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
+                  {formatDate(r.date)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
+                  {r.title}
+                  {renderAttachments(r)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.duration || "—"}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.role || "—"}
+                </td>
+              </>
+            )}
+          />
+
+          {/* ITP */}
+          <TrainingTable
+            title="ITP Programmes"
+            id="itp"
+            items={itpItems}
+            icon={Briefcase}
+            accentClass="text-teal-600 dark:text-teal-400"
+            borderClass="border-teal-500/20"
+            headers={["Period", "Programme Title", "Duration", "Role"]}
+            onExportExcel={exportItpExcel}
+            onExportPdf={exportItpPdf}
+            renderRow={(r) => (
+              <>
+                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
+                  {formatDate(r.date)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
+                  {r.title}
+                  {renderAttachments(r)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.duration || "—"}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.role || "—"}
+                </td>
+              </>
+            )}
+          />
+
+          {/* HOST */}
+          <TrainingTable
+            title="Host Institution Sessions"
+            id="host"
+            items={hostItems}
+            icon={Building2}
+            accentClass="text-teal-600 dark:text-teal-400"
+            borderClass="border-teal-500/20"
+            headers={[
+              "Period",
+              "Programme Title",
+              "Host Institution",
+              "Duration",
+              "Role",
+            ]}
+            onExportExcel={exportHostExcel}
+            onExportPdf={exportHostPdf}
+            renderRow={(r) => (
+              <>
+                <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
+                  {formatDate(r.date)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs font-medium text-foreground">
+                  {r.title}
+                  {renderAttachments(r)}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.organization}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.duration || "—"}
+                </td>
+                <td className="px-4 py-3 align-top text-xs text-muted-foreground">
+                  {r.role || "—"}
+                </td>
+              </>
+            )}
+          />
+
           {/* PG COURSES */}
           <TrainingTable
             title="Post Graduate Courses (M.Tech)"
@@ -582,6 +773,8 @@ function TechnicalTrainingPage() {
               "Semester",
               "No. of Students",
             ]}
+            onExportExcel={exportPgExcel}
+            onExportPdf={exportPgPdf}
             renderRow={(r) => (
               <>
                 <td className="whitespace-nowrap px-4 py-3 align-top text-xs text-muted-foreground tabular-nums">
