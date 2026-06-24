@@ -725,8 +725,9 @@ function Admin() {
   const [simulationResults, setSimulationResults] = useState<any>(null);
 
   // Authentication & Authorization states
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+const [checkingAuth, setCheckingAuth] = useState(true);
+const [currentUser, setCurrentUser] = useState<any>(null);
+const [loading, setLoading] = useState(false);
   
   // User Management CRUD states
   const [userList, setUserList] = useState<any[]>([]);
@@ -793,6 +794,7 @@ function Admin() {
     }
 
     const checkSessionAndAuth = async () => {
+      if (!supabase) return;
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
@@ -8717,11 +8719,13 @@ function Admin() {
                   // Trigger Option A invitation (server function call)
                   toast.loading("Sending invitation email...");
                   const inviteResult = await inviteUserServer({
-                    email,
-                    fullName,
-                    role: userRoleInput,
-                    status: userStatusInput,
-                    redirectTo: window.location.origin + "/reset-password"
+                    data: {
+                      email,
+                      fullName,
+                      role: userRoleInput,
+                      status: userStatusInput,
+                      redirectTo: window.location.origin + "/reset-password"
+                    }
                   });
 
                   if (inviteResult.success && inviteResult.authUser) {
