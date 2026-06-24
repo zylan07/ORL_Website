@@ -10,14 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TechnicalTrainingRouteImport } from './routes/technical-training'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as PeopleRouteImport } from './routes/people'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollaborationsConsultancyRouteImport } from './routes/collaborations-consultancy'
 import { Route as AwardsRouteImport } from './routes/awards'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as AcademicActivitiesRouteImport } from './routes/academic-activities'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RecordIdRouteImport } from './routes/record.$id'
@@ -30,6 +33,11 @@ import { Route as LegacyBosRouteImport } from './routes/legacy/bos'
 const TechnicalTrainingRoute = TechnicalTrainingRouteImport.update({
   id: '/technical-training',
   path: '/technical-training',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchRoute = ResearchRouteImport.update({
@@ -45,6 +53,11 @@ const PublicationsRoute = PublicationsRouteImport.update({
 const PeopleRoute = PeopleRouteImport.update({
   id: '/people',
   path: '/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -71,6 +84,11 @@ const AwardsRoute = AwardsRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessDeniedRoute = AccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AcademicActivitiesRoute = AcademicActivitiesRouteImport.update({
@@ -118,14 +136,17 @@ const LegacyBosRoute = LegacyBosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/bos': typeof LegacyBosRoute
   '/legacy/pg': typeof LegacyPgRoute
@@ -137,14 +158,17 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/bos': typeof LegacyBosRoute
   '/legacy/pg': typeof LegacyPgRoute
@@ -157,14 +181,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/academic-activities': typeof AcademicActivitiesRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/admin': typeof AdminRoute
   '/awards': typeof AwardsRoute
   '/collaborations-consultancy': typeof CollaborationsConsultancyRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/people': typeof PeopleRoute
   '/publications': typeof PublicationsRoute
   '/research': typeof ResearchRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/technical-training': typeof TechnicalTrainingRoute
   '/legacy/bos': typeof LegacyBosRoute
   '/legacy/pg': typeof LegacyPgRoute
@@ -178,14 +205,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/academic-activities'
+    | '/access-denied'
     | '/admin'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/login'
     | '/people'
     | '/publications'
     | '/research'
+    | '/reset-password'
     | '/technical-training'
     | '/legacy/bos'
     | '/legacy/pg'
@@ -197,14 +227,17 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/academic-activities'
+    | '/access-denied'
     | '/admin'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/login'
     | '/people'
     | '/publications'
     | '/research'
+    | '/reset-password'
     | '/technical-training'
     | '/legacy/bos'
     | '/legacy/pg'
@@ -216,14 +249,17 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/academic-activities'
+    | '/access-denied'
     | '/admin'
     | '/awards'
     | '/collaborations-consultancy'
     | '/contact'
     | '/gallery'
+    | '/login'
     | '/people'
     | '/publications'
     | '/research'
+    | '/reset-password'
     | '/technical-training'
     | '/legacy/bos'
     | '/legacy/pg'
@@ -236,14 +272,17 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcademicActivitiesRoute: typeof AcademicActivitiesRoute
+  AccessDeniedRoute: typeof AccessDeniedRoute
   AdminRoute: typeof AdminRoute
   AwardsRoute: typeof AwardsRoute
   CollaborationsConsultancyRoute: typeof CollaborationsConsultancyRoute
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
+  LoginRoute: typeof LoginRoute
   PeopleRoute: typeof PeopleRoute
   PublicationsRoute: typeof PublicationsRoute
   ResearchRoute: typeof ResearchRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TechnicalTrainingRoute: typeof TechnicalTrainingRoute
   LegacyBosRoute: typeof LegacyBosRoute
   LegacyPgRoute: typeof LegacyPgRoute
@@ -260,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/technical-training'
       fullPath: '/technical-training'
       preLoaderRoute: typeof TechnicalTrainingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research': {
@@ -281,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people'
       preLoaderRoute: typeof PeopleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -316,6 +369,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access-denied': {
+      id: '/access-denied'
+      path: '/access-denied'
+      fullPath: '/access-denied'
+      preLoaderRoute: typeof AccessDeniedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/academic-activities': {
@@ -380,14 +440,17 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcademicActivitiesRoute: AcademicActivitiesRoute,
+  AccessDeniedRoute: AccessDeniedRoute,
   AdminRoute: AdminRoute,
   AwardsRoute: AwardsRoute,
   CollaborationsConsultancyRoute: CollaborationsConsultancyRoute,
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
+  LoginRoute: LoginRoute,
   PeopleRoute: PeopleRoute,
   PublicationsRoute: PublicationsRoute,
   ResearchRoute: ResearchRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TechnicalTrainingRoute: TechnicalTrainingRoute,
   LegacyBosRoute: LegacyBosRoute,
   LegacyPgRoute: LegacyPgRoute,

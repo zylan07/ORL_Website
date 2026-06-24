@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   LayoutDashboard,
@@ -32,7 +32,13 @@ import {
   MapPin,
   Sparkles,
   RefreshCw,
-  Download
+  Download,
+  ShieldCheck,
+  UserX,
+  PlusCircle,
+  Eye,
+  Trash,
+  LogOut
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -65,8 +71,121 @@ import {
   type RepoRecord,
   type CarouselImage
 } from "@/lib/repository-data";
+import { supabase } from "@/lib/supabase";
+import { writeAuditLog } from "@/lib/audit-logger";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+// Server action: Invite User (Option A)
+export const inviteUserServer = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    email: z.string().email(),
+    fullName: z.string(),
+    role: z.enum(["super_admin", "editor", "viewer"]),
+    status: z.enum(["active", "inactive"]),
+    redirectTo: z.string()
+  }))
+  .handler(async ({ data }) => {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    
+    if (!serviceKey) {
+      return { success: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
+    }
+
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const adminClient = createClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+
+      // 1. Create auth account invitation
+      const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(data.email, {
+        redirectTo: data.redirectTo
+      });
+
+      if (inviteErr) {
+        return { success: false, error: `Auth invitation failed: ${inviteErr.message}` };
+      }
+
+      return { success: true, authUser: inviteData.user };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Server function execution failed." };
+    }
+  });
+
+// Server action: Delete User from Supabase Auth
+export const deleteUserServer = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ email: z.string().email() }))
+  .handler(async ({ data }) => {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    if (!serviceKey) return { success: false };
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const adminClient = createClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+      // List users
+      const { data: usersData, error: listErr } = await adminClient.auth.admin.listUsers();
+      if (listErr) throw listErr;
+      const match = usersData.users.find(u => u.email === data.email);
+      if (match) {
+        await adminClient.auth.admin.deleteUser(match.id);
+      }
+      return { success: true };
+    } catch (e) {
+      console.warn("Server auth delete user failed:", e);
+      return { success: false };
+    }
+  });
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: async ({ location }) => {
+    if (typeof window !== "undefined" && supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw redirect({
+          to: "/login",
+          search: { redirect: location.href }
+        });
+      }
+      
+      // Try checking by auth_user_id first (Strict Identity Linking)
+      let { data: authUser } = await supabase
+        .from("authorized_users")
+        .select("id, role, status, auth_user_id, email")
+        .eq("auth_user_id", session.user.id)
+        .maybeSingle();
+
+      if (!authUser) {
+        // Fallback check by email (First successful authorization)
+        const { data: byEmailUser } = await supabase
+          .from("authorized_users")
+          .select("id, role, status, auth_user_id, email")
+          .eq("email", session.user.email)
+          .maybeSingle();
+
+        if (byEmailUser) {
+          authUser = byEmailUser;
+          // Perform Auth Identity Linking if not linked yet
+          if (!byEmailUser.auth_user_id) {
+            await supabase
+              .from("authorized_users")
+              .update({ auth_user_id: session.user.id })
+              .eq("id", byEmailUser.id);
+          }
+        }
+      }
+
+      if (!authUser || authUser.status !== "active") {
+        throw redirect({
+          to: "/access-denied",
+          search: { reason: !authUser ? "unauthorized" : "disabled" }
+        });
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "Admin Dashboard — Website Content Manager" },
@@ -605,6 +724,24 @@ function Admin() {
   const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
   const [simulationResults, setSimulationResults] = useState<any>(null);
 
+  // Authentication & Authorization states
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // User Management CRUD states
+  const [userList, setUserList] = useState<any[]>([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUserItem] = useState<any | null>(null);
+  const [userNameInput, setUserNameInput] = useState("");
+  const [userEmailInput, setUserEmailInput] = useState("");
+  const [userRoleInput, setUserRoleInput] = useState<"super_admin" | "editor" | "viewer">("editor");
+  const [userStatusInput, setUserStatusInput] = useState<"active" | "inactive">("active");
+
+  // Audit Logs states
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [searchLogQuery, setSearchLogQuery] = useState("");
+  const [sortLogOrder, setSortLogOrder] = useState<"desc" | "asc">("desc");
+
   const refreshForensicMetrics = async () => {
     if (typeof window !== "undefined" && (window as any).getForensicStorageMetrics) {
       const m = await (window as any).getForensicStorageMetrics();
@@ -614,8 +751,123 @@ function Admin() {
     return null;
   };
 
+  const fetchUsersAndLogs = async (role: string) => {
+    if (!supabase || role !== "super_admin") return;
+    try {
+      const { data: users } = await supabase.from("authorized_users").select("*").order("created_at", { ascending: false });
+      if (users) setUserList(users);
+
+      const { data: logs } = await supabase.from("admin_audit_logs").select("*").order("created_at", { ascending: false });
+      if (logs) setAuditLogs(logs);
+    } catch (e) {
+      console.warn("Failed to load users or audit logs:", e);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    try {
+      // Non-blocking log write
+      writeAuditLog("Logout Successful", "auth", currentUser?.auth_user_id || currentUser?.id || "unknown", `User logged out: ${currentUser?.email}`);
+      await supabase.auth.signOut();
+      toast.success("Successfully logged out.");
+      window.location.href = "/login";
+    } catch (e: any) {
+      toast.error(e.message || "Failed to log out");
+    }
+  };
+
   useEffect(() => {
     refreshForensicMetrics();
+
+    if (!supabase) {
+      // Offline mock fallback
+      setCurrentUser({
+        email: "zylan6476@gmail.com",
+        full_name: "Initial Administrator (Offline Mock)",
+        role: "super_admin",
+        status: "active"
+      });
+      setCheckingAuth(false);
+      return;
+    }
+
+    const checkSessionAndAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.user) {
+          window.location.href = "/login";
+          return;
+        }
+
+        const user = session.user;
+
+        // Try checking by auth_user_id first (Strict Identity Linking), then email
+        let { data: authUser, error: queryErr } = await supabase
+          .from("authorized_users")
+          .select("*")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+
+        if (!authUser) {
+          // Fallback check by email
+          const { data: byEmailUser } = await supabase
+            .from("authorized_users")
+            .select("*")
+            .eq("email", user.email)
+            .maybeSingle();
+          
+          authUser = byEmailUser;
+
+          // Perform Auth Identity Linking if matches email
+          if (authUser && !authUser.auth_user_id) {
+            const { error: linkErr } = await supabase
+              .from("authorized_users")
+              .update({ auth_user_id: user.id })
+              .eq("id", authUser.id);
+
+            if (!linkErr) {
+              authUser.auth_user_id = user.id;
+              console.log("Successfully linked auth identity UUID to authorized_users row.");
+            }
+          }
+        }
+
+        if (queryErr || !authUser) {
+          await supabase.auth.signOut();
+          window.location.href = "/access-denied?reason=unauthorized";
+          return;
+        }
+
+        if (authUser.status !== "active") {
+          await supabase.auth.signOut();
+          window.location.href = "/access-denied?reason=disabled";
+          return;
+        }
+
+        setCurrentUser(authUser);
+        await fetchUsersAndLogs(authUser.role);
+
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+        window.location.href = "/login";
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkSessionAndAuth();
+
+    // Session Expired detection
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        window.location.href = "/login?error=expired";
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Load all repository academic records reactive hooks
@@ -859,6 +1111,17 @@ function Admin() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  if (checkingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-900 text-slate-100 font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+          <p className="text-xs text-slate-400 uppercase tracking-widest font-mono">Loading ORL Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row transition-colors duration-300">
       
@@ -895,7 +1158,15 @@ function Admin() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5">
-          {SIDEBAR_ITEMS.map(item => (
+          {SIDEBAR_ITEMS.concat([
+            { id: "users", label: "User Management", icon: Users },
+            { id: "logs", label: "Audit Logs", icon: FileSpreadsheet }
+          ]).filter(item => {
+            if (item.id === "users" || item.id === "logs") {
+              return currentUser?.role === "super_admin";
+            }
+            return true;
+          }).map(item => (
             <button
               key={item.id}
               onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
@@ -931,6 +1202,33 @@ function Admin() {
 
       {/* Right Main Content Scroll Area */}
       <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-6xl mx-auto w-full">
+        
+        {/* Top-Right Header User Controls */}
+        <div className="flex justify-between items-center border-b border-border/60 pb-4 mb-2 shrink-0 font-sans">
+          <div>
+            <h1 className="text-sm font-black tracking-wider text-foreground uppercase font-mono">ORL CMS</h1>
+            <p className="text-[9px] text-text-muted mt-0.5 uppercase tracking-widest">Website Manager</p>
+          </div>
+          
+          {currentUser && (
+            <div className="flex items-center gap-3 bg-card border border-border px-4 py-2 rounded-xl shadow-xs select-none">
+              <div className="h-8 w-8 rounded-full bg-teal-500/10 text-teal-500 flex items-center justify-center font-bold text-xs border border-teal-500/20">
+                {currentUser.full_name ? currentUser.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "U"}
+              </div>
+              <div className="text-left leading-tight hidden sm:block">
+                <div className="text-xs font-black text-foreground">{currentUser.full_name}</div>
+                <div className="text-[8px] text-text-muted uppercase font-bold tracking-wider">{currentUser.role === 'super_admin' ? 'Super Admin' : currentUser.role === 'editor' ? 'Editor' : 'Viewer'}</div>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="p-1.5 rounded hover:bg-secondary text-text-muted hover:text-destructive transition ml-2 cursor-pointer"
+                title="Log Out"
+              >
+                <LogOut className="h-4 w-4 text-teal-500 hover:text-red-500" />
+              </button>
+            </div>
+          )}
+        </div>
         
         {/* ==================== HOME MANAGER ==================== */}
         {activeTab === "home" && (
@@ -8374,6 +8672,538 @@ function Admin() {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== USER MANAGEMENT ==================== */}
+        {activeTab === "users" && currentUser?.role === "super_admin" && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-foreground uppercase">User Management</h1>
+              <p className="text-xs text-text-secondary mt-1">
+                Authorize, invite, and manage CMS access permissions for laboratory personnel.
+              </p>
+            </div>
+
+            {/* Add User Form Card */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2 flex items-center gap-2">
+                <PlusCircle className="h-4.5 w-4.5 text-teal-500" /> Add Approved User / Invite Personnel
+              </h3>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!supabase) return;
+                
+                const email = userEmailInput.trim().toLowerCase();
+                const fullName = userNameInput.trim();
+                
+                if (!email || !fullName) {
+                  toast.error("Please enter both full name and email.");
+                  return;
+                }
+
+                // Check if email already exists in authorized_users list
+                if (userList.some(u => u.email === email)) {
+                  toast.error("User with this email is already authorized.");
+                  return;
+                }
+
+                setLoading(true);
+                try {
+                  let authUserId = null;
+                  
+                  // Trigger Option A invitation (server function call)
+                  toast.loading("Sending invitation email...");
+                  const inviteResult = await inviteUserServer({
+                    email,
+                    fullName,
+                    role: userRoleInput,
+                    status: userStatusInput,
+                    redirectTo: window.location.origin + "/reset-password"
+                  });
+
+                  if (inviteResult.success && inviteResult.authUser) {
+                    authUserId = inviteResult.authUser.id;
+                    toast.dismiss();
+                    toast.success("Invitation email sent successfully!");
+                  } else {
+                    toast.dismiss();
+                    console.warn("Server invitation failed, falling back to Option B:", inviteResult.error);
+                    // Standard notification about Option B fallback
+                    toast.info("Supabase Admin API unavailable. Creating offline approval record (Option B). User can sign up manually.");
+                    
+                    // Log mock invitation link for developers/testing in development console
+                    console.log(`[MOCK INVITATION LINK] Click here to reset password for ${email}: ${window.location.origin}/reset-password`);
+                  }
+
+                  // Create database record
+                  const { error: insertErr } = await supabase
+                    .from("authorized_users")
+                    .insert({
+                      email,
+                      full_name: fullName,
+                      role: userRoleInput,
+                      status: userStatusInput,
+                      auth_user_id: authUserId
+                    });
+
+                  if (insertErr) throw insertErr;
+
+                  toast.success(`User '${fullName}' added successfully!`);
+                  writeAuditLog("Create User", "authorized_users", email, `Added user: ${fullName} (${email}), role: ${userRoleInput}, status: ${userStatusInput}`);
+                  
+                  // Clear form
+                  setUserNameInput("");
+                  setUserEmailInput("");
+                  setUserRoleInput("editor");
+                  setUserStatusInput("active");
+
+                  // Refresh user list
+                  fetchUsersAndLogs("super_admin");
+
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to add user.");
+                } finally {
+                  setLoading(false);
+                }
+              }} className="grid gap-4 sm:grid-cols-4 items-end text-xs">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Name</label>
+                  <input
+                    type="text"
+                    value={userNameInput}
+                    onChange={(e) => setUserNameInput(e.target.value)}
+                    placeholder="Enter full name..."
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address</label>
+                  <input
+                    type="email"
+                    value={userEmailInput}
+                    onChange={(e) => setUserEmailInput(e.target.value)}
+                    placeholder="name@domain.com"
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Role</label>
+                  <select
+                    value={userRoleInput}
+                    onChange={(e: any) => setUserRoleInput(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-bold"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="editor">Editor</option>
+                    <option value="viewer">Viewer (Read-Only)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="space-y-1 flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status</label>
+                    <select
+                      value={userStatusInput}
+                      onChange={(e: any) => setUserStatusInput(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-bold"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold uppercase tracking-wider h-9 transition cursor-pointer"
+                  >
+                    Add User
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Users List Table */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <h3 className="font-extrabold text-xs text-foreground uppercase border-b border-border/40 pb-2">Approved Access Directory</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-xs font-sans">
+                  <thead>
+                    <tr className="border-b border-border/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="py-3 px-4">Name</th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Created Date</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {userList.map((user) => (
+                      <tr key={user.id} className="hover:bg-secondary/10 transition">
+                        <td className="py-3.5 px-4 font-bold text-foreground">{user.full_name}</td>
+                        <td className="py-3.5 px-4 text-slate-400">{user.email}</td>
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${
+                            user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400' : user.role === 'editor' ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-500/10 text-slate-400'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${
+                            user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                          }`}>
+                            {user.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[10px]">{new Date(user.created_at).toLocaleDateString()}</td>
+                        <td className="py-3.5 px-4 text-right flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              // Setup editing
+                              setEditingUserItem(user);
+                              setUserNameInput(user.full_name);
+                              setUserEmailInput(user.email);
+                              setUserRoleInput(user.role);
+                              setUserStatusInput(user.status);
+                              setIsUserModalOpen(true);
+                            }}
+                            className="p-1 rounded border border-border bg-slate-900 text-slate-400 hover:text-white transition"
+                            title="Edit User"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          
+                          <button
+                            onClick={async () => {
+                              // Toggle status (Disable/Enable)
+                              if (!supabase) return;
+                              
+                              if (user.email === currentUser.email) {
+                                toast.error("Operation denied: You cannot disable your own account.");
+                                return;
+                              }
+
+                              const activeSuperAdmins = userList.filter(u => u.role === "super_admin" && u.status === "active");
+                              if (user.role === "super_admin" && user.status === "active" && activeSuperAdmins.length === 1) {
+                                toast.error("Operation denied: You cannot disable the last remaining active Super Admin.");
+                                return;
+                              }
+
+                              const nextStatus = user.status === "active" ? "inactive" : "active";
+                              try {
+                                const { error } = await supabase
+                                  .from("authorized_users")
+                                  .update({ status: nextStatus })
+                                  .eq("id", user.id);
+
+                                if (error) throw error;
+                                toast.success(`User status updated to ${nextStatus}!`);
+                                writeAuditLog(
+                                  nextStatus === "inactive" ? "Disable User" : "Enable User",
+                                  "authorized_users",
+                                  user.email,
+                                  `Changed user '${user.full_name}' status to ${nextStatus}`
+                                );
+                                fetchUsersAndLogs("super_admin");
+                              } catch (err: any) {
+                                toast.error(err.message || "Failed to update status.");
+                              }
+                            }}
+                            className={`p-1 rounded border border-border bg-slate-900 transition ${
+                              user.status === 'active' ? 'text-amber-500 hover:text-amber-400' : 'text-emerald-500 hover:text-emerald-400'
+                            }`}
+                            title={user.status === 'active' ? "Disable User" : "Enable User"}
+                          >
+                            {user.status === 'active' ? <UserX className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              // Delete User
+                              if (!supabase) return;
+                              
+                              if (user.email === currentUser.email) {
+                                toast.error("Operation denied: You cannot delete your own account.");
+                                return;
+                              }
+
+                              const activeSuperAdmins = userList.filter(u => u.role === "super_admin" && u.status === "active");
+                              if (user.role === "super_admin" && user.status === "active" && activeSuperAdmins.length === 1) {
+                                toast.error("Operation denied: You cannot delete the last remaining active Super Admin.");
+                                return;
+                              }
+
+                              if (!window.confirm(`Are you sure you want to permanently delete user '${user.full_name}'?`)) {
+                                return;
+                              }
+
+                              try {
+                                // Delete authorization record
+                                const { error: dbErr } = await supabase
+                                  .from("authorized_users")
+                                  .delete()
+                                  .eq("id", user.id);
+
+                                if (dbErr) throw dbErr;
+
+                                // Asynchronously delete auth account if service role is active
+                                deleteUserServer({ email: user.email });
+
+                                toast.success("User deleted successfully!");
+                                writeAuditLog("Delete User", "authorized_users", user.email, `Deleted user access record for: ${user.full_name} (${user.email})`);
+                                fetchUsersAndLogs("super_admin");
+                              } catch (err: any) {
+                                toast.error(err.message || "Failed to delete user.");
+                              }
+                            }}
+                            className="p-1 rounded border border-border bg-slate-900 text-red-500 hover:text-red-400 transition"
+                            title="Delete User"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* User Edit Modal */}
+        {isUserModalOpen && editingUser && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/75 z-50 p-4 font-sans select-none">
+            <div className="max-w-md w-full bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800/40">
+                <h3 className="font-extrabold text-xs uppercase tracking-wider text-white">Edit User Access</h3>
+                <button onClick={() => { setIsUserModalOpen(false); setEditingUserItem(null); }} className="text-slate-400 hover:text-white">
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!supabase) return;
+
+                // Guards
+                if (editingUser.email === currentUser.email && userRoleInput !== "super_admin") {
+                  toast.error("Operation denied: You cannot remove your own Super Admin role.");
+                  return;
+                }
+
+                if (editingUser.email === currentUser.email && userStatusInput !== "active") {
+                  toast.error("Operation denied: You cannot disable your own account.");
+                  return;
+                }
+
+                const activeSuperAdmins = userList.filter(u => u.role === "super_admin" && u.status === "active");
+                const isTargetActiveSuperAdmin = editingUser.role === "super_admin" && editingUser.status === "active";
+                
+                if (isTargetActiveSuperAdmin && activeSuperAdmins.length === 1) {
+                  if (userRoleInput !== "super_admin" || userStatusInput !== "active") {
+                    toast.error("Operation denied: You cannot demote or disable the last remaining active Super Admin.");
+                    return;
+                  }
+                }
+
+                try {
+                  const { error } = await supabase
+                    .from("authorized_users")
+                    .update({
+                      full_name: userNameInput,
+                      role: userRoleInput,
+                      status: userStatusInput
+                    })
+                    .eq("id", editingUser.id);
+
+                  if (error) throw error;
+
+                  toast.success("User updated successfully!");
+                  writeAuditLog(
+                    "Edit User",
+                    "authorized_users",
+                    editingUser.email,
+                    `Modified user '${editingUser.full_name}' -> Role: ${userRoleInput}, Status: ${userStatusInput}`
+                  );
+                  
+                  setIsUserModalOpen(false);
+                  setEditingUserItem(null);
+                  fetchUsersAndLogs("super_admin");
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to update user.");
+                }
+              }} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Name</label>
+                  <input
+                    type="text"
+                    value={userNameInput}
+                    onChange={(e) => setUserNameInput(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address (Read-Only)</label>
+                  <input
+                    type="text"
+                    value={userEmailInput}
+                    disabled
+                    className="w-full rounded-lg border border-border bg-slate-900/50 text-slate-500 px-3 py-2 text-xs outline-none cursor-not-allowed font-semibold"
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Role</label>
+                    <select
+                      value={userRoleInput}
+                      onChange={(e: any) => setUserRoleInput(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-bold"
+                    >
+                      <option value="super_admin">Super Admin</option>
+                      <option value="editor">Editor</option>
+                      <option value="viewer">Viewer (Read-Only)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status</label>
+                    <select
+                      value={userStatusInput}
+                      onChange={(e: any) => setUserStatusInput(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-bold"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== AUDIT LOGS ==================== */}
+        {activeTab === "logs" && currentUser?.role === "super_admin" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-foreground uppercase">Administrative Audit Logs</h1>
+                <p className="text-xs text-text-secondary mt-1">
+                  Track developer access, logins, logouts, credential adjustments, and dataset edits.
+                </p>
+              </div>
+
+              {/* Log cleaning Purge tools */}
+              <button
+                onClick={async () => {
+                  if (!supabase) return;
+                  if (!window.confirm("Are you sure you want to clean up logs older than 12 months? This operation cannot be undone.")) {
+                    return;
+                  }
+                  try {
+                    const cutoff = new Date();
+                    cutoff.setMonth(cutoff.getMonth() - 12);
+                    const { error } = await supabase
+                      .from("admin_audit_logs")
+                      .delete()
+                      .lt("created_at", cutoff.toISOString());
+                    
+                    if (error) throw error;
+                    toast.success("Successfully purged logs older than 12 months!");
+                    fetchUsersAndLogs("super_admin");
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to purge logs.");
+                  }
+                }}
+                className="px-3.5 py-1.75 rounded-lg border border-border hover:bg-secondary text-text-secondary hover:text-foreground font-bold uppercase tracking-wider text-4xs transition shrink-0"
+              >
+                Purge &gt;12 Month Logs
+              </button>
+            </div>
+
+            {/* Filter Logs Panel */}
+            <div className="p-5 rounded-xl border border-border bg-card space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
+                <div className="relative flex-1 w-full text-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 h-4 w-4" />
+                  <input
+                    type="text"
+                    value={searchLogQuery}
+                    onChange={(e) => setSearchLogQuery(e.target.value)}
+                    placeholder="Search logs by email, action, type, or key..."
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 pl-9 outline-none focus:border-teal-500 font-semibold"
+                  />
+                </div>
+                <select
+                  value={sortLogOrder}
+                  onChange={(e: any) => setSortLogOrder(e.target.value)}
+                  className="rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-teal-500 font-bold w-full sm:w-auto cursor-pointer"
+                >
+                  <option value="desc">Sort: Newest First</option>
+                  <option value="asc">Sort: Oldest First</option>
+                </select>
+              </div>
+
+              {/* Logs directory table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-xs font-sans">
+                  <thead>
+                    <tr className="border-b border-border/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="py-3 px-4">Timestamp</th>
+                      <th className="py-3 px-4">Operator Email</th>
+                      <th className="py-3 px-4">Action</th>
+                      <th className="py-3 px-4">Entity Type</th>
+                      <th className="py-3 px-4">Entity Name / ID</th>
+                      <th className="py-3 px-4">Log Details</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40 font-mono text-[11px] leading-relaxed">
+                    {auditLogs
+                      .filter(log => {
+                        const hay = [log.user_email, log.action, log.entity_type, log.entity_id, log.details].join(' ').toLowerCase();
+                        return hay.includes(searchLogQuery.toLowerCase());
+                      })
+                      .sort((a, b) => {
+                        const timeA = new Date(a.created_at).getTime();
+                        const timeB = new Date(b.created_at).getTime();
+                        return sortLogOrder === "desc" ? timeB - timeA : timeA - timeB;
+                      })
+                      .map((log) => (
+                        <tr key={log.id} className="hover:bg-secondary/10 transition">
+                          <td className="py-3 px-4 text-slate-400 text-[10px] whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="py-3 px-4 font-bold text-foreground whitespace-nowrap">{log.user_email}</td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-400 whitespace-nowrap">{log.entity_type || "N/A"}</td>
+                          <td className="py-3 px-4 text-slate-400">{log.entity_id || "N/A"}</td>
+                          <td className="py-3 px-4 text-slate-300 normal-case font-sans text-xs min-w-[200px]">{log.details || "N/A"}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

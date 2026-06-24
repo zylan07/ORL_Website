@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { parseDateSafe } from "./utils";
 import { supabase } from "./supabase";
+import { writeAuditLog } from "./audit-logger";
 import {
   getRecords,
   saveRecords,
@@ -160,6 +161,10 @@ export function createRecord(input: Omit<RepoRecord, "id">): RepoRecord {
   const updated = [rec, ...current];
   saveRecords(updated);
   triggerRecordsUpdate();
+  
+  // Log action (non-blocking)
+  writeAuditLog("Create Record", "records", rec.id, `Created ${rec.type} record: "${rec.title}"`);
+  
   return rec;
 }
 
@@ -170,6 +175,9 @@ export function updateRecord(id: string, patch: Partial<RepoRecord>) {
   );
   saveRecords(updated);
   triggerRecordsUpdate();
+
+  // Log action (non-blocking)
+  writeAuditLog("Update Record", "records", id, `Updated record type '${patch.type || "unknown"}': "${patch.title || "unspecified"}"`);
 }
 
 export function deleteRecord(id: string) {
@@ -177,6 +185,9 @@ export function deleteRecord(id: string) {
   const updated = current.filter((r) => r.id !== id);
   saveRecords(updated);
   triggerRecordsUpdate();
+
+  // Log action (non-blocking)
+  writeAuditLog("Delete Record", "records", id, `Deleted record: "${id}"`);
 
   if (supabase) {
     (async () => {

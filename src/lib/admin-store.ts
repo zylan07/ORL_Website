@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
+import { writeAuditLog } from "./audit-logger";
 
 // ----------------- GENERIC ENTITY INTERFACE -----------------
 export interface GenericEntity {
@@ -324,6 +325,9 @@ function saveStoredData<T>(key: string, data: T[]): void {
     localStorage.setItem(dbKey, serialized);
     cleanupOrphanAssets();
     
+    // Log action asynchronously (non-blocking)
+    writeAuditLog("Update Dataset", "datasets", key, `Updated dataset '${key}' containing ${data.length} records`);
+
     if (supabase) {
       (async () => {
         try {
@@ -1004,6 +1008,9 @@ export function saveSettings(settings: SiteSettings): void {
     localStorage.setItem(key, serialized);
     notifyStoreChange("settings");
     cleanupOrphanAssets();
+
+    // Log action asynchronously (non-blocking)
+    writeAuditLog("Update Site Settings", "site_settings", "site_settings", "Updated site settings branding and hero sections");
 
     if (supabase) {
       (async () => {
